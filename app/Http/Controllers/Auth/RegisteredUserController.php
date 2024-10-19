@@ -3,48 +3,40 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
-use App\Models\User;
+use App\Models\Employee;
+use App\Providers\RouteServiceProvider;
 use Illuminate\Auth\Events\Registered;
-use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\Rules;
-use Inertia\Inertia;
-use Inertia\Response;
+use Illuminate\Support\Facades\Validator;
 
 class RegisteredUserController extends Controller
 {
-    /**
-     * Display the registration view.
-     */
-    public function create(): Response
-    {
-        return Inertia::render('Auth/Register');
-    }
-
-    /**
-     * Handle an incoming registration request.
-     *
-     * @throws \Illuminate\Validation\ValidationException
-     */
-    public function store(Request $request): RedirectResponse
+    public function store(Request $request)
     {
         $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|string|lowercase|email|max:255|unique:'.User::class,
-            'password' => ['required', 'confirmed', Rules\Password::defaults()],
+            'first_name' => 'required|string|max:255',
+            'last_name_1' => 'required|string|max:255',
+            'last_name_2' => 'required|string|max:255',
+            'username' => 'required|string|max:255|unique:employees',
+            'password' => 'required|string|confirmed|min:8',
         ]);
 
-        $user = User::create([
-            'name' => $request->name,
-            'email' => $request->email,
+        $employee = Employee::create([
+            'first_name' => $request->first_name,
+            'last_name_1' => $request->last_name_1,
+            'last_name_2' => $request->last_name_2,
+            'username' => $request->username,
             'password' => Hash::make($request->password),
+            'position_id' => $request->position_id,  // Debes pasar este valor en el formulario
+            'hierarchy_level' => 0,  // Establece nivel por defecto si aplica
+            'company_id' => $request->company_id,  // Debes pasar este valor en el formulario
+            'registered_at' => now(),
         ]);
 
-        event(new Registered($user));
+        event(new Registered($employee));
 
-        Auth::login($user);
+        auth()->login($employee);
 
         return redirect(route('dashboard', absolute: false));
     }

@@ -15,6 +15,10 @@ Route::get('/', function () {
     ]);
 });
 
+Route::get('/createemployee', function () {
+    return Inertia::render('CreateEmployee');
+}) ->name('CreateEmployee');
+
 Route::get('/dashboard', function () {
     return Inertia::render('Dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
