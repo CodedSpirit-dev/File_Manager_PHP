@@ -15,13 +15,13 @@ Route::get('/', function () {
     ]);
 });
 
-Route::get('/test', function () {
-    return Inertia::render('Test');
-});
-
 Route::get('/dashboard', function () {
     return Inertia::render('Dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
+
+Route::get('/test', function () {
+    return Inertia::render('Test');
+}) ->name('test');
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
@@ -29,6 +29,7 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
-Route::post('/directorio', [DirectorioController::class, 'store']);
+
+Route::post('/directorio', [DirectorioController::class, 'store'])->name('directorio.store');
 
 require __DIR__.'/auth.php';
