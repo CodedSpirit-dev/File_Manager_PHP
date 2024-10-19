@@ -4,6 +4,7 @@ use App\Http\Controllers\ProfileController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
+use App\Http\Controllers\DirectorioController;
 
 Route::get('/', function () {
     return Inertia::render('Welcome', [
@@ -12,6 +13,10 @@ Route::get('/', function () {
         'laravelVersion' => Application::VERSION,
         'phpVersion' => PHP_VERSION,
     ]);
+});
+
+Route::get('/test', function () {
+    return Inertia::render('Test');
 });
 
 Route::get('/dashboard', function () {
@@ -24,9 +29,6 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
-use App\Http\Controllers\CounterController;
-
-Route::post('/increment', [CounterController::class, 'increment']);
-
+Route::post('/directorio', [DirectorioController::class, 'store']);
 
 require __DIR__.'/auth.php';
