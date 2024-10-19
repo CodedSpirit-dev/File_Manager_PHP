@@ -1,5 +1,6 @@
 import { PageProps } from '@/types';
 import { Head, Link } from '@inertiajs/react';
+import Footer from './Auth/Footer';
 
 export default function Welcome({
     auth,
@@ -361,6 +362,7 @@ export default function Welcome({
                     </div>
                 </div>
             </div>
+            <Footer />
         </>
     );
 }

@@ -6,6 +6,7 @@ import TextInput from '@/Components/TextInput';
 import GuestLayout from '@/Layouts/GuestLayout';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { FormEventHandler, useEffect, useState } from 'react';
+import Footer from './Footer';
 
 export default function Login({
     status,
@@ -46,7 +47,7 @@ export default function Login({
 
     // Función para manejar la petición a la API y actualizar el contador
     const handleIncrement = () => {
-        fetch('/increment', {
+        fetch('increment',{
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
