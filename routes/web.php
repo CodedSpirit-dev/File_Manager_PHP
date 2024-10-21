@@ -16,8 +16,8 @@ Route::get('/', function () {
 });
 
 Route::get('/createemployee', function () {
-    return Inertia::render('CreateEmployee');
-}) ->name('CreateEmployee');
+    return Inertia::render('Admin/CreateEmployee');
+}) ->name('createemployee');
 
 Route::get('/dashboard', function () {
     return Inertia::render('Dashboard');

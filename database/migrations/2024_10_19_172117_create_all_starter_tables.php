@@ -20,7 +20,7 @@ class CreateAllStarterTables extends Migration
     public function up()
     {
         Schema::create('hierarchy_levels', function (Blueprint $table) {
-            $table->unsignedInteger('level')->primary();
+            $table->unsignedInteger('level')->autoIncrement()->from(1)->primary();
             $table->string('name');
             $table->timestamps();
         });
@@ -32,7 +32,7 @@ class CreateAllStarterTables extends Migration
         });
 
         Schema::create('positions', function (Blueprint $table) {
-            $table->uuid('id')->primary();
+            $table->integer('id')->autoIncrement()->from(1)->primary();
             $table->string('name');
             $table->string('company_id');
             $table->unsignedInteger('hierarchy_level');
@@ -47,7 +47,7 @@ class CreateAllStarterTables extends Migration
             $table->string('first_name');
             $table->string('last_name_1');
             $table->string('last_name_2');
-            $table->uuid('position_id');
+            $table->integer('position_id');
             $table->unsignedInteger('hierarchy_level');
             $table->string('username')->unique();
             $table->string('password');
