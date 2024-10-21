@@ -1,3 +1,32 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+body{
+}
+
+.nav__bar{
+    @apply navbar;
+}
+.nav__bar__button{
+    margin-left: auto;
+    @apply btn;
+    @apply btn-ghost;
+}
+
+.input__label{
+    @apply input; @apply input-bordered;
+    @apply flex items-center;
+    @apply gap-2
+}
+
+.input__data__entry{
+    @apply grow ;
+    @apply border-none;
+}
+
+button{
+    &:hover{
+        color: white;
+    }
+}

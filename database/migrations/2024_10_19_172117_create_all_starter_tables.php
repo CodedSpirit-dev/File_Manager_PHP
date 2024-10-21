@@ -20,21 +20,21 @@ class CreateAllStarterTables extends Migration
     public function up()
     {
         Schema::create('hierarchy_levels', function (Blueprint $table) {
-            $table->unsignedInteger('level')->autoIncrement()->from(1)->primary();
+            $table->unsignedInteger('level')->primary();
             $table->string('name');
             $table->timestamps();
         });
 
         Schema::create('companies', function (Blueprint $table) {
-            $table->string('id')->primary();
+            $table->increments('id');
             $table->string('name');
             $table->timestamps();
         });
 
         Schema::create('positions', function (Blueprint $table) {
-            $table->integer('id')->autoIncrement()->from(1)->primary();
+            $table->increments('id');
             $table->string('name');
-            $table->string('company_id');
+            $table->unsignedInteger('company_id');
             $table->unsignedInteger('hierarchy_level');
             $table->timestamps();
 
@@ -43,16 +43,16 @@ class CreateAllStarterTables extends Migration
         });
 
         Schema::create('employees', function (Blueprint $table) {
-            $table->id();
+            $table->increments('id');
             $table->string('first_name');
             $table->string('last_name_1');
             $table->string('last_name_2');
-            $table->integer('position_id');
+            $table->unsignedInteger('position_id');
             $table->unsignedInteger('hierarchy_level');
             $table->string('username')->unique();
             $table->string('password');
             $table->date('registered_at');
-            $table->string('company_id');
+            $table->unsignedInteger('company_id');
             $table->timestamps();
 
             $table->foreign('position_id')->references('id')->on('positions');

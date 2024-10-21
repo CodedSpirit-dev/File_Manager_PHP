@@ -13,6 +13,7 @@ export default function CreateEmployee() {
         last_name2: '',
         user_name: '',
         password: '',
+        hierarchy_level: '',
         password_confirmation: '',
         position_id: '', // Se debe manejar la logica para que se pueda seleccionar el puesto
         company_id: '', // Se debe manejar la logica para que se pueda seleccionar la empresa
@@ -26,6 +27,7 @@ export default function CreateEmployee() {
         user_name: '',
         position_id: '',
         company_id: '',
+        hierarchy_level: '',
         password: '',
         password_confirmation: ''
     });
@@ -37,8 +39,9 @@ export default function CreateEmployee() {
             last_name1: string;
             last_name2: string;
             user_name: string;
-            position_id?: string | number;  // Puede ser un número o un mensaje de error (string)
-            company_id?: string | number;   // Lo mismo aquí
+            position_id: string;  // Debe ser una cadena vacía inicialmente
+            company_id: string;   // Debe ser una cadena vacía inicialmente
+            hierarchy_level: string;
             password: string;
             password_confirmation: string;
         } = {
@@ -46,13 +49,14 @@ export default function CreateEmployee() {
             last_name1: '',
             last_name2: '',
             user_name: '',
-            company_id: 0,
-            position_id: 0,
+            company_id: '',
+            position_id: '',
+            hierarchy_level: '',
             password: '',
             password_confirmation: ''
         };
 
-        const positionId = parseInt(data.position_id, 10); // Convierte a número base 10
+        const positionId = parseInt(data.position_id, 10);
         const companyId = parseInt(data.company_id, 10);
 
         if (!data.first_name) {
@@ -78,6 +82,10 @@ export default function CreateEmployee() {
             validationErrors.company_id = "Debes seleccionar la empresa";
         }
 
+        if (!data.hierarchy_level) {
+            validationErrors.hierarchy_level = 'Debes seleccionar el nivel de autorización';
+        }
+
         if (!data.password) {
             validationErrors.password = 'La contraseña es requerida';
         }
@@ -86,15 +94,15 @@ export default function CreateEmployee() {
             validationErrors.password_confirmation = 'La confirmación de la contraseña es requerida';
         }
 
-        if (Object.keys(validationErrors).length > 0) {
-            setErrors(validationErrors);
-            console.log('Data:', data);
-
-        } else {
-            console.log('Data:', data);
-            console.log("No hay errores");
+        // Si los errores son iguales a "" entonces se envía la petició
+        if (Object.values(validationErrors).every((value) => value === '')) {
+            console.log('Enviando petición');
+            console.log(data);
         }
 
+        post(route('registerEmployee'), {
+            onFinish: () => reset("first_name", "last_name1", "last_name2", "user_name", "password", "hierarchy_level", "password_confirmation", "position_id", "company_id"),
+        });
 
     }
 
@@ -113,102 +121,120 @@ export default function CreateEmployee() {
 
             <form onSubmit={handleSubmit}>
                 <div>
-                    <label htmlFor="first_name">Nombre(s)</label>
+                    <label htmlFor="first_name" className='input__label'>Nombre(s)
                     <input
                         id="first_name"
                         name="first_name"
                         value={data.first_name}
-                        className="mt-1 block w-full"
+                        className="input__data__entry"
                         autoComplete="given-name"
                         autoFocus
                         onChange={(e) => setData('first_name', e.target.value)}
                         required
                     />
+                    </label>
                     {errors.first_name && <p className="mt-2 text-red-600">{errors.first_name}</p>}
                 </div>
 
-                <div className="mt-4">
-                    <label htmlFor="last_name1">Apellido paterno</label>
+                <div className="mt-4 input__label">
+                    <label htmlFor="last_name1">Apellido paterno
                     <input
                         id="last_name1"
                         name="last_name1"
                         value={data.last_name1}
-                        className="mt-1 block w-full"
+                        className="input__data__entry"
                         autoComplete="given-name"
                         onChange={(e) => setData('last_name1', e.target.value)}
                         required
                     />
+                    </label>
                     {errors.last_name1 && <p className="mt-2 text-red-600">{errors.last_name1}</p>}
                 </div>
 
-                <div className="mt-4">
-                    <label htmlFor="last_name2">Apellido materno</label>
+                <div className="mt-4 input__label">
+                    <label htmlFor="last_name2">Apellido materno
                     <input
                         id="last_name2"
                         name="last_name2"
                         value={data.last_name2}
-                        className="mt-1 block w-full"
+                        className="input__data__entry"
                         autoComplete="given-name"
                         onChange={(e) => setData('last_name2', e.target.value)}
                         required
                     />
+                    </label>
                     {errors.last_name2 && <p className="mt-2 text-red-600">{errors.last_name2}</p>}
                 </div>
 
-                <div className="mt-4">
-                    <label htmlFor="user_name">Nombre de usuario (CURP)</label>
+                <div className="mt-4 input__label">
+                    <label htmlFor="user_name">Nombre de usuario
                     <input
                         id="user_name"
                         name="user_name"
                         value={data.user_name}
-                        className="mt-1 block w-full"
+                        className="input__data__entry"
                         autoComplete="given-name"
                         maxLength={18}
-                        minLength={18}
+                        //minLength={18}
                         onChange={(e) => setData('user_name', e.target.value)}
                         required
                     />
+                    </label>
                     {errors.user_name && <p className="mt-2 text-red-600">{errors.user_name}</p>}
                 </div>
-                
-                <div className="mt-4">
-                    <label htmlFor="company_id">Nombre de la empresa</label>
+
+                <div className="mt-4 input__label">
+                    <label htmlFor="company_id">Nombre de la empresa
                     <input
                         id="company_id"
                         name="company_id"
                         value={data.company_id}
                         type='number'
-                        className="mt-1 block w-full"
+                        className="input__data__entry"
                         autoComplete="given-name"
                         onChange={(e) => setData('company_id', e.target.value)}
                         required
                     />
+                    </label>
                     {errors.company_id && <p className="mt-2 text-red-600">{errors.user_name}</p>}
                 </div>
 
-                <div className="mt-4">
+                <div className="mt-4 input__label">
                     <label htmlFor="position_id">Nombre del puesto</label>
                     <input
                         id="position_id"
                         name="position_id"
                         value={data.position_id}
                         type='number'
-                        className="mt-1 block w-full"
-                        autoComplete="given-name"
+                        className="input__data__entry"
                         onChange={(e) => setData('position_id', e.target.value)}
                         required
                     />
                     {errors.position_id && <p className="mt-2 text-red-600">{errors.user_name}</p>}
                 </div>
 
-                <div className="mt-4">
-                    <label htmlFor="password">Password</label>
+                <div className="mt-4 input__label">
+                    <label htmlFor="hierarchy_level">Nivel de autorizacion</label>
+                    <input
+                        id="hierarchy_level"
+                        name="hierarchy_level"
+                        value={data.hierarchy_level}
+                        type='number'
+                        className="hierarchy_level"
+                        onChange={(e) => setData('hierarchy_level', e.target.value)}
+                        required
+                    />
+                    {errors.hierarchy_level && <p className="mt-2 text-red-600">{errors.user_name}</p>}
+                </div>
+
+                <div className="mt-4 input__label">
+                    <label htmlFor="password">Contraseña</label>
                     <input
                         id="password"
                         type="password"
                         name="password"
                         value={data.password}
-                        className="mt-1 block w-full"
+                        className="input__data__entry"
                         autoComplete="new-password"
                         onChange={(e) => setData('password', e.target.value)}
                         required
@@ -216,14 +242,14 @@ export default function CreateEmployee() {
                     {errors.password && <p className="mt-2 text-red-600">{errors.password}</p>}
                 </div>
 
-                <div className="mt-4">
-                    <label htmlFor="password_confirmation">Confirm Password</label>
+                <div className="mt-4 input__label">
+                    <label htmlFor="password_confirmation">Ingresa de nuevo la contraseña</label>
                     <input
                         id="password_confirmation"
                         type="password"
                         name="password_confirmation"
                         value={data.password_confirmation}
-                        className="mt-1 block w-full"
+                        className="input__data__entry"
                         autoComplete="new-password"
                         onChange={(e) => setData('password_confirmation', e.target.value)}
                         required
@@ -232,8 +258,8 @@ export default function CreateEmployee() {
                 </div>
 
                 <div className="mt-4 flex items-center justify-end">
-                    <button className="ms-4 btn btn-primary" disabled={processing}>
-                        Register
+                    <button className="btn btn-success" disabled={processing}>
+                        Registrar al empleado
                     </button>
                 </div>
 

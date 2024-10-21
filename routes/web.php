@@ -7,13 +7,17 @@ use Inertia\Inertia;
 use App\Http\Controllers\DirectorioController;
 
 Route::get('/', function () {
-    return Inertia::render('Welcome', [
+    return Inertia::render('Home', [
         'canLogin' => Route::has('login'),
         'canRegister' => Route::has('register'),
         'laravelVersion' => Application::VERSION,
         'phpVersion' => PHP_VERSION,
     ]);
 });
+
+Route::get('/home', function () {
+    return Inertia::render('Home');
+}) ->name('home');
 
 Route::get('/createemployee', function () {
     return Inertia::render('Admin/CreateEmployee');
