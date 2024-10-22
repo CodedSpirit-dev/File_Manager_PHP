@@ -45,4 +45,8 @@ Route::get('/admin/employees/create', [\App\Http\Controllers\admin\RegisterEmplo
 Route::post('/admin/employees/store', [\App\Http\Controllers\admin\RegisterEmployeeController::class, 'store'])->name('admin.employees.store');
 
 
+use App\Http\Controllers\Admin\EmployeeListController;
+
+Route::get('/api/employeelist', [EmployeeListController::class,'index']);
+
 require __DIR__.'/auth.php';

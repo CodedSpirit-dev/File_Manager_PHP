@@ -1,11 +1,9 @@
 import ResponsiveNavLink from '@/Components/ResponsiveNavLink';
 import { Button } from '@headlessui/react';
-import { Link } from '@inertiajs/react';
 import React, { useState } from 'react';
 import CreateEmployee from './Admin/CreateEmployee';
 import Welcome from './Welcome';
-
-
+import EmployeeList from './Admin/EmployeeList'; // Importar EmployeeList
 
 const Home: React.FC = () => {
     const [component, setComponent] = useState<JSX.Element | null>(null);
@@ -18,6 +16,9 @@ const Home: React.FC = () => {
             case 'Component2':
                 setComponent(<Component2 />);
                 break;
+            case 'EmployeeList':
+                setComponent(<EmployeeList />);
+                break;
             default:
                 setComponent(null);
         }
@@ -27,35 +28,32 @@ const Home: React.FC = () => {
         <div>
             <div>
                 <div>
-                    <nav className='nav__bar'>
+                    <nav className="nav__bar">
                         <Button className="nav__bar__button" onClick={() => renderComponent('Component1')}>
                             Dashboard
                         </Button>
                         <Button className="nav__bar__button" onClick={() => renderComponent('Component1')}>
                             Explorador de archivos
                         </Button>
-                        <Button className="nav__bar__button" onClick={() => renderComponent('Component1')}>
-                            Registros
+                        <Button className="nav__bar__button" onClick={() => renderComponent('EmployeeList')}>
+                            Lista de Empleados {/* Agregar botón para la lista de empleados */}
                         </Button>
                         <Button className="nav__bar__button" onClick={() => renderComponent('Component2')}>
-                           Administracion de empleados
+                            Administración de empleados
                         </Button>
                         <Button className="nav__bar__button" onClick={() => renderComponent('Component2')}>
-                           Cerrar sesion
+                            Cerrar sesión
                         </Button>
-                        <h1 className='text-5xl w-96 font-extrabold justify-end content-end'>SGI</h1>
+                        <h1 className="text-5xl w-96 font-extrabold justify-end content-end">SGI</h1>
                     </nav>
-                    <div className='mt-4'>
-                    {component}
-                    </div>
+                    <div className="mt-4">{component}</div>
                 </div>
             </div>
         </div>
     );
 };
 
-const Component2: React.FC = () => <div><CreateEmployee/></div>;
-const Component1: React.FC = () => <div><Welcome/></div>;
-
+const Component2: React.FC = () => <div><CreateEmployee /></div>;
+const Component1: React.FC = () => <div><Welcome /></div>;
 
 export default Home;
