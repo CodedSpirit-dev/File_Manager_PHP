@@ -8,8 +8,10 @@ import axios from 'axios';
 import Profile from './Profile/Profile';
 import GuestLayout from '@/Layouts/GuestLayout';
 import Guest from '@/Layouts/GuestLayout';
+import { usePage } from '@inertiajs/react';
 
 const Home: React.FC = () => {
+    const { auth } = usePage().props;
     const [component, setComponent] = useState<JSX.Element | null>(null);
 
     const renderComponent = (componentName: string) => {
@@ -30,7 +32,6 @@ const Home: React.FC = () => {
                 setComponent(null);
         }
     };
-
 
     const closeSession = () => {
         axios.post('/logout').then(() => {
@@ -53,7 +54,10 @@ const Home: React.FC = () => {
                 <Button className="nav__bar__button" onClick={() => renderComponent('Component4')}>
                     Administración de empleados
                 </Button>
-                <button className="nav__bar__button" onClick={() => document.getElementById('modal_sesion_close').showModal()}>Cerrar sesión</button>
+                <button className="nav__bar__button" onClick={() => {
+                    const modal = document.getElementById('modal_sesion_close') as HTMLDialogElement | null;
+                    modal?.showModal();
+                }}>Cerrar sesión</button>
                 <dialog id="modal_sesion_close" className="modal">
                     <div className="modal-box">
                         <h3 className="font-bold text-lg text-center">¿Estás seguro de cerrar sesión?</h3>
@@ -73,7 +77,10 @@ const Home: React.FC = () => {
     );
 };
 
-const Component1: React.FC = () => <div><Profile /></div>;
+const Component1: React.FC = () => {
+    const { auth } = usePage().props;
+    return <div><Profile mustVerifyEmail={false} status="" auth={auth} /></div>;
+};
 const Component2: React.FC = () => <div>Explorador de Archivos</div>;
 const Component3: React.FC = () => <div><EmployeeList /></div>;
 const Component4: React.FC = () => <div><CreateEmployee /></div>;
