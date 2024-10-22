@@ -5,6 +5,7 @@ use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use App\Http\Controllers\DirectorioController;
+use App\Http\Controllers\admin\RegisterEmployeeController;
 
 Route::get('/', function () {
     return Inertia::render('Home', [
@@ -39,5 +40,9 @@ Route::middleware('auth')->group(function () {
 
 
 Route::post('/directorio', [DirectorioController::class, 'store'])->name('directorio.store');
+
+Route::get('/admin/employees/create', [\App\Http\Controllers\admin\RegisterEmployeeController::class, 'create'])->name('admin.employees.create');
+Route::post('/admin/employees/store', [\App\Http\Controllers\admin\RegisterEmployeeController::class, 'store'])->name('admin.employees.store');
+
 
 require __DIR__.'/auth.php';
