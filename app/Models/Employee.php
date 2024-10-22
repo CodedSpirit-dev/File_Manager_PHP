@@ -30,8 +30,11 @@ class Employee extends Authenticatable
         'remember_token',
     ];
 
-    // El tipo de las columnas
-    protected $casts = [
-        'registered_at' => 'datetime',
-    ];
+    protected function casts(): array
+    {
+        return [
+            'registered_at' => 'datetime',
+            'password' => 'hashed',
+        ];
+    }
 }

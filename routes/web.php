@@ -32,18 +32,25 @@ Route::get('/test', function () {
     return Inertia::render('Test');
 }) ->name('test');
 
+use App\Http\Controllers\Admin\LoginController;
+
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
+Route::group(['middleware' => 'auth'], function () {
+    Route::get('/admin/employees/create', [RegisterEmployeeController::class, 'create'])->name('admin.employees.create');
+    Route::post('/admin/employees/store', [RegisterEmployeeController::class, 'store'])->name('admin.employees.store');
+    Route::post('/sgi/login', [LoginController::class, 'login'])->name('sgi.login');
+});
 
 Route::post('/directorio', [DirectorioController::class, 'store'])->name('directorio.store');
 
+
 Route::get('/admin/employees/create', [\App\Http\Controllers\admin\RegisterEmployeeController::class, 'create'])->name('admin.employees.create');
 Route::post('/admin/employees/store', [\App\Http\Controllers\admin\RegisterEmployeeController::class, 'store'])->name('admin.employees.store');
-
 
 use App\Http\Controllers\Admin\EmployeeListController;
 

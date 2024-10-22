@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import axios from 'axios';
+import GuestLayout from '@/Layouts/GuestLayout';
 
 interface Employee {
     id: number;
@@ -39,7 +40,7 @@ const EmployeeList: React.FC = () => {
     }
 
     return (
-        <div>
+        <div className='container__75'>
             <h2 className="text-xl font-bold mb-4">Lista de Empleados</h2>
             <table className="employee__table">
                 <thead>

@@ -66,11 +66,11 @@ export default function CreateEmployee() {
     };
 
     return (
-        <GuestLayout>
+        <div className='container__25'>
             <Head title="Registro de nuevos empleados" />
             <form onSubmit={handleSubmit}>
                 <div>
-                    <label htmlFor="first_name">Nombre(s)</label>
+                    <label className='mt-10 input__label' htmlFor="first_name">Nombre(s)
                     <input
                         id="first_name"
                         name="first_name"
@@ -80,11 +80,12 @@ export default function CreateEmployee() {
                         onChange={(e) => setData('first_name', e.target.value)}
                         required
                     />
+                    </label>
                     {errors.first_name && <p className="mt-2 text-red-600">{errors.first_name}</p>}
                 </div>
 
-                <div className="mt-4">
-                    <label htmlFor="last_name_1">Apellido paterno</label>
+                <div className="mt-4 input__label">
+                    <label htmlFor="last_name_1">Apellido paterno
                     <input
                         id="last_name_1"
                         name="last_name_1"
@@ -94,11 +95,13 @@ export default function CreateEmployee() {
                         onChange={(e) => setData('last_name_1', e.target.value)}
                         required
                     />
+                    </label>
                     {errors.last_name_1 && <p className="mt-2 text-red-600">{errors.last_name_1}</p>}
                 </div>
 
-                <div className="mt-4">
-                    <label htmlFor="last_name_2">Apellido materno</label>
+
+                <div className="mt-4 input__label">
+                    <label htmlFor="last_name_2">Apellido materno
                     <input
                         id="last_name_2"
                         name="last_name_2"
@@ -108,11 +111,13 @@ export default function CreateEmployee() {
                         onChange={(e) => setData('last_name_2', e.target.value)}
                         required
                     />
+                    </label>
                     {errors.last_name_2 && <p className="mt-2 text-red-600">{errors.last_name_2}</p>}
                 </div>
 
-                <div className="mt-4">
-                    <label htmlFor="username">Nombre de usuario (CURP)</label>
+
+                <div className="mt-4 input__label">
+                    <label htmlFor="username">Nombre de usuario (CURP)
                     <input
                         id="username"
                         name="username"
@@ -122,11 +127,12 @@ export default function CreateEmployee() {
                         onChange={(e) => setData('username', e.target.value)}
                         required
                     />
+                    </label>
                     {errors.username && <p className="mt-2 text-red-600">{errors.username}</p>}
                 </div>
 
-                <div className="mt-4">
-                    <label htmlFor="company_id">Nombre de la empresa</label>
+                <div className="mt-4 input__label">
+                    <label htmlFor="company_id">Nombre de la empresa
                     <input
                         id="company_id"
                         name="company_id"
@@ -136,11 +142,13 @@ export default function CreateEmployee() {
                         onChange={(e) => setData('company_id', e.target.value)}
                         required
                     />
+                    </label>
                     {errors.company_id && <p className="mt-2 text-red-600">{errors.company_id}</p>}
                 </div>
 
-                <div className="mt-4">
-                    <label htmlFor="position_id">Nombre del puesto</label>
+
+                <div className="mt-4 input__label">
+                    <label htmlFor="position_id">Nombre del puesto
                     <input
                         id="position_id"
                         name="position_id"
@@ -150,11 +158,13 @@ export default function CreateEmployee() {
                         onChange={(e) => setData('position_id', e.target.value)}
                         required
                     />
+                    </label>
                     {errors.position_id && <p className="mt-2 text-red-600">{errors.position_id}</p>}
                 </div>
 
-                <div className="mt-4">
-                    <label htmlFor="hierarchy_level">Nivel de autorización</label>
+
+                <div className="mt-4 input__label">
+                    <label htmlFor="hierarchy_level">Nivel de autorización
                     <input
                         id="hierarchy_level"
                         name="hierarchy_level"
@@ -164,11 +174,13 @@ export default function CreateEmployee() {
                         onChange={(e) => setData('hierarchy_level', e.target.value)}
                         required
                     />
+                    </label>
                     {errors.hierarchy_level && <p className="mt-2 text-red-600">{errors.hierarchy_level}</p>}
                 </div>
 
-                <div className="mt-4">
-                    <label htmlFor="password">Contraseña</label>
+
+                <div className="mt-4 input__label">
+                    <label htmlFor="password">Contraseña
                     <input
                         id="password"
                         type="password"
@@ -179,11 +191,12 @@ export default function CreateEmployee() {
                         onChange={(e) => setData('password', e.target.value)}
                         required
                     />
+                    </label>
                     {errors.password && <p className="mt-2 text-red-600">{errors.password}</p>}
                 </div>
 
-                <div className="mt-4">
-                    <label htmlFor="password_confirmation">Confirmar contraseña</label>
+                <div className="mt-4 input__label">
+                    <label htmlFor="password_confirmation">Confirmar contraseña
                     <input
                         id="password_confirmation"
                         type="password"
@@ -194,6 +207,7 @@ export default function CreateEmployee() {
                         onChange={(e) => setData('password_confirmation', e.target.value)}
                         required
                     />
+                    </label>
                     {errors.password_confirmation && <p className="mt-2 text-red-600">{errors.password_confirmation}</p>}
                 </div>
 
@@ -203,6 +217,6 @@ export default function CreateEmployee() {
                     </button>
                 </div>
             </form>
-        </GuestLayout>
+        </div>
     );
 }

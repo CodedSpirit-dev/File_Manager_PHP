@@ -3,10 +3,39 @@
 @tailwind utilities;
 
 body{
+    @apply bg-zinc-200;
+    @apply font-sans;
+}
+
+.container__25{
+    @apply flex flex-col items-center pt-6 sm:justify-center sm:pt-0 w-full overflow-hidden bg-white px-6 py-4 shadow-md sm:max-w-lg sm:rounded-lg;
+    @apply mx-auto;
+    @apply mt-28;
+    vertical-align: middle;
+    @apply grid place-items-center;
+}
+
+.container__75{
+    @apply flex;
+    @apply items-center;
+    @apply w-screen;
+    @apply flex-col;
+    @apply place-items-center;
+    @apply mt-6;
+    @apply w-11/12;
+    @apply overflow-hidden;
+    @apply  bg-white;
+    @apply px-6;
+    @apply py-4;
+    @apply shadow-md;
+    @apply mx-auto;
+    @apply rounded-lg;
 }
 
 .nav__bar{
     @apply navbar;
+    @apply shadow-md;
+    @apply bg-primary-content;
 }
 .nav__bar__button{
     margin-left: auto;
@@ -15,14 +44,16 @@ body{
 }
 
 .input__label{
+    @apply font-semibold;
     @apply input; @apply input-bordered;
     @apply flex items-center;
-    @apply gap-2
+    @apply bg-transparent;
 }
 
 .input__data__entry{
-    @apply grow ;
+    @apply font-medium;
     @apply border-none;
+    @apply bg-transparent;
 }
 
 button{
