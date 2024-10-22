@@ -8,12 +8,6 @@ interface Employee {
     last_name_2: string;
     created_at: string;
     updated_at: string;
-    company: {
-        name: string;
-    };
-    position: {
-        name: string;
-    };
 }
 
 const EmployeeList: React.FC = () => {
@@ -41,21 +35,19 @@ const EmployeeList: React.FC = () => {
 
     if (error) {
         return <div>{error}</div>;
+        console.log(error);
     }
 
     return (
         <div>
             <h2 className="text-xl font-bold mb-4">Lista de Empleados</h2>
-            <table className="table-auto w-full">
+            <table className="employee__table">
                 <thead>
                     <tr>
                         <th className="px-4 py-2">Nombre</th>
                         <th className="px-4 py-2">Apellido Paterno</th>
                         <th className="px-4 py-2">Apellido Materno</th>
-                        <th className="px-4 py-2">Empresa</th>
-                        <th className="px-4 py-2">Puesto</th>
-                        <th className="px-4 py-2">Fecha de Creación</th>
-                        <th className="px-4 py-2">Fecha de Actualización</th>
+                        <th className="px-4 py-2">Fecha de Registro</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -64,11 +56,7 @@ const EmployeeList: React.FC = () => {
                             <td className="border px-4 py-2">{employee.first_name}</td>
                             <td className="border px-4 py-2">{employee.last_name_1}</td>
                             <td className="border px-4 py-2">{employee.last_name_2}</td>
-                            <td className="border px-4 py-2">{employee.company.name}</td>
-                            <td className="border px-4 py-2">{employee.position.name}</td>
-                            <td className="border px-4 py-2">{new Date(employee.created_at).toLocaleDateString()}</td>
-                            <td className="border px-4 py-2">{new Date(employee.updated_at).toLocaleDateString()}</td>
-                        </tr>
+                            <td className="border px-4 py-2">{new Date(employee.created_at).toLocaleDateString()}</td>                        </tr>
                     ))}
                 </tbody>
             </table>
