@@ -4,7 +4,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\DirectorioController;
 use App\Http\Controllers\Admin\RegisterEmployeeController;
 use App\Http\Controllers\Admin\LoginController;
-use App\Http\Controllers\admin\EmployeeListController;
+use App\Http\Controllers\Admin\EmployeeListController;
 use App\Http\Controllers\Admin\RegisterCompanyController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
