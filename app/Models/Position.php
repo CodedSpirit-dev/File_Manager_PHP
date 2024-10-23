@@ -70,7 +70,7 @@ class Position extends Model
      */
     public function hierarchyLevels()
     {
-        return $this->belongsTo(HierarchyLevel::class, 'hierarchy_level', 'level');
+        return $this->belongsTo(HierarchyLevel::class, 'level', 'hierarchy_level');
     }
 
     /**

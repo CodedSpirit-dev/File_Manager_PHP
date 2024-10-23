@@ -25,8 +25,8 @@ class RegisterEmployeeController extends Controller
             'last_name_2' => 'nullable|string|max:255',
             'position_id' => 'required|integer',
             'hierarchy_level' => 'required|integer|min:0|max:100',
-            'username' => 'required|string|unique:employees,username|max:255', // El nombre de usuario debe ser único
-            'password' => 'required|string|min:8|confirmed', // La confirmación de contraseña
+            'username' => 'required|string|unique:employees,username|max:255',
+            'password' => 'required|string|min:8|confirmed',
             'company_id' => 'required|integer',
         ]);
 

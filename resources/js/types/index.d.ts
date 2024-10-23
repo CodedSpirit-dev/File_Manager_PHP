@@ -48,8 +48,6 @@ export interface Position {
 
 
 export interface HierarchyLevel {
-    id: number;
+    level: number;
     name: string;
-    company_id: number;
-    hierarchy_level: number;
 }

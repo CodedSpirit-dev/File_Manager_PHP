@@ -222,7 +222,7 @@ export default function CreateEmployee({}: CreateEmployeeProps) {
                         >
                             <option value="">Seleccione un nivel de autorización</option>
                             {hierarchyLevels.map((hierarchyLevel) => (
-                                <option key={hierarchyLevel.id} value={hierarchyLevel.id}>
+                                <option key={hierarchyLevel.level} value={hierarchyLevel.level}>
                                     {hierarchyLevel.name}
                                 </option>
                             ))}

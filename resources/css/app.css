@@ -12,6 +12,8 @@ body{
     @apply mt-28;
     vertical-align: middle;
     @apply grid place-items-center;
+
+
 }
 
 .container__75{

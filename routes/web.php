@@ -70,6 +70,7 @@ Route::get('/api/companies', [CompanyController::class, 'index'])->name('api.com
 
 use App\Http\Controllers\PositionController;
 Route::get('/api/positions', [PositionController::class, 'index'])->name('api.positions.index');
+Route::post('/api/positions', [PositionController::class, 'store'])->name('api.positions.store');
 
 use App\Http\Controllers\HierarchyLevelController;
 Route::get('/api/hierarchylevels', [HierarchyLevelController::class, 'index'])->name('api.hierarchylevels.index');
