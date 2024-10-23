@@ -8,7 +8,7 @@ import axios from 'axios';
 import Profile from './Profile/Profile';
 import GuestLayout from '@/Layouts/GuestLayout';
 import Guest from '@/Layouts/GuestLayout';
-import { usePage } from '@inertiajs/react';
+import { Head, usePage } from '@inertiajs/react';
 import CreateCompany from './Admin/CreateCompany';
 
 const Home: React.FC = () => {
@@ -46,6 +46,7 @@ const Home: React.FC = () => {
 
     return (
         <>
+        <Head title="Inicio" />
         <section className="container mx-auto mt-2">
             <nav className="nav__bar rounded-lg">
                 <Button className="nav__bar__button transition-all" onClick={() => renderComponent('Component2')}>
