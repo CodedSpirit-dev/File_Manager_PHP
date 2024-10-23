@@ -2,6 +2,7 @@
 /node_modules
 /storage/pail
 /vendor
+/public/hot
 .env.backup
 .env.production
 .phpactor.json
