@@ -68,5 +68,11 @@ Route::post('/admin/companies/store', [RegisterCompanyController::class, 'store'
 use App\Http\Controllers\CompanyController;
 Route::get('/api/companies', [CompanyController::class, 'index'])->name('api.companies.index');
 
+use App\Http\Controllers\PositionController;
+Route::get('/api/positions', [PositionController::class, 'index'])->name('api.positions.index');
+
+use App\Http\Controllers\HierarchyLevelController;
+Route::get('/api/hierarchylevels', [HierarchyLevelController::class, 'index'])->name('api.hierarchylevels.index');
+
 // Autenticación
 require __DIR__ . '/auth.php';

@@ -38,3 +38,18 @@ export interface Company {
     id: number;
     name: string;
 }
+
+export interface Position {
+    id: number;
+    name: string;
+    company_id: number;
+    hierarchy_level: number;
+}
+
+
+export interface HierarchyLevel {
+    id: number;
+    name: string;
+    company_id: number;
+    hierarchy_level: number;
+}

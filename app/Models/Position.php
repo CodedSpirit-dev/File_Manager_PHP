@@ -4,6 +4,8 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Models\HierarchyLevel;
+
 
 /**
  * Class Position
@@ -66,7 +68,7 @@ class Position extends Model
      *
      * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
      */
-    public function hierarchyLevel()
+    public function hierarchyLevels()
     {
         return $this->belongsTo(HierarchyLevel::class, 'hierarchy_level', 'level');
     }

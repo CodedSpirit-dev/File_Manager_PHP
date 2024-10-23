@@ -1,6 +1,6 @@
 import InputError from '@/Components/InputError';
 import GuestLayout from '@/Layouts/GuestLayout';
-import { Company } from '@/types';
+import { Company, Position, HierarchyLevel } from '@/types';
 import { Head, useForm } from '@inertiajs/react';
 import { useEffect, useState } from 'react';
 import axios from 'axios';
@@ -21,6 +21,8 @@ export default function CreateEmployee({}: CreateEmployeeProps) {
     });
 
     const [companies, setCompanies] = useState<Company[]>([]);
+    const [positions, setPositions] = useState<Position[]>([]);
+    const [hierarchyLevels, setHierarchyLevels] = useState<HierarchyLevel[]>([]);
     const [errors, setErrors] = useState({
         first_name: '',
         last_name_1: '',
@@ -41,6 +43,20 @@ export default function CreateEmployee({}: CreateEmployeeProps) {
             .catch(error => {
                 console.error('Error al cargar las empresas', error);
             });
+
+        axios.get('api/positions')
+            .then(response => {
+                setPositions(response.data);
+            }).catch(error => {
+            console.error('Error al cargar los puestos', error);
+        });
+
+        axios.get('api/hierarchylevels')
+            .then(response => {
+                setHierarchyLevels(response.data);
+            }).catch(error => {
+            console.error('Error al cargar los niveles de autorización', error);
+        });
     }, []);
 
     const handleSubmit = (e: React.FormEvent) => {
@@ -71,8 +87,16 @@ export default function CreateEmployee({}: CreateEmployeeProps) {
         if (!data.password_confirmation) validationErrors.password_confirmation = 'La confirmación de la contraseña es requerida';
 
         if (Object.values(validationErrors).every(value => value === '')) {
-            console.log("Data to send: ", data);
+            const upperCaseData = {
+                ...data,
+                first_name: data.first_name.toUpperCase(),
+                last_name_1: data.last_name_1.toUpperCase(),
+                last_name_2: data.last_name_2.toUpperCase(),
+                username: data.username.toUpperCase(),
+            };
+            console.log("Data to send: ", upperCaseData);
             post(route('admin.employees.store'), {
+                data: upperCaseData,
                 //onFinish: () => reset("first_name", "last_name_1", "last_name_2", "username", "password", "hierarchy_level", "password_confirmation", "position_id", "company_id"),
             });
         } else {
@@ -86,60 +110,60 @@ export default function CreateEmployee({}: CreateEmployeeProps) {
             <form onSubmit={handleSubmit}>
                 <div>
                     <label className='mt-10 input__label' htmlFor="first_name">Nombre(s)
-                    <input
-                        id="first_name"
-                        name="first_name"
-                        value={data.first_name}
-                        className="input__data__entry"
-                        autoComplete="given-name"
-                        onChange={(e) => setData('first_name', e.target.value)}
-                        required
-                    />
+                        <input
+                            id="first_name"
+                            name="first_name"
+                            value={data.first_name}
+                            className="input__data__entry"
+                            autoComplete="given-name"
+                            onChange={(e) => setData('first_name', e.target.value)}
+                            required
+                        />
                     </label>
                     {errors.first_name && <p className="mt-2 text-red-600">{errors.first_name}</p>}
                 </div>
 
                 <div className="mt-4 input__label">
                     <label htmlFor="last_name_1">Apellido paterno
-                    <input
-                        id="last_name_1"
-                        name="last_name_1"
-                        value={data.last_name_1}
-                        className="input__data__entry"
-                        autoComplete="family-name"
-                        onChange={(e) => setData('last_name_1', e.target.value)}
-                        required
-                    />
+                        <input
+                            id="last_name_1"
+                            name="last_name_1"
+                            value={data.last_name_1}
+                            className="input__data__entry"
+                            autoComplete="family-name"
+                            onChange={(e) => setData('last_name_1', e.target.value)}
+                            required
+                        />
                     </label>
                     {errors.last_name_1 && <p className="mt-2 text-red-600">{errors.last_name_1}</p>}
                 </div>
 
                 <div className="mt-4 input__label">
                     <label htmlFor="last_name_2">Apellido materno
-                    <input
-                        id="last_name_2"
-                        name="last_name_2"
-                        value={data.last_name_2}
-                        className="input__data__entry"
-                        autoComplete="family-name"
-                        onChange={(e) => setData('last_name_2', e.target.value)}
-                        required
-                    />
+                        <input
+                            id="last_name_2"
+                            name="last_name_2"
+                            value={data.last_name_2}
+                            className="input__data__entry"
+                            autoComplete="family-name"
+                            onChange={(e) => setData('last_name_2', e.target.value)}
+                            required
+                        />
                     </label>
                     {errors.last_name_2 && <p className="mt-2 text-red-600">{errors.last_name_2}</p>}
                 </div>
 
                 <div className="mt-4 input__label">
                     <label htmlFor="username">Nombre de usuario (CURP)
-                    <input
-                        id="username"
-                        name="username"
-                        value={data.username}
-                        className="input__data__entry"
-                        maxLength={18}
-                        onChange={(e) => setData('username', e.target.value)}
-                        required
-                    />
+                        <input
+                            id="username"
+                            name="username"
+                            value={data.username}
+                            className="input__data__entry"
+                            maxLength={18}
+                            onChange={(e) => setData('username', e.target.value)}
+                            required
+                        />
                     </label>
                     {errors.username && <p className="mt-2 text-red-600">{errors.username}</p>}
                 </div>
@@ -167,62 +191,74 @@ export default function CreateEmployee({}: CreateEmployeeProps) {
 
                 <div className="mt-4 input__label">
                     <label htmlFor="position_id">Nombre del puesto
-                    <input
-                        id="position_id"
-                        name="position_id"
-                        value={data.position_id}
-                        type="number"
-                        className="input__data__entry"
-                        onChange={(e) => setData('position_id', e.target.value)}
-                        required
-                    />
+                        <select
+                            id="position_id"
+                            name="position_id"
+                            value={data.position_id}
+                            className="input__data__entry"
+                            onChange={(e) => setData('position_id', e.target.value)}
+                            required
+                        >
+                            <option value="">Seleccione un puesto</option>
+                            {positions.map((position) => (
+                                <option key={position.id} value={position.id}>
+                                    {position.name}
+                                </option>
+                            ))}
+                        </select>
                     </label>
                     {errors.position_id && <p className="mt-2 text-red-600">{errors.position_id}</p>}
                 </div>
 
                 <div className="mt-4 input__label">
                     <label htmlFor="hierarchy_level">Nivel de autorización
-                    <input
-                        id="hierarchy_level"
-                        name="hierarchy_level"
-                        value={data.hierarchy_level}
-                        type="number"
-                        className="input__data__entry"
-                        onChange={(e) => setData('hierarchy_level', e.target.value)}
-                        required
-                    />
+                        <select
+                            id="hierarchy_level"
+                            name="hierarchy_level"
+                            value={data.hierarchy_level}
+                            className="input__data__entry"
+                            onChange={(e) => setData('hierarchy_level', e.target.value)}
+                            required
+                        >
+                            <option value="">Seleccione un nivel de autorización</option>
+                            {hierarchyLevels.map((hierarchyLevel) => (
+                                <option key={hierarchyLevel.id} value={hierarchyLevel.id}>
+                                    {hierarchyLevel.name}
+                                </option>
+                            ))}
+                        </select>
                     </label>
                     {errors.hierarchy_level && <p className="mt-2 text-red-600">{errors.hierarchy_level}</p>}
                 </div>
 
                 <div className="mt-4 input__label">
                     <label htmlFor="password">Contraseña
-                    <input
-                        id="password"
-                        type="password"
-                        name="password"
-                        value={data.password}
-                        className="input__data__entry"
-                        autoComplete="new-password"
-                        onChange={(e) => setData('password', e.target.value)}
-                        required
-                    />
+                        <input
+                            id="password"
+                            type="password"
+                            name="password"
+                            value={data.password}
+                            className="input__data__entry"
+                            autoComplete="new-password"
+                            onChange={(e) => setData('password', e.target.value)}
+                            required
+                        />
                     </label>
                     {errors.password && <p className="mt-2 text-red-600">{errors.password}</p>}
                 </div>
 
                 <div className="mt-4 input__label">
                     <label htmlFor="password_confirmation">Confirmar contraseña
-                    <input
-                        id="password_confirmation"
-                        type="password"
-                        name="password_confirmation"
-                        value={data.password_confirmation}
-                        className="input__data__entry"
-                        autoComplete="new-password"
-                        onChange={(e) => setData('password_confirmation', e.target.value)}
-                        required
-                    />
+                        <input
+                            id="password_confirmation"
+                            type="password"
+                            name="password_confirmation"
+                            value={data.password_confirmation}
+                            className="input__data__entry"
+                            autoComplete="new-password"
+                            onChange={(e) => setData('password_confirmation', e.target.value)}
+                            required
+                        />
                     </label>
                     {errors.password_confirmation && <p className="mt-2 text-red-600">{errors.password_confirmation}</p>}
                 </div>

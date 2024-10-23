@@ -50,19 +50,19 @@ const Home: React.FC = () => {
         <Head title="Inicio" />
         <section className="container mx-auto mt-2">
             <nav className="nav__bar rounded-lg">
-                <Button className="nav__bar__button transition-all" onClick={() => renderComponent('Component2')}>
+                <Button className="btn btn-ghost nav__bar__button hover:text-black" onClick={() => renderComponent('Component2')}>
                     Explorador de archivos
                 </Button>
                 <div className="dropdown dropdown-end">
                     <div tabIndex={0} role="button" className="btn btn-ghost nav__bar__button">Panel de Administración</div>
                         <ul
                         tabIndex={0}
-                        className="menu dropdown-content bg-base-100 rounded-box z-[1] mt-4 w-52 p-2 shadow">
-                        <li><Button className="" onClick={() => renderComponent('Component1')}>Perfil</Button></li>
-                        <li><Button className="" onClick={() => renderComponent('Component5')}>Registrar nueva empresa</Button></li>
+                        className="menu dropdown-content rounded-box z-[1] mt-4 w-52 p-2 shadow bg-white">
+                        <li><Button className="hover:text-black" onClick={() => renderComponent('Component1')}>Perfil</Button></li>
+                        <li><Button className="hover:text-black" onClick={() => renderComponent('Component5')}>Registrar nueva empresa</Button></li>
                         <li><a>Agregar nuevo puesto</a></li>
-                        <li><Button className="" onClick={() => renderComponent('Component4')}>Administración de empleados</Button></li>
-                        <li><Button className="" onClick={() => renderComponent('Component3')}>Lista de Empleados
+                        <li><Button className="hover:text-black" onClick={() => renderComponent('Component4')}>Agregar nuevo empleado</Button></li>
+                        <li><Button className="hover:text-black" onClick={() => renderComponent('Component3')}>Lista de Empleados
                 </Button></li>
                     </ul>
                 </div>
@@ -70,7 +70,7 @@ const Home: React.FC = () => {
 
                 {/* Agregar botón para cerrar sesión */}
                 <div>
-                    <button className="nav__bar__button transition-opacity" onClick={() => {
+                    <button className="nav__bar__button transition-opacity hover:text-black" onClick={() => {
                         const modal = document.getElementById('modal_sesion_close') as HTMLDialogElement | null;
                         modal?.showModal();
                     }}>Cerrar sesión</button>
