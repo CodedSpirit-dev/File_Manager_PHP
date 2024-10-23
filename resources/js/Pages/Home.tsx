@@ -9,6 +9,7 @@ import Profile from './Profile/Profile';
 import GuestLayout from '@/Layouts/GuestLayout';
 import Guest from '@/Layouts/GuestLayout';
 import { usePage } from '@inertiajs/react';
+import CreateCompany from './Admin/CreateCompany';
 
 const Home: React.FC = () => {
     const { auth } = usePage().props;
@@ -28,51 +29,67 @@ const Home: React.FC = () => {
             case 'Component4':
                 setComponent(<Component4 />);
                 break;
+            case 'Component5':
+                setComponent(<Component5 />);
+                break;
             default:
                 setComponent(null);
         }
     };
 
     const closeSession = () => {
-        axios.post('/logout').then(() => {
+        axios.post('/logout').finally(() => {
             window.location.href = '/login';
-        });
-    };
+        }
+        );
+    }
 
     return (
         <>
-            <nav className="nav__bar">
-                <Button className="nav__bar__button" onClick={() => renderComponent('Component1')}>
-                    Dashboard
-                </Button>
-                <Button className="nav__bar__button" onClick={() => renderComponent('Component2')}>
+        <section className="container mx-auto mt-2">
+            <nav className="nav__bar rounded-lg">
+                <Button className="nav__bar__button transition-all" onClick={() => renderComponent('Component2')}>
                     Explorador de archivos
                 </Button>
-                <Button className="nav__bar__button" onClick={() => renderComponent('Component3')}>
-                    Lista de Empleados {/* Agregar botón para la lista de empleados */}
-                </Button>
-                <Button className="nav__bar__button" onClick={() => renderComponent('Component4')}>
-                    Administración de empleados
-                </Button>
-                <button className="nav__bar__button" onClick={() => {
-                    const modal = document.getElementById('modal_sesion_close') as HTMLDialogElement | null;
-                    modal?.showModal();
-                }}>Cerrar sesión</button>
-                <dialog id="modal_sesion_close" className="modal">
-                    <div className="modal-box">
-                        <h3 className="font-bold text-lg text-center">¿Estás seguro de cerrar sesión?</h3>
-                        <div className="modal-action justify-center">
-                            <form method="dialog">
-                                {/* if there is a button in form, it will close the modal */}
-                                <button className="btn m-3 btn-info">No cerrar sesión</button>
-                                <button className="btn m-3 btn-warning" onClick={closeSession} >Si, cerrar sesión</button>
-                            </form>
+                <div className="dropdown dropdown-end">
+                    <div tabIndex={0} role="button" className="btn btn-ghost nav__bar__button">Panel de Administración</div>
+                        <ul
+                        tabIndex={0}
+                        className="menu dropdown-content bg-base-100 rounded-box z-[1] mt-4 w-52 p-2 shadow">
+                        <li><Button className="" onClick={() => renderComponent('Component1')}>Perfil</Button></li>
+                        <li><Button className="" onClick={() => renderComponent('Component5')}>Registrar nueva empresa</Button></li>
+                        <li><a>Agregar nuevo puesto</a></li>
+                        <li><Button className="" onClick={() => renderComponent('Component4')}>Administración de empleados</Button></li>
+                        <li><Button className="" onClick={() => renderComponent('Component3')}>Lista de Empleados
+                </Button></li>
+                    </ul>
+                </div>
+
+
+                {/* Agregar botón para cerrar sesión */}
+                <div>
+                    <button className="nav__bar__button transition-opacity" onClick={() => {
+                        const modal = document.getElementById('modal_sesion_close') as HTMLDialogElement | null;
+                        modal?.showModal();
+                    }}>Cerrar sesión</button>
+                    <dialog id="modal_sesion_close" className="modal">
+                        <div className="modal-box">
+                            <h3 className="font-bold text-lg text-center">¿Estás seguro de cerrar sesión?</h3>
+                            <div className="modal-action justify-center">
+                                <form method="dialog">
+                                    <button className="btn m-3 btn-info">No cerrar sesión</button>
+                                    <button className="btn m-3 btn-warning" onClick={closeSession} >Si, cerrar sesión</button>
+                                </form>
+                            </div>
                         </div>
-                    </div>
-                </dialog>
-                <h1 className="text-5xl w-96 font-extrabold justify-end content-end">SGI</h1>
+                    </dialog>
+                </div>
+                <h1 className="logo">SGI</h1>
             </nav>
+
+
             <div className="mt-4">{component}</div>
+        </section>
         </>
     );
 };
@@ -84,5 +101,6 @@ const Component1: React.FC = () => {
 const Component2: React.FC = () => <div>Explorador de Archivos</div>;
 const Component3: React.FC = () => <div><EmployeeList /></div>;
 const Component4: React.FC = () => <div><CreateEmployee /></div>;
+const Component5: React.FC = () => <div><CreateCompany /></div>;
 
 export default Home;

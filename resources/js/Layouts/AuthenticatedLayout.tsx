@@ -9,7 +9,9 @@ export default function Authenticated({
     header,
     children,
 }: PropsWithChildren<{ header?: ReactNode }>) {
+    const employee = usePage().props.auth.user;
     const user = usePage().props.auth.user;
+
 
     const [showingNavigationDropdown, setShowingNavigationDropdown] =
         useState(false);

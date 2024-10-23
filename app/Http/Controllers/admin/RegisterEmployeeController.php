@@ -49,8 +49,5 @@ class RegisterEmployeeController extends Controller
         $employee->password = Hash::make($request->password);
         $employee->registered_at = now(); // Agrega la fecha actual
         $employee->save();
-
-        // Redireccionar o devolver una respuesta JSON después de crear el empleado
-        return response()->json(['message' => 'Registro creado exitosamente'], 201);
     }
 }

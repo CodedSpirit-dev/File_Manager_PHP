@@ -31,7 +31,7 @@ const EmployeeList: React.FC = () => {
     }, []);
 
     if (loading) {
-        return <div>Cargando empleados...</div>;
+        return <span className="flex my-auto mx-auto bg-blue-400 loading loading-dots loading-lg w-2/4 h-screen"></span>
     }
 
     if (error) {

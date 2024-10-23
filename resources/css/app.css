@@ -3,7 +3,6 @@
 @tailwind utilities;
 
 body{
-    @apply bg-zinc-200;
     @apply font-sans;
 }
 
@@ -38,7 +37,6 @@ body{
     @apply bg-primary-content;
 }
 .nav__bar__button{
-    margin-left: auto;
     @apply btn;
     @apply btn-ghost;
 }
@@ -65,4 +63,10 @@ button{
 .employee__table{
     @apply table;
     @apply table-zebra;
+}
+
+.logo{
+    @apply text-5xl font-extrabold justify-end content-end;
+    @apply ml-auto mr-4;
+
 }
