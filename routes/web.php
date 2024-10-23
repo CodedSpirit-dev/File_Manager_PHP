@@ -28,18 +28,14 @@ Route::get('/', function () {
 
 // Ruta /home que se muestra después del login (requiere autenticación)
 Route::get('/home', function () {
-    return Inertia::render('Dashboard');  // Asegúrate de que tengas una vista llamada "Dashboard"
-})->middleware(['auth', 'verified'])->name('home');
+    return Inertia::render('Dashboard');
+})->middleware(['auth', 'verified'])->name('dashboard');  // Cambia el nombre de la ruta a 'dashboard'
 
 // Crear empleado (vista)
 Route::get('/createemployee', function () {
     return Inertia::render('Admin/CreateEmployee');
 })->name('createemployee');
 
-// Ruta protegida para la página de inicio (requiere autenticación y verificación)
-Route::get('/', function () {
-    return Inertia::render('Home');
-})->middleware(['auth', 'verified'])->name('login');
 
 // Ruta de prueba
 Route::get('/test', function () {
@@ -68,6 +64,9 @@ Route::get('/api/employeelist', [EmployeeListController::class, 'index'])->name(
 
 // Ruta para registrar una nueva empresa
 Route::post('/admin/companies/store', [RegisterCompanyController::class, 'store'])->name('admin.companies.store');
+
+use App\Http\Controllers\CompanyController;
+Route::get('/api/companies', [CompanyController::class, 'index'])->name('api.companies.index');
 
 // Autenticación
 require __DIR__ . '/auth.php';

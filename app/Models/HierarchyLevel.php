@@ -26,6 +26,8 @@ class HierarchyLevel extends Model
 {
     use HasFactory;
 
+    protected $table = 'hierarchy_levels';
+
     /**
      * The primary key associated with the table.
      *

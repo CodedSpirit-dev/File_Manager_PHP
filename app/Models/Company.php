@@ -26,6 +26,8 @@ class Company extends Model
 {
     use HasFactory;
 
+    protected $table = 'companies'; // Indica que utilizarás la tabla 'companies'
+
     /**
      * The primary key associated with the table.
      *

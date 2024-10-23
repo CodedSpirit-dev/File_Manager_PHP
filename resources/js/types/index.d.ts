@@ -33,3 +33,8 @@ auth: {
     employee: Employee;
 };
 };
+
+export interface Company {
+    id: number;
+    name: string;
+}

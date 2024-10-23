@@ -1,4 +1,5 @@
 import ResponsiveNavLink from '@/Components/ResponsiveNavLink';
+import { Company } from '@/types';
 import { Button } from '@headlessui/react';
 import React, { useState } from 'react';
 import CreateEmployee from './Admin/CreateEmployee';

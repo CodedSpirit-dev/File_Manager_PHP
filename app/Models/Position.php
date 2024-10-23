@@ -28,6 +28,8 @@ class Position extends Model
 {
     use HasFactory;
 
+    protected $table = 'positions'; // Indica que utilizarás la tabla 'companies'
+
     /**
      * The primary key associated with the table.
      *

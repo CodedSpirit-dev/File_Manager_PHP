@@ -1,9 +1,13 @@
 import InputError from '@/Components/InputError';
 import GuestLayout from '@/Layouts/GuestLayout';
+import { Company } from '@/types';
 import { Head, useForm } from '@inertiajs/react';
-import { FormEventHandler, useState } from 'react';
+import { useEffect, useState } from 'react';
+import axios from 'axios';
 
-export default function CreateEmployee() {
+interface CreateEmployeeProps {}
+
+export default function CreateEmployee({}: CreateEmployeeProps) {
     const { data, setData, post, processing, reset } = useForm({
         first_name: '',
         last_name_1: '',
@@ -16,6 +20,7 @@ export default function CreateEmployee() {
         company_id: '', // Lógica para seleccionar la empresa
     });
 
+    const [companies, setCompanies] = useState<Company[]>([]);
     const [errors, setErrors] = useState({
         first_name: '',
         last_name_1: '',
@@ -27,6 +32,16 @@ export default function CreateEmployee() {
         password: '',
         password_confirmation: ''
     });
+
+    useEffect(() => {
+        axios.get('api/companies')
+            .then(response => {
+                setCompanies(response.data);
+            })
+            .catch(error => {
+                console.error('Error al cargar las empresas', error);
+            });
+    }, []);
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -99,7 +114,6 @@ export default function CreateEmployee() {
                     {errors.last_name_1 && <p className="mt-2 text-red-600">{errors.last_name_1}</p>}
                 </div>
 
-
                 <div className="mt-4 input__label">
                     <label htmlFor="last_name_2">Apellido materno
                     <input
@@ -114,7 +128,6 @@ export default function CreateEmployee() {
                     </label>
                     {errors.last_name_2 && <p className="mt-2 text-red-600">{errors.last_name_2}</p>}
                 </div>
-
 
                 <div className="mt-4 input__label">
                     <label htmlFor="username">Nombre de usuario (CURP)
@@ -133,19 +146,24 @@ export default function CreateEmployee() {
 
                 <div className="mt-4 input__label">
                     <label htmlFor="company_id">Nombre de la empresa
-                    <input
-                        id="company_id"
-                        name="company_id"
-                        value={data.company_id}
-                        type="number"
-                        className="input__data__entry"
-                        onChange={(e) => setData('company_id', e.target.value)}
-                        required
-                    />
+                        <select
+                            id="company_id"
+                            name="company_id"
+                            value={data.company_id}
+                            className="input__data__entry"
+                            onChange={(e) => setData('company_id', e.target.value)}
+                            required
+                        >
+                            <option value="">Seleccione una empresa</option>
+                            {companies.map((company) => (
+                                <option key={company.id} value={company.id}>
+                                    {company.name}
+                                </option>
+                            ))}
+                        </select>
                     </label>
                     {errors.company_id && <p className="mt-2 text-red-600">{errors.company_id}</p>}
                 </div>
-
 
                 <div className="mt-4 input__label">
                     <label htmlFor="position_id">Nombre del puesto
@@ -162,7 +180,6 @@ export default function CreateEmployee() {
                     {errors.position_id && <p className="mt-2 text-red-600">{errors.position_id}</p>}
                 </div>
 
-
                 <div className="mt-4 input__label">
                     <label htmlFor="hierarchy_level">Nivel de autorización
                     <input
@@ -177,7 +194,6 @@ export default function CreateEmployee() {
                     </label>
                     {errors.hierarchy_level && <p className="mt-2 text-red-600">{errors.hierarchy_level}</p>}
                 </div>
-
 
                 <div className="mt-4 input__label">
                     <label htmlFor="password">Contraseña
