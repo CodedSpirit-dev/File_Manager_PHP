@@ -11,8 +11,9 @@ const EmployeeList: React.FC = (): React.ReactNode => {
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
-        setLoading(true);
+        setLoading(true); // Establece el estado de carga en true al inicio
 
+        // Llamadas API para obtener la lista de empleados, puestos y compañías
         Promise.all([
             axios.get('api/employeelist'),
             axios.get('api/positions'),
@@ -22,7 +23,7 @@ const EmployeeList: React.FC = (): React.ReactNode => {
                 setEmployees(employeeResponse.data);
                 setPositions(positionsResponse.data);
                 setCompanies(companiesResponse.data);
-                setLoading(false);
+                setLoading(false); // Solo se quita el loading después de que todas las llamadas han finalizado
             })
             .catch((error) => {
                 setError('Error al cargar los datos');
