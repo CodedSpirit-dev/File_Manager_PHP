@@ -70,5 +70,9 @@ Route::get('/api/hierarchylevels', [HierarchyLevelController::class, 'index'])->
 use App\Http\Controllers\PermissionController;
 Route::get('/api/permissions', [PermissionController::class, 'index'])->name('api.permissions.index');
 
+use App\Http\Controllers\UserPermissionsController;
+Route::post('/api/userpermissions', [UserPermissionsController::class, 'store'])->name('api.userpermissions.store');
+
+
 // Autenticación
 require __DIR__ . '/auth.php';
