@@ -93,7 +93,6 @@ button{
 
 .employee__table{
     @apply table;
-    @apply table-zebra;
 }
 
 .logo{

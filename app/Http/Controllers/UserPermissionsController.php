@@ -27,7 +27,7 @@ class UserPermissionsController extends Controller
         $permissions = $request->input('permissions');
 
         // Eliminar permisos anteriores del empleado si existen
-        DB::table('users_permissions')->where('employee_id', $employeeId)->delete();
+        DB::table('user_permissions')->where('employee_id', $employeeId)->delete();
 
         // Insertar nuevos permisos asignados
         $data = [];
@@ -38,7 +38,7 @@ class UserPermissionsController extends Controller
             ];
         }
 
-        DB::table('users_permissions')->insert($data);
+        DB::table('user_permissions')->insert($data);
 
         // Retornar respuesta exitosa
         return response()->json(['message' => 'Permisos asignados exitosamente']);

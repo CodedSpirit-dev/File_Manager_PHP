@@ -142,7 +142,7 @@ export default function CreateEmployee({}: CreateEmployeeProps) {
             <form onSubmit={handleSubmit}>
                 <h1 className="text-2xl text-start font-bold my-4">Registro de nuevos empleados</h1>
                 {/* Lista de pasos */}
-                <ul className="steps w-full">
+                <ul className="steps">
                     <li className={`step ${step >= 1 ? 'step-primary' : ''}`}>Registrar nuevo empleado</li>
                     <li className={`step ${step === 2 ? 'step-primary' : ''}`}>Elegir los permisos para el nuevo usuario</li>
                 </ul>
