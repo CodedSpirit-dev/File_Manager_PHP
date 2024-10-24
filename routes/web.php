@@ -2,10 +2,10 @@
 
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\DirectorioController;
-use App\Http\Controllers\Admin1\RegisterEmployeeController;
-use App\Http\Controllers\Admin1\LoginController;
-use App\Http\Controllers\Admin1\EmployeeListController;
-use App\Http\Controllers\Admin1\RegisterCompanyController;
+use App\Http\Controllers\Admin\RegisterEmployeeController;
+use App\Http\Controllers\Admin\LoginController;
+use App\Http\Controllers\Admin\EmployeeListController;
+use App\Http\Controllers\Admin\RegisterCompanyController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
