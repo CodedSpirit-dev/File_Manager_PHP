@@ -41,7 +41,9 @@ class RegisterEmployeeController extends Controller
         $employee->last_name_1 = $request->last_name_1;
         $employee->last_name_2 = $request->last_name_2;
         $employee->position_id = $request->position_id;
+        $employee->hierarchy_level = $request->hierarchy_level;
         $employee->username = $request->username;
+        $employee->company_id = $request->company_id;
         $employee->password = Hash::make($request->password);
         $employee->registered_at = now(); // Agrega la fecha actual
         $employee->save();

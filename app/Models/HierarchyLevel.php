@@ -50,16 +50,6 @@ class HierarchyLevel extends Model
     protected $fillable = ['level', 'name'];
 
     /**
-     * Get the users associated with the hierarchy level.
-     *
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany
-     */
-    public function employees()
-    {
-        return $this->hasMany(Employee::class, 'hierarchy_level', 'level');
-    }
-
-    /**
      * Get the positions associated with the hierarchy level.
      *
      * @return \Illuminate\Database\Eloquent\Relations\HasMany

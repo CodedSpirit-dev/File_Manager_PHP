@@ -58,6 +58,7 @@ class CreateAllStarterTables extends Migration
             $table->timestamps();
 
             $table->foreign('position_id')->references('id')->on('positions');
+            // 'hierarchy_level' se obtiene de 'positions', así que no se necesita aquí.
         });
 
         // Tabla de permisos

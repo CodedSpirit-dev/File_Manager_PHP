@@ -51,9 +51,3 @@ export interface HierarchyLevel {
     level: number;
     name: string;
 }
-
-export interface Permission {
-    id: number;
-    permission_name: string;
-    permission_description: string;
-}

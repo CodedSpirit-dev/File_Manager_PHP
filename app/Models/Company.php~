@@ -54,7 +54,7 @@ class Company extends Model
      *
      * @return \Illuminate\Database\Eloquent\Relations\HasMany
      */
-    public function employees()
+    public function employee()
     {
         return $this->hasMany(Employee::class, 'company_id', 'id');
     }

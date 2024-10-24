@@ -1,21 +1,17 @@
 import { useForm } from '@inertiajs/react';
-import {useEffect, useState} from 'react';
+import { useEffect, useState } from 'react';
 import axios from "axios";
-import {Company, HierarchyLevel} from "@/types";
+import { Company, HierarchyLevel } from "@/types";
 
-export default function CreateCompany() {
+export default function CreatePosition() {
     const { data, setData, post, processing, reset } = useForm({
-        name : '',
-        company_id : '',
-        hierarchy_level : ''
-
+        name: '',
+        company_id: '',
+        hierarchy_level: ''
     });
 
     const [companies, setCompanies] = useState<Company[]>([]);
-
     const [hierarchyLevels, setHierarchyLevels] = useState<HierarchyLevel[]>([]);
-
-
     const [errors, setErrors] = useState({
         name: ''
     });
@@ -26,13 +22,13 @@ export default function CreateCompany() {
     const handleSubmit = () => {
         let validationErrors = { name: '' };
 
-        if (!data.name) validationErrors.name = 'El nombre de la empresa es requerido';
+        if (!data.name) validationErrors.name = 'El nombre del puesto es requerido';
 
         if (!validationErrors.name) {
             post(route('api.positions.store'), {
                 onFinish: () => {
                     reset('name');
-                    setSuccessMessage('La empresa ha sido registrada exitosamente.'); // Mostrar mensaje de éxito
+                    setSuccessMessage('El puesto ha sido registrado exitosamente.'); // Mostrar mensaje de éxito
                     closeModal(); // Cerrar modal después de registro exitoso
                 },
             });
@@ -42,12 +38,12 @@ export default function CreateCompany() {
     };
 
     const closeModal = () => {
-        const modal = document.getElementById('modal_company_confirm') as HTMLDialogElement | null;
+        const modal = document.getElementById('modal_position_confirm') as HTMLDialogElement | null;
         modal?.close();
     };
 
     const openModal = () => {
-        const modal = document.getElementById('modal_company_confirm') as HTMLDialogElement | null;
+        const modal = document.getElementById('modal_position_confirm') as HTMLDialogElement | null;
         modal?.showModal();
     };
 
@@ -73,6 +69,7 @@ export default function CreateCompany() {
         <div className='container__25'>
             <form onSubmit={(e) => e.preventDefault()}>
                 <div>
+                    {/* Selección de empresa */}
                     <label className="mt-10 input__label" htmlFor="company_id">Nombre de la empresa
                         <select
                             id="company_id"
@@ -89,8 +86,9 @@ export default function CreateCompany() {
                                 </option>
                             ))}
                         </select>
-
                     </label>
+
+                    {/* Selección de nivel jerárquico */}
                     <label className="mt-10 input__label" htmlFor="hierarchy_level">Nivel Jerárquico
                         <select
                             id="hierarchy_level"
@@ -108,6 +106,8 @@ export default function CreateCompany() {
                             ))}
                         </select>
                     </label>
+
+                    {/* Nombre del puesto */}
                     <label className='mt-10 input__label' htmlFor="name">Nombre del puesto
                         <input
                             id="name"
@@ -121,6 +121,7 @@ export default function CreateCompany() {
                     {errors.name && <p className="mt-2 text-red-600">{errors.name}</p>}
                 </div>
 
+                {/* Botón para abrir el modal de confirmación */}
                 <div className="mt-4 flex items-center justify-end">
                     <button className="btn btn-success" onClick={openModal}>
                         Registrar puesto
@@ -128,7 +129,7 @@ export default function CreateCompany() {
                 </div>
             </form>
 
-            {/* Mostrar mensaje de éxito si la empresa fue registrada */}
+            {/* Mostrar mensaje de éxito si el puesto fue registrado */}
             {successMessage && (
                 <div role="alert" className="alert alert-success mt-4">
                     <svg
@@ -147,7 +148,7 @@ export default function CreateCompany() {
             )}
 
             {/* Modal de confirmación */}
-            <dialog id="modal_company_confirm" className="modal">
+            <dialog id="modal_position_confirm" className="modal">
                 <div className="modal-box">
                     <h3 className="font-bold text-lg text-center">¿Estás seguro de registrar este puesto?</h3>
                     <div className="modal-action justify-center">

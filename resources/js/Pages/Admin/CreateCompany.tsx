@@ -1,5 +1,5 @@
-import { useForm } from '@inertiajs/react';
-import { useState } from 'react';
+import {Head, useForm} from '@inertiajs/react';
+import React, { useState } from 'react';
 
 export default function CreateCompany() {
     const { data, setData, post, processing, reset } = useForm({
@@ -43,23 +43,24 @@ export default function CreateCompany() {
 
     return (
         <div className='container__25'>
+            <Head title="Registro de nuevas empresas" />
             <form onSubmit={(e) => e.preventDefault()}>
-                <div>
-                    <label className='mt-10 input__label' htmlFor="name">Nombre de la empresa
-                        <input
-                            id="name"
-                            name="name"
-                            value={data.name}
-                            className="input__data__entry"
-                            onChange={(e) => setData('name', e.target.value)}
-                            required
-                        />
-                    </label>
+                <h1 className="text-2xl text-start font-bold my-4">Registro de empresas</h1>
+                <div className="mt-4">
+                    <input
+                        id="name"
+                        name="name"
+                        value={data.name}
+                        className="input input-bordered input-primary w-full max-w-xs "
+                        placeholder="Nombre de la empresa"
+                        onChange={(e) => setData('name', e.target.value)}
+                        required
+                    />
                     {errors.name && <p className="mt-2 text-red-600">{errors.name}</p>}
                 </div>
 
                 <div className="mt-4 flex items-center justify-end">
-                    <button className="btn btn-success" onClick={openModal}>
+                    <button className="btn btn-success" onClick={openModal} disabled={processing}>
                         Registrar empresa
                     </button>
                 </div>

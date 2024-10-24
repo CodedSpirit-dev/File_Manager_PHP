@@ -14,11 +14,12 @@ body{
     vertical-align: middle;
     @apply grid place-items-center;
     @apply bg-white;
+    @apply w-full;
 
     /* Agregar tamaños responsivos */
     @apply md:max-w-xl; /* Para dispositivos medianos */
-    @apply lg:max-w-2xl; /* Para dispositivos grandes */
-    @apply xl:max-w-3xl; /* Para dispositivos extra grandes */
+    @apply lg:w-full; /* Para dispositivos grandes */
+    @apply xl:w-full; /* Para dispositivos extra grandes */
 }
 
 
