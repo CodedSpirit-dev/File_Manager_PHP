@@ -52,7 +52,7 @@ const Home: React.FC = () => {
     return (
         <>
             <Head title="Inicio"/>
-            <section className="container mx-auto mt-2">
+            <section className="container mx-auto">
                 <nav className="nav__bar rounded-lg">
                     <Button className="btn btn-ghost nav__bar__button hover:text-black"
                             onClick={() => renderComponent('Component2')}>

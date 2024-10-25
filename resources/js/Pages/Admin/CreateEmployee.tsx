@@ -145,7 +145,6 @@ export default function CreateEmployee() {
                                     />
                                 )}
                             />
-                            {errors.first_name && <p className="text-red-600">{errors.first_name.message}</p>}
                         </div>
                         {watchAllFields.first_name && (
                             <>
