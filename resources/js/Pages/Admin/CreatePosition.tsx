@@ -34,7 +34,7 @@ export default function CreatePosition() {
                 successModalRef.current?.showModal();  // Mostrar modal de éxito
             })
             .catch(error => {
-                if (error.response?.status === 450) {  // Conflicto: nombre ya tomado
+                if (error.response?.status === 480) {  // Conflicto: nombre ya tomado
                     setErrorMessage('El nombre del puesto ya está en uso.');
                     errorModalRef.current?.showModal(); // Mostrar modal de error por nombre
                 } else {

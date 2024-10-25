@@ -9,7 +9,7 @@ class CompanyController extends Controller
 {
     public function index()
     {
-        $companies = Company::all(['id', 'name']);
+        $companies = Company::orderBy("name","asc")->get();
         return response()->json($companies);
     }
 }

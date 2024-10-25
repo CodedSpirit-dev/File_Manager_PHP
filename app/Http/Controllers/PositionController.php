@@ -11,7 +11,7 @@ class PositionController extends Controller
 {
     public function index()
     {
-        $positions = Position::all(['id', 'name', 'company_id', 'hierarchy_level']);
+        $positions = Position::orderBy('name')->get();
         return response()->json($positions);
     }
 
@@ -30,7 +30,7 @@ class PositionController extends Controller
         if ($positionInCompany) {
             return response()->json([
                 'message' => 'The company already has a position with the same name'
-            ], 450);
+            ], 480);
         }
 
         $position = Position::create([

@@ -160,6 +160,7 @@ body{
 }
 .input__data__entry {
     @apply mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500;
+
 }
 
 @media (min-width: 640px) {
@@ -192,4 +193,14 @@ button{
     @apply text-5xl font-extrabold justify-end content-end;
     @apply ml-auto mr-4;
 
+}
+
+.checkbox__text {
+    @apply mt-5;
+    @apply text-sm;
+    @apply grid-flow-col-dense
+
+}
+.checkbox__input {
+    @apply rounded mr-3;
 }
