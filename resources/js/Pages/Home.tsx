@@ -101,7 +101,6 @@ const Home: React.FC = () => {
                             </div>
                         </dialog>
                     </div>
-                    <h1 className="logo">SGI</h1>
                 </nav>
 
 
