@@ -62,16 +62,17 @@ export default function CreateEmployee() {
         setValue('position_id', '');
     }, [watchCompany, positions]);
 
-    const handlePermissionChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const permissionId = Number(e.target.value);
-        const selectedPermissions = getValues('selected_permissions') || [];
+    const handlePermissionChange = (permissionId: number) => {
+        const currentPermissions = getValues('selected_permissions') as number[]; // Asegúrate de que sea un array de números
 
-        if (e.target.checked) {
-            setValue('selected_permissions', [...selectedPermissions, permissionId]);
+        if (currentPermissions.includes(permissionId)) {
+            setValue('selected_permissions', currentPermissions.filter(id => id !== permissionId));
         } else {
-            setValue('selected_permissions', selectedPermissions.filter((id: number) => id !== permissionId));
+            setValue('selected_permissions', [...currentPermissions, permissionId]);
         }
     };
+
+
 
     const onSubmit = (data: any) => {
         if (step < totalSteps) {
@@ -377,8 +378,6 @@ export default function CreateEmployee() {
                                     className="ml-2 checkbox checkbox-primary"
                                     checked={field.value} // Controla el estado del checkbox
                                     onChange={(e) => field.onChange(e.target.checked)} // Actualiza el valor como booleano
-                                    // Aquí se eliminan las propiedades problemáticas de {...field}
-                                    // Puedes añadir el resto de las propiedades que necesites
                                     name={field.name}
                                     ref={field.ref}
                                     onBlur={field.onBlur}
@@ -389,24 +388,25 @@ export default function CreateEmployee() {
 
 
 
-                        {watchEnablePermissions && (
-                            <div className="mt-6">
-                                <label className="mb-3 text-xl text-center font-black block">Permisos</label>
-                                <div className="grid grid-cols-2 gap-4">
-                                    {permissions.map(permission => (
-                                        <label key={permission.id} className="flex items-center my-2">
-                                            <input
-                                                type="checkbox"
-                                                checked={getValues('selected_permissions').includes(permission.id)}
-                                                onChange={handlePermissionChange}
-                                                className="checkbox checkbox-primary mr-2"
-                                            />
-                                            <span>{permission.permission_description}</span>
-                                        </label>
-                                    ))}
+                    {watchEnablePermissions && (
+                                <div className="mt-6">
+                                    <label className="mb-3 text-xl text-center font-black block">Permisos</label>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        {permissions.map(permission => (
+                                            <label key={permission.id} className="flex items-center my-2">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={getValues('selected_permissions').includes(permission.id)}
+                                                    onChange={() => handlePermissionChange(permission.id)} // Cambia aquí
+                                                    className="checkbox checkbox-primary mr-2"
+                                                />
+                                                <span>{permission.permission_description}</span>
+                                            </label>
+                                        ))}
+                                    </div>
                                 </div>
-                            </div>
-                        )}
+                            )}
+
 
                         <div className="mt-4 flex justify-center">
                             <button type="button" className="btn size-2/4 mr-1" onClick={() => setStep(step - 1)}>

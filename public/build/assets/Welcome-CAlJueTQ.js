@@ -1,0 +1,1 @@
+import{j as e}from"./app-8uSU3nsv.js";const s=()=>e.jsxs("div",{style:{textAlign:"center",marginTop:"50px"},children:[e.jsx("h1",{children:"Bienvenido Alex"}),e.jsx("h2",{children:"¿Qué deseas hacer hoy?"})]});export{s as default};
