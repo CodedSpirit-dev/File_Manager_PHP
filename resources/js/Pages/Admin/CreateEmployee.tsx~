@@ -283,6 +283,7 @@ export default function CreateEmployee() {
                                     />
                                 )}
                             />
+                            {errors.password_confirmation && <p className="text-red-600">{errors.password_confirmation.message}</p>}
                         </div>
 
                         {/* Feedback en tiempo real sobre coincidencia de contraseñas */}
