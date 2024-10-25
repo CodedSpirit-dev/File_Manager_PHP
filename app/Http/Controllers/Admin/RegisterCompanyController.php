@@ -4,8 +4,9 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use App\Models\Company; // Modelo Company
 use Illuminate\Support\Facades\Validator; // Para validación de datos
+use App\Models\Company; // Modelo Company
+
 
 class RegisterCompanyController extends Controller
 {
@@ -33,11 +34,20 @@ class RegisterCompanyController extends Controller
             'name' => 'required|string|max:255|unique:companies,name',
         ]);
 
-        // Si la validación falla, devolver con errores
+        // Si el nombre ya existe, devolver un error
+        if (Company::where('name', $request->name)->exists()) {
+            return response()->json([
+                'errors' => [
+                    'name' => ['El nombre de la empresa ya existe.'],
+                ],
+            ], 450); // Devuelve un estado 422 en caso de error de validación
+        }
+
+        // Si otros campos no cumplen con las reglas de validación, devolver un error
         if ($validator->fails()) {
             return response()->json([
                 'errors' => $validator->errors(),
-            ], 422); // Devuelve un estado 422 en caso de error de validación
+            ], 425); // Devuelve un estado 422 en caso de error de validación
         }
 
         // Crear una nueva empresa con los datos validados

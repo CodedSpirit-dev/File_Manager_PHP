@@ -55,7 +55,7 @@ Route::post('/directorio', [DirectorioController::class, 'store'])->name('direct
 Route::get('/api/employeelist', [EmployeeListController::class, 'index'])->name('api.employeelist');
 
 // Ruta para registrar una nueva empresa
-Route::post('/admin/companies/store', [RegisterCompanyController::class, 'store'])->name('admin.companies.store');
+Route::post('/api/companies/store', [RegisterCompanyController::class, 'store'])->name('api.companies.store');
 
 use App\Http\Controllers\CompanyController;
 Route::get('/api/companies', [CompanyController::class, 'index'])->name('api.companies.index');

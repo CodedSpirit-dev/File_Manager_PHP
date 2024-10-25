@@ -32,7 +32,7 @@ const EmployeeList: React.FC = (): React.ReactNode => {
 
 
     if (loading) {
-        return <span className="flex my-auto mx-auto bg-blue-400 loading loading-dots loading-lg w-2/4 h-screen"></span>
+        return <span className="flex my-auto mx-auto bg-primary loading loading-dots loading-lg w-2/4 h-screen"></span>
     }
 
     if (error) {
@@ -41,7 +41,7 @@ const EmployeeList: React.FC = (): React.ReactNode => {
     }
 
     return (
-        <div className='container__75'>
+        <div className='container__75__table'>
             <h2 className="text-xl font-bold mb-4">Lista de Empleados</h2>
             <table className="employee__table">
                 <thead>

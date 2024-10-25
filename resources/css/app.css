@@ -9,18 +9,20 @@ body{
 }
 
 .container__25 {
-    @apply flex flex-col items-center pt-6 sm:justify-center sm:pt-0 w-full overflow-hidden  px-6 py-4 shadow-md sm:max-w-lg sm:rounded-lg;
-    @apply mx-auto mt-28; /* Alineación y margen superior */
-    vertical-align: middle;
-    @apply grid place-items-center;
+    @apply items-center pt-6 px-6 py-4 shadow-md;
+    @apply mx-auto mt-28;
     @apply bg-white;
-
-    /* Agregar tamaños responsivos */
-    @apply md:max-w-xl; /* Para dispositivos medianos */
-    @apply lg:max-w-2xl; /* Para dispositivos grandes */
-    @apply xl:max-w-3xl; /* Para dispositivos extra grandes */
+    @apply sm:max-w-sm mt-1.5;
+    @apply md:max-w-xl  mt-1.5;
+    @apply lg:max-w-2xl  mt-1.5;
+    @apply xl:max-w-3xl  mt-1.5;
 }
 
+.container__25__table {
+    @apply items-center pt-6 px-6 py-4 shadow-md;
+    @apply mx-auto mt-28;
+    @apply bg-white;
+}
 
 .container__75{
     @apply flex;
@@ -40,47 +42,138 @@ body{
     @apply bg-white;
 }
 
-.nav__bar{
+.container__75__table {
+    @apply flex;
+    @apply items-center;
+    @apply w-screen;
+    @apply flex-col;
+    @apply place-items-center;
+    @apply mt-6;
+    @apply w-11/12;
+    @apply overflow-hidden;
+    @apply bg-white;
+    @apply px-6;
+    @apply py-4;
+    @apply shadow-md;
+    @apply mx-auto;
+    @apply rounded-lg;
+    @apply bg-white;
+}
+
+@media screen and (min-width: 320px) {
+    .container__75__table {
+        @apply w-auto;
+    }
+    table{
+        @apply w-full;
+    }
+
+    th{
+        @apply text-xs;
+    }
+    tr{
+        @apply text-xs;
+        @apply text-ellipsis;
+        @apply text-wrap;
+    }
+}
+
+.table-responsive {
+    @apply w-full;
+    @apply overflow-x-auto;
+}
+
+.table {
+    @apply min-w-full;
+    @apply divide-y;
+    @apply divide-gray-200;
+}
+
+.table th {
+    @apply text-xs;
+    @apply font-medium;
+    @apply text-gray-500;
+    @apply uppercase;
+    @apply tracking-wider;
+}
+
+.table td {
+    @apply text-sm;
+    @apply text-gray-900;
+    @apply whitespace-nowrap;
+    @apply overflow-hidden;
+    @apply overflow-ellipsis;
+}
+
+@media (max-width: 640px) {
+    .table th {
+        @apply text-xs;
+    }
+
+    .table td {
+        @apply text-xs;
+    }
+}
+
+@media (min-width: 480px) {
+    .table th {
+        @apply text-sm;
+    }
+
+    .table td {
+        @apply text-sm;
+    }
+}
+
+.nav__bar {
     @apply navbar;
     @apply shadow-md;
     @apply bg-white;
+    @apply flex;
+    @apply items-center;
+    @apply justify-between;
+    @apply px-4;
+    @apply py-2;
 }
-.nav__bar__button{
+
+.nav__bar__button {
     @apply btn;
     @apply btn-ghost;
+    @apply text-sm;
+    @apply truncate;
 }
 
-.input__label {
-    @apply font-semibold;
-    @apply input input-bordered; /* Combinar clases de Tailwind */
-    @apply flex items-center; /* Flexbox para alinear elementos */
-    @apply bg-transparent; /* Fondo transparente */
-    @apply w-full; /* Ancho completo */
-    @apply mb-2; /* Margen inferior para separación de inputs */
+.nav__bar__logo {
+    @apply text-xl;
+    @apply font-bold;
+    @apply truncate;
 }
 
+@media (max-width: 640px) {
+    .nav__bar__button {
+        @apply text-xs;
+    }
+
+    .nav__bar__logo {
+        @apply text-lg;
+    }
+}
 .input__data__entry {
-    @apply font-medium; /* Fuente media */
-    @apply border-none; /* Sin borde */
-    @apply bg-transparent; /* Fondo transparente */
-    @apply w-full; /* Ancho completo */
-    @apply p-2; /* Espaciado interno para los inputs */
-    @apply placeholder:text-gray-400; /* Color del texto de los placeholders */
+    @apply mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500;
 }
 
-/* Estilos responsivos */
-@media (min-width: 640px) { /* sm */
+@media (min-width: 640px) {
     .input__label {
-        @apply mb-4; /* Margen inferior mayor en pantallas más grandes */
+        @apply mb-4;
     }
     .input__data__entry {
-        @apply text-lg; /* Aumentar el tamaño del texto en pantallas más grandes */
+        @apply text-lg;
     }
 }
 
-@media (min-width: 768px) { /* md */
+@media (min-width: 768px) {
     .input__data__entry {
-        @apply text-xl; /* Aumentar aún más el tamaño del texto */
+        @apply text-xl;
     }
 }
 

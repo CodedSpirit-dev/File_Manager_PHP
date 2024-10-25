@@ -64,7 +64,7 @@ const Home: React.FC = () => {
                         </div>
                         <ul
                             tabIndex={0}
-                            className="menu dropdown-content rounded-box z-[10] mt-4 w-52 p-2 shadow bg-white">
+                            className="menu dropdown-content rounded-box z-[1] mt-4 w-52 p-2 shadow bg-white">
                             <li><Button className="hover:text-black"
                                         onClick={() => renderComponent('Component1')}>Perfil</Button></li>
                             <li><Button className="hover:text-black" onClick={() => renderComponent('Component5')}>Registrar

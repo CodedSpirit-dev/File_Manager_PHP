@@ -35,15 +35,9 @@ export default function CreateEmployee({}: CreateEmployeeProps) {
 
     const [positions, setPositions] = useState<Position[]>([]);
     const [permissions, setPermissions] = useState<Permission[]>([]); // Estado para almacenar los permisos
-    const [errors, setErrors] = useState({
-        first_name: '',
-        last_name_1: '',
-        last_name_2: '',
-        username: '',
-        position_id: '',
-        password: '',
-        password_confirmation: ''
-    });
+
+    const [modalSuccess, setModalSuccess] = useState(false);
+    const [modalError, setModalError] = useState(false);
 
     const [step, setStep] = useState(1);
     const totalSteps = 2;
@@ -113,14 +107,16 @@ export default function CreateEmployee({}: CreateEmployeeProps) {
                             permissions: data.selected_permissions // Enviar el array de permisos seleccionados
                         })
                             .then(() => {
-                                console.log('Permisos asignados correctamente');
+                                setModalSuccess(true); // Mostrar modal de éxito
                                 reset(); // Reiniciar el formulario
                                 setStep(1); // Volver al primer paso
                             })
                             .catch(error => {
                                 console.error('Error al asignar los permisos', error);
+                                setModalError(true); // Mostrar modal de error
                             });
                     } else {
+                        setModalSuccess(true); // Mostrar modal de éxito
                         reset(); // Reiniciar el formulario
                         setStep(1); // Volver al primer paso
                     }
@@ -128,19 +124,17 @@ export default function CreateEmployee({}: CreateEmployeeProps) {
                 .catch(error => {
                     console.error('Error al guardar el empleado', error);
                     if (error.response?.data?.errors) {
-                        setErrors(error.response.data.errors);
+                        setModalError(true);
                     }
                 });
         }
     };
 
-
-
     return (
         <div className="container__25">
             <Head title="Registro de nuevos empleados" />
-            <form onSubmit={handleSubmit}>
-                <h1 className="text-2xl text-start font-bold my-4">Registro de nuevos empleados</h1>
+            <form className={'h-auto'} onSubmit={handleSubmit}>
+                <h1 className="text-2xl text-center font-bold my-4">Registro de nuevos empleados</h1>
                 {/* Lista de pasos */}
                 <ul className="steps w-full">
                     <li className={`step ${step >= 1 ? 'step-primary' : ''}`}>Registrar nuevo empleado</li>
@@ -154,7 +148,7 @@ export default function CreateEmployee({}: CreateEmployeeProps) {
                                 id="first_name"
                                 name="first_name"
                                 value={data.first_name}
-                                className="w-full"
+                                className="input__data__entry"
                                 placeholder="Nombre(s)"
                                 onChange={handleChange}
                                 required
@@ -166,7 +160,7 @@ export default function CreateEmployee({}: CreateEmployeeProps) {
                                 id="last_name_1"
                                 name="last_name_1"
                                 value={data.last_name_1}
-                                className="w-full"
+                                className="input__data__entry "
                                 placeholder="Primer apellido"
                                 onChange={handleChange}
                                 required
@@ -178,7 +172,7 @@ export default function CreateEmployee({}: CreateEmployeeProps) {
                                 id="last_name_2"
                                 name="last_name_2"
                                 value={data.last_name_2}
-                                className="w-full"
+                                className="input__data__entry"
                                 placeholder="Segundo apellido"
                                 onChange={handleChange}
                                 required
@@ -190,7 +184,7 @@ export default function CreateEmployee({}: CreateEmployeeProps) {
                                 id="username"
                                 name="username"
                                 value={data.username}
-                                className="w-full"
+                                className="input__data__entry"
                                 placeholder="Nombre de usuario (CURP)"
                                 maxLength={18}
                                 onChange={handleChange}
@@ -203,13 +197,13 @@ export default function CreateEmployee({}: CreateEmployeeProps) {
                                 id="position_id"
                                 name="position_id"
                                 value={data.position_id}
-                                className="w-full"
+                                className="input__data__entry"
                                 onChange={handleChange}
                                 required
                             >
-                                <option value="">Seleccione un puesto</option>
+                                <option className={'input__data__entry'} value="">Seleccione un puesto</option>
                                 {positions.map((position: Position) => (
-                                    <option key={position.id} value={position.id}>
+                                    <option className={'input__data__entry'} key={position.id} value={position.id}>
                                         {position.name}
                                     </option>
                                 ))}
@@ -222,7 +216,7 @@ export default function CreateEmployee({}: CreateEmployeeProps) {
                                 type="password"
                                 name="password"
                                 value={data.password}
-                                className="w-full"
+                                className="input__data__entry"
                                 placeholder="Contraseña"
                                 onChange={handleChange}
                                 required
@@ -235,7 +229,7 @@ export default function CreateEmployee({}: CreateEmployeeProps) {
                                 type="password"
                                 name="password_confirmation"
                                 value={data.password_confirmation}
-                                className="w-full"
+                                className="input__data__entry"
                                 placeholder="Confirmar contraseña"
                                 onChange={handleChange}
                                 required
@@ -269,17 +263,17 @@ export default function CreateEmployee({}: CreateEmployeeProps) {
                         </div>
 
                         {data.enable_permissions && (
-                            <div className="mt-4">
-                                <h3>Seleccione los permisos:</h3>
+                            <div className="mt-4 grid grid-cols-2 gap-4">
                                 {permissions.map((permission: Permission) => (
-                                    <div key={permission.id} className="mt-2">
-                                        <label>
+                                    <div key={permission.id}>
+                                        <label htmlFor={`permission_${permission.id}`} className="input__label ">
                                             <input
+                                                id={`permission_${permission.id}`}
                                                 type="checkbox"
                                                 value={permission.id}
                                                 checked={data.selected_permissions.includes(permission.id)}
                                                 onChange={handlePermissionChange}
-                                                className="checkbox checkbox-primary"
+                                                className="checkbox checkbox-primary mr-5"
                                             />
                                             {permission.permission_description}
                                         </label>
@@ -288,17 +282,45 @@ export default function CreateEmployee({}: CreateEmployeeProps) {
                             </div>
                         )}
 
-                        <div className="mt-4 flex items-center justify-between">
-                            <button className="btn btn-info" onClick={handlePrev} disabled={processing}>
-                                Volver
+                        <div className="mt-4 flex justify-between">
+                        <button className="btn btn-block" onClick={handlePrev}>
+                                Anterior
                             </button>
-                            <button className="btn btn-success" type="submit" disabled={processing}>
-                                Guardar empleado
+                        </div>
+
+                        <div className="mt-4 flex justify-between">
+                            <button className="btn btn-block " onClick={handleSubmit} disabled={processing}>
+                                Guardar
                             </button>
                         </div>
                     </>
                 )}
             </form>
+
+            {/* Modal de éxito */}
+            {modalSuccess && (
+                <div className="modal modal-open">
+                    <div className="modal-box">
+                        <h3 className="font-bold text-lg">¡Empleado registrado con éxito!</h3>
+                        <div className="modal-action">
+                            <button className="btn btn-primary" onClick={() => setModalSuccess(false)}>Cerrar</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Modal de error */}
+            {modalError && (
+                <div className="modal modal-open">
+                    <div className="modal-box">
+                        <h3 className="font-bold text-lg">Error al registrar el empleado</h3>
+                        <p>Por favor, verifica los campos e inténtalo nuevamente.</p>
+                        <div className="modal-action">
+                            <button className="btn btn-primary" onClick={() => setModalError(false)}>Cerrar</button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
