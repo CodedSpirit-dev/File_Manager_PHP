@@ -85,52 +85,6 @@ body {
     @apply overflow-ellipsis;
 }
 
-@media (max-width: 640px) {
-    .table th {
-        @apply text-xs;
-    }
-
-    .table td {
-        @apply text-xs;
-    }
-
-    .nav__bar__button {
-        @apply text-xs;
-    }
-
-    .nav__bar__logo {
-        @apply text-lg;
-    }
-}
-
-
-
-@media (min-width: 480px) {
-    .table th {
-        @apply text-sm;
-    }
-
-    .table td {
-        @apply text-sm;
-    }
-}
-
-@media (min-width: 640px) {
-    .input__label {
-        @apply mb-4;
-    }
-
-    .input__data__entry {
-        @apply text-lg;
-    }
-}
-
-@media (min-width: 768px) {
-    .input__data__entry {
-        @apply text-xl;
-    }
-}
-
 .nav__bar {
     @apply navbar;
     @apply max-w-screen-xl;
@@ -166,24 +120,62 @@ button {
 
 .employee__table {
     @apply table;
+    @apply min-w-full; /* Asegura que la tabla tome el ancho mínimo completo */
 }
 
 .logo {
     @apply text-5xl font-extrabold justify-end content-end;
     @apply ml-auto mr-4;
 }
-@media (min-width: 320px) {
-    .nav__bar{
-        @apply flex-auto;
-        @apply text-center;
-        @apply justify-center;
 
-    }
+.overFlow {
+    @apply overflow-x-auto; /* Habilita el desplazamiento horizontal */
+    @apply w-full; /* Asegura que el contenedor tome el ancho completo */
+    @apply max-w-full; /* Limita el ancho del contenedor a su contenedor padre */
+}
 
-    .nav__bar__button{
+/* Estilo para la celda de la columna Nombre */
+td.name-cell {
+    @apply break-words; /* Permite que las palabras largas se rompan */
+    @apply max-w-xs; /* Limita el ancho máximo de la celda */
+    word-wrap: break-word;
+}
+
+.name-cell {
+    @apply break-words; /* Permite que las palabras largas se rompan */
+    @apply max-w-xs; /* Limita el ancho máximo de la celda */
+    word-wrap: break-word;
+}
+
+/* Media Queries */
+@media (max-width: 640px) {
+    .table th {
         @apply text-xs;
     }
 
+    .table td {
+        @apply text-xs;
+    }
+
+    .nav__bar__button {
+        @apply text-lg;
+    }
+
+    .nav__bar__logo {
+        @apply text-lg;
+    }
+}
+
+@media (min-width: 320px) {
+    .nav__bar {
+        @apply flex-auto;
+        @apply text-center;
+        @apply justify-center;
+    }
+
+    .nav__bar__button {
+        @apply text-xs;
+    }
 
     .container__75__table {
         @apply w-auto;
@@ -198,7 +190,7 @@ button {
             @apply justify-center;
         }
 
-        tbody{
+        tbody {
             @apply max-w-full;
         }
 
@@ -206,37 +198,45 @@ button {
             @apply text-xs;
             @apply text-ellipsis;
             @apply text-wrap;
-
         }
     }
-
-
-
-
 }
 
+@media (min-width: 480px) {
+    .table th {
+        @apply text-sm;
+    }
 
-.overFlow {
-    @apply overflow-x-auto; /* Habilita el desplazamiento horizontal */
-    @apply w-full; /* Asegura que el contenedor tome el ancho completo */
-    @apply max-w-full; /* Limita el ancho del contenedor a su contenedor padre */
+    .table td {
+        @apply text-sm;
+    }
 }
 
-.employee__table {
-    @apply min-w-full; /* Asegura que la tabla tome el ancho mínimo completo */
+@media (min-width: 640px) {
+    .input__label {
+        @apply mb-4;
+    }
+
+    .input__data__entry {
+        @apply text-lg;
+    }
 }
 
+@media (min-width: 641px) {
+    .nav__bar {
+        @apply flex-auto;
+        @apply text-center;
+        @apply justify-center;
+        @apply text-lg;
+    }
 
-/* Estilo para la celda de la columna Nombre */
-td.name-cell {
-    @apply break-words; /* Permite que las palabras largas se rompan */
-    @apply max-w-xs; /* Limita el ancho máximo de la celda */
-    word-wrap: break-word
+    .nav__bar__button {
+        @apply text-base;
+    }
 }
 
-
-.name-cell {
-    @apply break-words; /* Permite que las palabras largas se rompan */
-    @apply max-w-xs; /* Limita el ancho máximo de la celda */
-    word-wrap: break-word
+@media (min-width: 768px) {
+    .input__data__entry {
+        @apply text-xl;
+    }
 }

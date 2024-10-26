@@ -14,7 +14,7 @@ const EmployeeList: React.FC = (): React.ReactNode => {
         setLoading(true);
 
         Promise.all([
-            axios.get('api/employeelist'),
+            axios.get('admin/employees'),
             axios.get('api/positions'),
             axios.get('api/companies'),
         ])

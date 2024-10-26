@@ -42,6 +42,10 @@ const Home: React.FC = () => {
         }
     };
 
+    const defaultComponent = () => {
+        return <Home/>;
+    }
+
     const closeSession = () => {
         axios.post('/logout').finally(() => {
                 window.location.href = '/login';
@@ -104,7 +108,9 @@ const Home: React.FC = () => {
                 </nav>
 
 
-                <div className="mt-4">{component}</div>
+                <div className="mt-4">
+                {component ? component : <Profile mustVerifyEmail={false} status="" auth={auth} />}
+                </div>
             </section>
         </>
     );

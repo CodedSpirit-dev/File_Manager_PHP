@@ -23,7 +23,7 @@ class Employee extends Authenticatable
         'username',
         'password',
         'registered_at',
-        'last_login_at'
+        'last_login_at' // Añadir este campo
     ];
 
     protected $casts = [

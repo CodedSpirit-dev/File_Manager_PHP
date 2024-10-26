@@ -32,10 +32,10 @@ Route::get('/test', function () {
 
 // Rutas para el perfil del usuario (requiere autenticación)
 Route::middleware('auth')->group(function () {
-    Route::get('/profile', [EmployeeController::class, 'show'])->name('profile.show');
-    Route::get('/profile/edit', [EmployeeController::class, 'edit'])->name('profile.edit');
-    Route::patch('/profile', [EmployeeController::class, 'update'])->name('profile.update');
-    Route::delete('/profile', [EmployeeController::class, 'destroy'])->name('profile.destroy');
+    Route::get('/profile', [ProfileController::class, 'show'])->name('profile.show');
+    Route::get('/profile/edit', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
 // Rutas para el directorio
