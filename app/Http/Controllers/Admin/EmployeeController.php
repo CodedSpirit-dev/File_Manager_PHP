@@ -29,6 +29,7 @@ class EmployeeController extends Controller
             'first_name' => $employee->first_name,
             'last_name_1' => $employee->last_name_1,
             'last_name_2' => $employee->last_name_2,
+            'username' => $employee->username,
             'position' => $employee->position ? $employee->position->name : 'Unassigned',
             'company' => $employee->position && $employee->position->company ? $employee->position->company->name : 'Unassigned',
             'registered_at' => $employee->registered_at->format('Y-m-d H:i:s'),

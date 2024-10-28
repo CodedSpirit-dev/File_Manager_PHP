@@ -10,6 +10,7 @@ import axios from 'axios';
 interface Profile{
     first_name: string;
     last_name_1: string;
+    username: string;
     position: string;
     company: string;
     registered_at: string;
@@ -41,9 +42,10 @@ export default function Profile({
                         {profile ? (
                             <div className="mt-4 text-gray-700">
                                 <p><strong>Nombre:</strong> {profile.first_name} {profile.last_name_1}</p>
+                                <p><strong>Nombre de Usuario:</strong> {profile.username}</p>
                                 <p><strong>Puesto:</strong> {profile.position}</p>
                                 <p><strong>Compañía:</strong> {profile.company}</p>
-                                <p><strong>Fecha de Ingreso:</strong> {new Date(profile.registered_at).toLocaleDateString()}</p>
+                                <p><strong>Fecha de Registro:</strong> {new Date(profile.registered_at).toLocaleDateString()}</p>
                                 <p><strong>Último Ingreso:</strong> {new Date(profile.last_login_at).toLocaleDateString()}</p>
                             </div>
                         ) : (

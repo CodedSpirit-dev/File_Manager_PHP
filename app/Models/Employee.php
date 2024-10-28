@@ -28,7 +28,7 @@ class Employee extends Authenticatable
 
     protected $casts = [
         'registered_at' => 'datetime',
-        'last_login_at' => 'datetime', // Para que se maneje como fecha
+        'last_login_at' => 'datetime',
         'password' => 'hashed',
     ];
 
@@ -62,10 +62,8 @@ class Employee extends Authenticatable
 
    public function create()
    {
-       // Obtener todas las empresas, posiciones y niveles jerárquicos
-       $positions = Position::all(['id', 'name']); // Obtener solo los campos id y name de los puestos
+       $positions = Position::all(['id', 'name']);
 
-       // Pasar los datos de las empresas, posiciones y jerarquías a la vista
        return inertia('CreateEmployee', [
            'positions' => $positions
        ]);

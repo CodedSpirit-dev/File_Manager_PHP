@@ -16,14 +16,13 @@ class EmployeeController extends Controller
     {
         // Get the authenticated employee
         $employee = auth()->user();
-        $currentuserid = Auth::user()->id;
 
         if (!$employee) {
             return response()->json(['error' => 'Not authenticated'], 401);
         }
 
         // Load specific relationships and attributes
-        //$employee->load('position', 'position.company'); // Load position and associated company
+        $employee->load('position', 'position.company'); // Load position and associated company
 
         // Format the employee's profile data
         $profileData = [
@@ -37,7 +36,7 @@ class EmployeeController extends Controller
         ];
 
         // Return the profile data as JSON
-        return response()->json($currentuserid);
+        return response()->json($profileData);
     }
 
     /**

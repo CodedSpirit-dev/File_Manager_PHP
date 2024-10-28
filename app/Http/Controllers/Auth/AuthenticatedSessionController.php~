@@ -36,7 +36,7 @@ class AuthenticatedSessionController extends Controller
 
         $request->user()->update([
             'last_login_at' => Carbon::now()->toDateTimeString()
-        ]);
+        ]
 
         return redirect()->intended(route('home', absolute: false));
     }
