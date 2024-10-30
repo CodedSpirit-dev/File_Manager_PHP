@@ -13,27 +13,28 @@ export default function CreateCompany() {
 
     const [successMessage, setSuccessMessage] = useState('');
     const [errorMessage, setErrorMessage] = useState('');
+    const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
+    const [isErrorModalOpen, setIsErrorModalOpen] = useState(false);
+
 
     const onSubmit = (data: { name: string }) => {
-        axios.post(route('api.companies.store'), data)
+        axios.post(route('admin.companies.store'), data)
             .then(() => {
                 setSuccessMessage('La empresa ha sido registrada exitosamente.');
-                setErrorMessage(''); // Limpiar el mensaje de error si es exitoso
-                openSuccessModal();
+                setErrorMessage('');
+                setIsSuccessModalOpen(true); // Mostrar modal de éxito
                 reset();
             })
             .catch(error => {
-                // Si el error es de nombre duplicado
                 if (error.response?.status === 450) {
                     setErrorMessage('El nombre de la empresa ya está en uso.');
                 } else {
                     setErrorMessage('Hubo un error al registrar la empresa.');
                 }
-
-                openErrorModal();
-            }
-        );
+                setIsErrorModalOpen(true); // Mostrar modal de error
+            });
     };
+
 
     const closeModal = () => {
         const successModal = document.getElementById('modal_company_success') as HTMLDialogElement | null;
@@ -93,30 +94,44 @@ export default function CreateCompany() {
                     >
                         Registrar empresa
                     </button>
+
+                    {/* Modal de éxito */}
+                    <dialog id="modal_company_success" className="modal">
+                        <div className="modal-box">
+                            <h3 className="font-bold text-lg text-center">Registro de empresa</h3>
+                            <h3 className="text-center">{successMessage}</h3>
+                            <div className="modal-action justify-center">
+                                <button type="button" className="btn btn-info" onClick={closeModal}>Aceptar</button>
+                            </div>
+                        </div>
+                    </dialog>
                 </div>
             </form>
 
             {/* Modal de éxito */}
-            <dialog id="modal_company_success" className="modal">
-                <div className="modal-box">
-                    <h3 className="font-bold text-lg text-center">Registro de empresa</h3>
-                    <h3 className="text-center">{successMessage}</h3>
-                    <div className="modal-action justify-center">
-                        <button className="btn btn-info" onClick={closeModal}>Aceptar</button>
+            {isSuccessModalOpen && (
+                <div className="modal modal-open">
+                    <div className="modal-box">
+                        <h3 className="font-bold text-lg text-center">Registro de empresa</h3>
+                        <h3 className="text-center">{successMessage}</h3>
+                        <div className="modal-action justify-center">
+                            <button type="button" className="btn btn-info" onClick={closeModal}>Aceptar</button>
+                        </div>
                     </div>
                 </div>
-            </dialog>
-
+            )}
             {/* Modal de error */}
-            <dialog id="modal_company_error" className="modal">
-                <div className="modal-box">
-                    <h1 className="font-bold text-lg text-center">Error al registrar empresa</h1>
-                    <h2 className="text-center text-red-600">{errorMessage}</h2>
-                    <div className="modal-action justify-center">
-                        <button className="btn btn-info" onClick={closeModal}>Cerrar</button>
+            {isErrorModalOpen && (
+                <div className="modal modal-open">
+                    <div className="modal-box">
+                        <h1 className="font-bold text-lg text-center">Error al registrar empresa</h1>
+                        <h2 className="text-center text-red-600">{errorMessage}</h2>
+                        <div className="modal-action justify-center">
+                            <button className="btn btn-info" onClick={closeModal}>Cerrar</button>
+                        </div>
                     </div>
                 </div>
-            </dialog>
+            )}
         </div>
     );
 }
