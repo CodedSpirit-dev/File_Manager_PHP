@@ -79,3 +79,4 @@ Route::get('/files', [FileManagerController::class, 'index']);
 Route::post('/files/upload', [FileManagerController::class, 'upload']);
 Route::delete('/files/delete/{filename}', [FileManagerController::class, 'delete']);
 Route::post('/files/createfolder', [FileManagerController::class, 'createFolder']);
+Route::middleware('auth:sanctum')->get('/user/hierarchy', [EmployeeController::class, 'getUserHierarchy']);

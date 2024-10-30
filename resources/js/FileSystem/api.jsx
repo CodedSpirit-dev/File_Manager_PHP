@@ -37,3 +37,8 @@ export const createFolder = async (folderName, path = 'public') => {
 
     return response.data;
 };
+
+export const getUserHierarchy = async () => {
+    const response = await axios.get('/user/hierarchy');
+    return response.data;
+};

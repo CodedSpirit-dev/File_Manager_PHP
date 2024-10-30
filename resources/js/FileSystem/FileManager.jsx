@@ -1,17 +1,40 @@
 import React, { useState, useEffect } from 'react';
-import { getFiles, uploadFile, deleteFile, createFolder } from './api';
+import { getFiles, uploadFile, deleteFile, createFolder, getUserHierarchy } from './api';
 import { FcFolder, FcDocument, FcUpload, FcAddDatabase } from 'react-icons/fc';
 
 const FileManager = () => {
     const [files, setFiles] = useState([]);
     const [directories, setDirectories] = useState([]);
-    const [currentPath, setCurrentPath] = useState('public');
+    const [currentPath, setCurrentPath] = useState('');
     const [selectedFile, setSelectedFile] = useState(null);
     const [folderName, setFolderName] = useState('');
     const [message, setMessage] = useState('');
+    const [userHierarchy, setUserHierarchy] = useState(null); // Nivel de jerarquía
+    const [userCompany, setUserCompany] = useState(''); // Nombre de la compañía del usuario
 
+    // Cargar jerarquía y establecer carpeta inicial de la compañía
     useEffect(() => {
-        fetchFiles(currentPath);
+        const initializePath = async () => {
+            const userData = await getUserHierarchy();
+            setUserHierarchy(userData.hierarchy_level);
+            setUserCompany(userData.company_name);
+
+            // Redirigir a la carpeta de la compañía si no es administrador
+            if (userData.hierarchy_level > 0) {
+                setCurrentPath(`public/${userData.company_name}`);
+            } else {
+                setCurrentPath('public');
+            }
+        };
+
+        initializePath();
+    }, []);
+
+    // Cargar archivos y carpetas en la ruta actual
+    useEffect(() => {
+        if (currentPath) {
+            fetchFiles(currentPath);
+        }
     }, [currentPath]);
 
     const fetchFiles = async (path) => {
@@ -26,7 +49,7 @@ const FileManager = () => {
 
     const handleUpload = async () => {
         if (selectedFile) {
-            const response = await uploadFile(selectedFile);
+            const response = await uploadFile(selectedFile, currentPath);
             setMessage(response.message);
             setSelectedFile(null);
             fetchFiles(currentPath);
@@ -54,7 +77,7 @@ const FileManager = () => {
 
     const goBack = () => {
         const parentPath = currentPath.substring(0, currentPath.lastIndexOf('/'));
-        setCurrentPath(parentPath || 'public');
+        setCurrentPath(parentPath || `public/${userCompany}`);
     };
 
     return (
@@ -62,23 +85,23 @@ const FileManager = () => {
             <div className="card bg-base-200 shadow-xl p-4">
                 <h1 className="text-2xl font-bold mb-4">Gestor de Archivos</h1>
 
-                {/* Crear carpeta */}
-                <div className="form-control mb-4">
-                    <label className="input-group">
-                        <input
-                            type="text"
-                            value={folderName}
-                            onChange={(e) => setFolderName(e.target.value)}
-                            placeholder="Nombre de la nueva carpeta"
-                            className="input input-bordered w-full"
-                        />
-                        <button className="btn btn-primary" onClick={handleCreateFolder}>
-                            <FcAddDatabase className="mr-2" /> Crear Carpeta
-                        </button>
-                    </label>
-                </div>
+                {(userHierarchy === 0 || userHierarchy < 3) && (
+                    <div className="form-control mb-4">
+                        <label className="input-group">
+                            <input
+                                type="text"
+                                value={folderName}
+                                onChange={(e) => setFolderName(e.target.value)}
+                                placeholder="Nombre de la nueva carpeta"
+                                className="input input-bordered w-full"
+                            />
+                            <button className="btn btn-primary" onClick={handleCreateFolder}>
+                                <FcAddDatabase className="mr-2" /> Crear Carpeta
+                            </button>
+                        </label>
+                    </div>
+                )}
 
-                {/* Subir archivo */}
                 <div className="form-control mb-4">
                     <div className="input-group">
                         <input type="file" onChange={handleFileChange} className="input input-bordered w-full" />
@@ -92,12 +115,11 @@ const FileManager = () => {
 
                 <h2 className="text-xl font-semibold mb-4">Lista de Carpetas y Archivos</h2>
                 <div className="mb-4">
-                    <button onClick={goBack} disabled={currentPath === 'public'} className="btn btn-outline mb-4">
+                    <button onClick={goBack} disabled={currentPath === `public/${userCompany}`} className="btn btn-outline mb-4">
                         Volver
                     </button>
                 </div>
 
-                {/* Lista de Carpetas y Archivos */}
                 <div className="flex flex-col space-y-2">
                     {directories.map((directory, index) => (
                         <div

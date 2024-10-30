@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Files;
 
 use App\Http\Controllers\Controller;
+use App\Models\Employee;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
@@ -10,18 +11,33 @@ class FileManagerController extends Controller
 {
     public function index(Request $request)
     {
+        $employee = auth()->user(); // Obtén el empleado autenticado
+        $position = $employee->position; // Posición del empleado autenticado
         $path = $request->input('path', 'public');
 
-        // Obtener carpetas y archivos en la ruta especificada
-        $directories = Storage::disk('local')->directories($path);
-        $files = Storage::disk('local')->files($path);
+        if (!$position) {
+            return response()->json(['error' => 'Position not assigned to employee.'], 403);
+        }
 
+        // Si el empleado es de jerarquía 0 (Administrador), tiene acceso a todas las carpetas
+        if ($position->hierarchy_level === 0) {
+            $directories = Storage::disk('local')->directories($path);
+        } else {
+            // Los empleados solo ven su propia carpeta y las de subordinados de su jerarquía
+            $companyFolder = 'public/' . $employee->position->company->name; // Nombre de la carpeta de la empresa
+            $employeeFolder = $companyFolder . '/' . $position->name; // Carpeta del puesto del empleado
+
+            $directories = Storage::disk('local')->directories($employeeFolder);
+        }
+
+        $files = Storage::disk('local')->files($path);
         return response()->json([
             'directories' => $directories,
             'files' => $files,
             'path' => $path
         ]);
     }
+
 
 
     public function upload(Request $request)
@@ -44,15 +60,14 @@ class FileManagerController extends Controller
 
     public function createFolder(Request $request)
     {
-        $request->validate([
-            'folder_name' => 'required|string',
-            'path' => 'nullable|string' // Ruta opcional
-        ]);
+        $employee = auth()->user(); // Empleado autenticado
+        $request->validate(['folder_name' => 'required|string']);
 
-        // Determinar la ruta de la carpeta
-        $path = $request->input('path', 'public') . '/' . $request->input('folder_name');
+        // Verifica el nivel de jerarquía del empleado
+        $path = ($employee->position->hierarchy_level === 0)
+            ? 'public/' . $request->input('folder_name') // Admin crea en raíz
+            : 'public/' . $employee->position->company->name . '/' . $employee->position->name . '/' . $request->input('folder_name');
 
-        // Crear la carpeta
         if (!Storage::disk('local')->exists($path)) {
             Storage::disk('local')->makeDirectory($path);
             return response()->json(['message' => 'Carpeta creada exitosamente.']);
@@ -60,5 +75,6 @@ class FileManagerController extends Controller
             return response()->json(['message' => 'La carpeta ya existe.'], 400);
         }
     }
+
 
 }

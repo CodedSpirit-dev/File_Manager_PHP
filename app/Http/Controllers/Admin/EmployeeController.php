@@ -93,4 +93,21 @@ class EmployeeController extends Controller
         // Return the ID of the created employee
         return response()->json(['id' => $employee->id]);
     }
+
+    // En tu controlador de usuarios o de autenticación
+    public function getUserHierarchy()
+    {
+        $employee = auth()->user();
+        if (!$employee) {
+            return response()->json(['error' => 'Not authenticated'], 401);
+        }
+
+        $hierarchyLevel = $employee->position->hierarchy_level;
+        $companyName = $employee->position->company->name;
+
+        return response()->json([
+            'hierarchy_level' => $hierarchyLevel,
+            'company_name' => $companyName,
+        ]);
+    }
 }
