@@ -1,0 +1,50 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
+
+class FolderController extends Controller
+{
+    public function getFilesInDirectory($directory)
+    {
+        // Obtiene todos los archivos en el directorio especificado
+        $files = Storage::files($directory);
+
+        return response()->json([
+            'files' => $files,
+        ]);
+    }
+
+    public function getDirectoriesInDirectory($directory)
+    {
+        // Obtiene todos los directorios en el directorio especificado
+        $directories = Storage::directories($directory);
+
+        return response()->json([
+            'directories' => $directories,
+        ]);
+    }
+
+    public function createDirectory(Request $request)
+    {
+        $directory = $request->input('directory');
+
+        // Puedes agregar lógica aquí para definir el directorio base en el que crear nuevas carpetas
+        if (Storage::makeDirectory($directory)) {
+            return response()->json(['message' => 'Directory created successfully.'], 201);
+        }
+
+        return response()->json(['error' => 'Failed to create directory.'], 500);
+    }
+
+    public function deleteDirectory($directory)
+    {
+        if (Storage::deleteDirectory($directory)) {
+            return response()->json(['message' => 'Directory deleted successfully.'], 200);
+        }
+
+        return response()->json(['error' => 'Failed to delete directory.'], 500);
+    }
+}

@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\Files\FileManagerController;
+use App\Http\Controllers\FolderController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\DirectorioController;
 use App\Http\Controllers\Admin\EmployeeController;
@@ -71,3 +73,9 @@ Route::prefix('api')->name('api.')->group(function () {
 
 // Ruta para el perfil del empleado
 Route::get('/admin/employees/profile', [EmployeeController::class, 'profile'])->middleware('auth');
+
+
+Route::get('/files', [FileManagerController::class, 'index']);
+Route::post('/files/upload', [FileManagerController::class, 'upload']);
+Route::delete('/files/delete/{filename}', [FileManagerController::class, 'delete']);
+Route::post('/files/createfolder', [FileManagerController::class, 'createFolder']);

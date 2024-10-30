@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\Files\FileManagerController;
+use App\Http\Controllers\FolderController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\DirectorioController;
 use App\Http\Controllers\Admin\EmployeeController;
@@ -32,10 +34,10 @@ Route::get('/test', function () {
 
 // Rutas para el perfil del usuario (requiere autenticación)
 Route::middleware('auth')->group(function () {
-    Route::get('/profile', [ProfileController::class, 'show'])->name('profile.show');
-    Route::get('/profile/edit', [ProfileController::class, 'edit'])->name('profile.edit');
-    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
-    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+    Route::get('/profile', [EmployeeController::class, 'show'])->name('profile.show');
+    Route::get('/profile/edit', [EmployeeController::class, 'edit'])->name('profile.edit');
+    Route::patch('/profile', [EmployeeController::class, 'update'])->name('profile.update');
+    Route::delete('/profile', [EmployeeController::class, 'destroy'])->name('profile.destroy');
 });
 
 // Rutas para el directorio
@@ -71,3 +73,9 @@ Route::prefix('api')->name('api.')->group(function () {
 
 // Ruta para el perfil del empleado
 Route::get('/admin/employees/profile', [EmployeeController::class, 'profile'])->middleware('auth');
+
+
+Route::get('/files', [FileManagerController::class, 'index']);
+Route::post('/files/upload', [FileManagerController::class, 'upload']);
+Route::delete('/files/delete/{filename}', [FileManagerController::class, 'delete']);
+Route::post('/files/create-folder', [FileManagerController::class, 'createFolder']);

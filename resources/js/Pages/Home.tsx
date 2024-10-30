@@ -12,6 +12,7 @@ import Guest from '@/Layouts/GuestLayout';
 import {Head, usePage} from '@inertiajs/react';
 import CreateCompany from './Admin/CreateCompany';
 import CreatePosition from './Admin/CreatePosition';
+import FileManager from "@/FileSystem/FileManager";
 
 const Home: React.FC = () => {
     const {auth} = usePage().props;
@@ -120,7 +121,7 @@ const Component1: React.FC = () => {
     const {auth} = usePage().props;
     return <div><Profile mustVerifyEmail={false} status="" auth={auth}/></div>;
 };
-const Component2: React.FC = () => <div>Explorador de Archivos</div>;
+const Component2: React.FC = () => <div><FileManager folder={''}/></div>;
 const Component3: React.FC = () => <div><EmployeeList/></div>;
 const Component4: React.FC = () => <div><CreateEmployee/></div>;
 const Component5: React.FC = () => <div><CreateCompany/></div>;
