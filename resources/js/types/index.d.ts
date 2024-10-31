@@ -23,7 +23,7 @@ export interface Employee {
     'username': string;
     'password': string;
     'registered_at': string;
-    'company_id': number;
+    company_id?: number | null;
 }
 
 export type EmployeePageProps <

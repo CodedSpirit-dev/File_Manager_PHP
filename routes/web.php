@@ -67,6 +67,7 @@ Route::prefix('api')->name('api.')->group(function () {
     Route::get('/hierarchylevels', [HierarchyLevelController::class, 'index'])->name('hierarchylevels.index');
     Route::get('/permissions', [PermissionController::class, 'index'])->name('permissions.index');
     Route::post('/userpermissions', [UserPermissionsController::class, 'store'])->name('userpermissions.store');
+    Route::get('/employees/{id}/permissions', [EmployeeController::class, 'getPermissions'])->name('employees.permissions');
 });
 
 // Ruta para el perfil del empleado

@@ -93,6 +93,7 @@ body {
     @apply flex;
     @apply items-center;
     @apply justify-between;
+    @apply mx-auto;
 }
 
 .nav__bar__button {
@@ -171,6 +172,7 @@ td.name-cell {
         @apply flex-auto;
         @apply text-center;
         @apply justify-center;
+        @apply mx-auto;
     }
 
     .nav__bar__button {
@@ -228,6 +230,7 @@ td.name-cell {
         @apply text-center;
         @apply justify-center;
         @apply text-lg;
+        @apply mx-auto;
     }
 
     .nav__bar__button {

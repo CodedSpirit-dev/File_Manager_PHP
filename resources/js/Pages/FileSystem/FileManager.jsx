@@ -93,9 +93,9 @@ const FileManager = () => {
                                 value={folderName}
                                 onChange={(e) => setFolderName(e.target.value)}
                                 placeholder="Nombre de la nueva carpeta"
-                                className="input input-bordered w-full"
+                                className="input input-bordered w-full mb-2"
                             />
-                            <button className="btn btn-primary" onClick={handleCreateFolder}>
+                            <button className="btn btn-primary mt-2" onClick={handleCreateFolder}>
                                 <FcAddDatabase className="mr-2" /> Crear Carpeta
                             </button>
                         </label>
@@ -130,7 +130,7 @@ const FileManager = () => {
                                 onClick={() => enterDirectory(directory)}
                                 className="btn btn-link text-left flex items-center w-full text-lg"
                             >
-                                <FcFolder  size={40} className="mr-2" /> {directory.split('/').pop()}
+                                <FcFolder size={40} className="mr-2" /> {directory.split('/').pop()}
                             </button>
                         </div>
                     ))}

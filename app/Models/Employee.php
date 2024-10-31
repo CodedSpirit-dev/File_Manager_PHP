@@ -40,8 +40,8 @@ class Employee extends Authenticatable
         return $this->hasOneThrough(Company::class, Position::class, 'id', 'id', 'position_id', 'company_id');
     }
 
-    public function userPermissions()
+    public function permissions()
     {
-        return $this->hasMany(UserPermission::class, 'employee_id', 'id');
+        return $this->belongsToMany(Permission::class, 'user_permissions', 'employee_id', 'permission_id');
     }
 }

@@ -13,9 +13,16 @@ const EmployeeList: React.FC = (): React.ReactNode => {
     const [modalOpen, setModalOpen] = useState(false);
 
     const handleEditClick = (employee: Employee) => {
-        setEditingEmployee(employee);
+        // Find the position associated with the employee
+        const position = positions.find(position => position.id === employee.position_id);
+        // Get the company_id from the position
+        const companyId = position ? position.company_id : null;
+        // Set the editingEmployee with the company_id included
+        // @ts-ignore
+        setEditingEmployee({ ...employee, company_id: companyId });
         setModalOpen(true);
     };
+
 
     useEffect(() => {
         setLoading(true);

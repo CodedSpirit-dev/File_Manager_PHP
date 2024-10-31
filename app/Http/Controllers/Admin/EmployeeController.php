@@ -189,6 +189,16 @@ class EmployeeController extends Controller
     }
 
 
+    public function getPermissions($id)
+    {
+        $employee = Employee::with('permissions')->find($id);
+
+        if (!$employee) {
+            return response()->json(['error' => 'Empleado no encontrado'], 404);
+        }
+
+        return response()->json($employee->permissions);
+    }
 
 
 
