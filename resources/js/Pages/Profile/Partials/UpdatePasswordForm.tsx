@@ -32,7 +32,7 @@ export default function UpdatePasswordForm({
     const updatePassword: FormEventHandler = (e) => {
         e.preventDefault();
 
-        axios.put('password', data)
+        axios.put('password/update', data)
             .then(() => {
                 reset();
             })

@@ -16,7 +16,6 @@ export default function CreateCompany() {
     const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
     const [isErrorModalOpen, setIsErrorModalOpen] = useState(false);
 
-
     const onSubmit = (data: { name: string }) => {
         axios.post('/admin/companies/store', data)
             .then(() => {
@@ -35,22 +34,10 @@ export default function CreateCompany() {
             });
     };
 
-
+    // Función para cerrar los modales
     const closeModal = () => {
-        const successModal = document.getElementById('modal_company_success') as HTMLDialogElement | null;
-        const errorModal = document.getElementById('modal_company_error') as HTMLDialogElement | null;
-        successModal?.close();
-        errorModal?.close();
-    };
-
-    const openSuccessModal = () => {
-        const modal = document.getElementById('modal_company_success') as HTMLDialogElement | null;
-        modal?.showModal();
-    };
-
-    const openErrorModal = () => {
-        const modal = document.getElementById('modal_company_error') as HTMLDialogElement | null;
-        modal?.showModal();
+        setIsSuccessModalOpen(false);
+        setIsErrorModalOpen(false);
     };
 
     return (
@@ -67,6 +54,10 @@ export default function CreateCompany() {
                             minLength: {
                                 value: 3,
                                 message: 'El nombre debe tener al menos 3 caracteres'
+                            },
+                            maxLength: {
+                                value: 50,
+                                message: 'El nombre no debe tener más de 50 caracteres'
                             },
                             pattern: {
                                 value: /^[a-zA-Z0-9\s]+$/,
@@ -94,17 +85,6 @@ export default function CreateCompany() {
                     >
                         Registrar empresa
                     </button>
-
-                    {/* Modal de éxito */}
-                    <dialog id="modal_company_success" className="modal">
-                        <div className="modal-box">
-                            <h3 className="font-bold text-lg text-center">Registro de empresa</h3>
-                            <h3 className="text-center">{successMessage}</h3>
-                            <div className="modal-action justify-center">
-                                <button type="button" className="btn btn-info" onClick={closeModal}>Aceptar</button>
-                            </div>
-                        </div>
-                    </dialog>
                 </div>
             </form>
 

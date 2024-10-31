@@ -38,15 +38,15 @@ export default function CreateEmployee() {
     const watchEnablePermissions = watch('enable_permissions');
 
     useEffect(() => {
-        axios.get('/api/positions')
+        axios.get('api/positions')
             .then(response => setPositions(response.data))
             .catch(error => console.error('Error al cargar los puestos', error));
 
-        axios.get('/api/permissions')
+        axios.get('api/permissions')
             .then(response => setPermissions(response.data))
             .catch(error => console.error('Error al cargar los permisos', error));
 
-        axios.get('/api/companies')
+        axios.get('admin/companies')
             .then(response => setCompanies(response.data))
             .catch(error => console.error('Error al cargar las empresas', error));
     }, []);
