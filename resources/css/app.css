@@ -1,245 +1,174 @@
+/* app.css */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-body {
-    @apply min-h-screen;
-    @apply bg-gray-100;
-    @apply text-gray-800;
-}
-
-.container__25 {
-    @apply items-center pt-6 px-6 py-4 shadow-md;
-    @apply mx-auto mt-28;
-    @apply bg-white;
-    @apply sm:max-w-sm mt-1.5;
-    @apply md:max-w-xl mt-1.5;
-    @apply lg:max-w-2xl mt-1.5;
-    @apply xl:max-w-3xl mt-1.5;
-}
-
-.container__25__table {
-    @apply items-center pt-6 px-6 py-4 shadow-md;
-    @apply mx-auto mt-28;
-    @apply bg-white;
-}
-
-.container__75 {
-    @apply flex;
-    @apply items-center;
-    @apply w-screen;
-    @apply flex-col;
-    @apply place-items-center;
-    @apply mt-6;
-    @apply w-11/12;
-    @apply overflow-hidden;
-    @apply bg-white;
-    @apply px-6;
-    @apply py-4;
-    @apply shadow-md;
-    @apply mx-auto;
-    @apply rounded-lg;
-}
-
-.container__75__table {
-    @apply flex;
-    @apply items-center;
-    @apply w-screen;
-    @apply flex-col;
-    @apply place-items-center;
-    @apply mt-6;
-    @apply w-11/12;
-    @apply overflow-hidden;
-    @apply bg-white;
-    @apply px-6;
-    @apply py-4;
-    @apply shadow-md;
-    @apply mx-auto;
-    @apply rounded-lg;
-}
-
-.table-responsive {
-    @apply w-full;
-    @apply overflow-x-auto;
-}
-
-.table {
-    @apply min-w-full;
-    @apply divide-y;
-    @apply divide-gray-200;
-}
-
-.table th {
-    @apply text-xs;
-    @apply font-medium;
-    @apply text-gray-500;
-    @apply uppercase;
-    @apply tracking-wider;
-}
-
-.table td {
-    @apply text-sm;
-    @apply text-gray-900;
-    @apply whitespace-nowrap;
-    @apply overflow-hidden;
-    @apply overflow-ellipsis;
-}
-
-.nav__bar {
-    @apply navbar;
-    @apply max-w-screen-xl;
-    @apply shadow-md;
-    @apply bg-white;
-    @apply flex;
-    @apply items-center;
-    @apply justify-between;
-    @apply mx-auto;
-}
-
-.nav__bar__button {
-    @apply btn;
-    @apply btn-ghost;
-    @apply text-sm;
-    @apply font-semibold;
-}
-
-.nav__bar__logo {
-    @apply text-xl;
-    @apply font-bold;
-    @apply truncate;
-}
-
-.input__data__entry {
-    @apply mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500;
-}
-
-button {
-    &:hover {
-        color: white;
+/* Definir clases personalizadas dentro de @layer components */
+@layer components {
+    /* Estilos Generales */
+    body {
+        @apply min-h-screen bg-gray-100 text-gray-800;
     }
-}
 
-.employee__table {
-    @apply table;
-    @apply min-w-full; /* Asegura que la tabla tome el ancho mínimo completo */
-}
+    /* Contenedor Principal */
+    .container__25 {
+        @apply mx-auto max-w-7xl bg-white p-6 shadow-md rounded-lg w-full;
+    }
 
-.logo {
-    @apply text-5xl font-extrabold justify-end content-end;
-    @apply ml-auto mr-4;
-}
+    .container__25__table {
+        @apply flex flex-col items-center pt-6 px-6 py-4 shadow-md mx-auto mt-28 bg-white;
+    }
 
-.overFlow {
-    @apply overflow-x-auto; /* Habilita el desplazamiento horizontal */
-    @apply w-full; /* Asegura que el contenedor tome el ancho completo */
-    @apply max-w-full; /* Limita el ancho del contenedor a su contenedor padre */
-}
+    /* Contenedor Responsivo para Componentes al 75% */
+    .container__75,
+    .container__75__table {
+        @apply mx-auto bg-white p-6 shadow-md rounded-lg w-full flex flex-col items-center overflow-hidden;
+        @apply max-w-full sm:max-w-3xl md:max-w-5xl lg:max-w-7xl;
+    }
 
-/* Estilo para la celda de la columna Nombre */
-td.name-cell {
-    @apply break-words; /* Permite que las palabras largas se rompan */
-    @apply max-w-xs; /* Limita el ancho máximo de la celda */
-    word-wrap: break-word;
-}
+    /* Tabla Responsiva */
+    .table-responsive {
+        @apply w-full overflow-x-auto;
+    }
 
-.name-cell {
-    @apply break-words; /* Permite que las palabras largas se rompan */
-    @apply max-w-xs; /* Limita el ancho máximo de la celda */
-    word-wrap: break-word;
-}
+    .table {
+        @apply min-w-full divide-y divide-gray-200;
+    }
 
-/* Media Queries */
-@media (max-width: 640px) {
     .table th {
-        @apply text-xs;
+        @apply text-xs font-medium text-gray-500 uppercase tracking-wider;
     }
 
     .table td {
-        @apply text-xs;
+        @apply text-sm text-gray-900 whitespace-nowrap overflow-hidden truncate;
+    }
+
+    /* Barra de Navegación */
+    .nav__bar {
+        @apply navbar max-w-screen-xl shadow-md bg-white flex items-center justify-between mx-auto;
     }
 
     .nav__bar__button {
-        @apply text-lg;
+        @apply btn btn-ghost text-sm font-semibold sm:text-lg md:text-base;
     }
 
     .nav__bar__logo {
-        @apply text-lg;
-    }
-}
-
-@media (min-width: 320px) {
-    .nav__bar {
-        @apply flex-auto;
-        @apply text-center;
-        @apply justify-center;
-        @apply mx-auto;
+        @apply text-xl font-bold truncate sm:text-lg;
     }
 
-    .nav__bar__button {
-        @apply text-xs;
-    }
-
-    .container__75__table {
-        @apply w-auto;
-
-        table {
-            @apply w-full;
-        }
-
-        th {
-            @apply text-xs;
-            @apply text-center;
-            @apply justify-center;
-        }
-
-        tbody {
-            @apply max-w-full;
-        }
-
-        tr {
-            @apply text-xs;
-            @apply text-ellipsis;
-            @apply text-wrap;
-        }
-    }
-}
-
-@media (min-width: 480px) {
-    .table th {
-        @apply text-sm;
-    }
-
-    .table td {
-        @apply text-sm;
-    }
-}
-
-@media (min-width: 640px) {
-    .input__label {
-        @apply mb-4;
-    }
-
+    /* Entrada de Datos */
     .input__data__entry {
-        @apply text-lg;
-    }
-}
-
-@media (min-width: 641px) {
-    .nav__bar {
-        @apply flex-auto;
-        @apply text-center;
-        @apply justify-center;
-        @apply text-lg;
-        @apply mx-auto;
+        @apply mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500;
+        @apply text-lg md:text-xl;
     }
 
-    .nav__bar__button {
-        @apply text-base;
+    /* Hover para Botones */
+    button:hover {
+        @apply text-white;
     }
-}
 
-@media (min-width: 768px) {
-    .input__data__entry {
-        @apply text-xl;
+    /* Tabla de Empleados */
+    .employee__table {
+        @apply table min-w-full;
+    }
+
+    /* Logo */
+    .logo {
+        @apply text-5xl font-extrabold ml-auto mr-4;
+    }
+
+    /* Overflow */
+    .overFlow {
+        @apply overflow-x-auto w-full max-w-full;
+    }
+
+    /* Estilos Específicos para FileManager */
+    /* Contenedor Principal */
+    .file-manager-container {
+        @apply mx-auto bg-white p-4 sm:p-6 lg:p-8 shadow-md rounded-lg w-full max-w-7xl;
+    }
+
+    /* Título Principal */
+    .file-manager-title {
+        @apply text-3xl font-bold mb-6 text-center;
+    }
+
+    /* Contenedor de Formularios */
+    .file-manager-form-control {
+        @apply form-control mb-6;
+    }
+
+    /* Flexbox para Formularios Responsivos */
+    .file-manager-form-flex {
+        @apply flex flex-col sm:flex-row items-start sm:items-center;
+    }
+
+    /* Input de Texto para Crear Carpeta */
+    .file-manager-input {
+        @apply input input-bordered w-full sm:w-auto flex-1 mb-4 sm:mb-0;
+    }
+
+    /* Botón para Crear Carpeta */
+    .file-manager-create-button {
+        @apply btn btn-primary ml-0 sm:ml-4 flex items-center justify-center;
+    }
+
+    /* Botón para Subir Archivo */
+    .file-manager-upload-button {
+        @apply btn btn-secondary ml-0 sm:ml-4 flex items-center justify-center;
+    }
+
+    /* Mensajes de Estado (Éxito y Error) */
+    .file-manager-message-success {
+        @apply alert alert-success mb-6;
+    }
+
+    .file-manager-message-error {
+        @apply alert alert-error mb-6;
+    }
+
+    /* Botón de Volver */
+    .file-manager-back-button {
+        @apply btn btn-outline mb-6;
+    }
+
+    /* Estilos para Botón de Volver Deshabilitado */
+    .file-manager-back-button-disabled {
+        @apply opacity-50 cursor-not-allowed;
+    }
+
+    /* Grid para Listar Carpetas y Archivos */
+    .file-manager-grid {
+        @apply grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6;
+    }
+
+    /* Tarjeta de Carpeta o Archivo */
+    .file-manager-card {
+        @apply flex flex-col items-center p-4 bg-base-100 shadow-md rounded-lg hover:bg-gray-50 transition duration-200;
+    }
+
+    /* Ícono de Carpeta */
+    .file-manager-folder-icon {
+        @apply text-5xl mb-2;
+    }
+
+    /* Ícono de Archivo */
+    .file-manager-file-icon {
+        @apply text-5xl mb-2;
+    }
+
+    /* Nombre del Archivo o Carpeta */
+    .file-manager-name {
+        @apply text-center text-sm font-medium text-gray-700 truncate w-24;
+    }
+
+    /* Botón Eliminar */
+    .file-manager-delete-button {
+        @apply btn btn-error btn-sm mt-2;
+    }
+
+    /* Hover para Botones */
+    button:hover {
+        @apply text-white;
     }
 }

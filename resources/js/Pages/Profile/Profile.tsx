@@ -35,7 +35,7 @@ export default function Profile({
         <>
             <Head title="Perfil"/>
 
-            <div className="py-2">
+            <div className="">
                 <div className="mx-auto max-w-7xl">
 
 

@@ -52,7 +52,7 @@ export default function CreateCompany() {
     };
 
     return (
-        <div className='container__25 w-full'>
+        <div className='container__25'>
             <Head title="Registro de nuevas empresas" />
             <form onSubmit={(e) => { e.preventDefault(); openConfirmModal(); }}>
                 <h1 className="text-2xl text-center font-bold my-4">Registro de nuevas empresas</h1>

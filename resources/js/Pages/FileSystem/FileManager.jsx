@@ -15,15 +15,20 @@ const FileManager = () => {
     // Cargar jerarquía y establecer carpeta inicial de la compañía
     useEffect(() => {
         const initializePath = async () => {
-            const userData = await getUserHierarchy();
-            setUserHierarchy(userData.hierarchy_level);
-            setUserCompany(userData.company_name);
+            try {
+                const userData = await getUserHierarchy();
+                setUserHierarchy(userData.hierarchy_level);
+                setUserCompany(userData.company_name);
 
-            // Redirigir a la carpeta de la compañía si no es administrador
-            if (userData.hierarchy_level > 0) {
-                setCurrentPath(`public/${userData.company_name}`);
-            } else {
-                setCurrentPath('public');
+                // Redirigir a la carpeta de la compañía si no es administrador
+                if (userData.hierarchy_level > 0) {
+                    setCurrentPath(`public/${userData.company_name}`);
+                } else {
+                    setCurrentPath('public');
+                }
+            } catch (error) {
+                console.error('Error al obtener la jerarquía del usuario:', error);
+                setMessage('Error al obtener la jerarquía del usuario');
             }
         };
 
@@ -38,9 +43,14 @@ const FileManager = () => {
     }, [currentPath]);
 
     const fetchFiles = async (path) => {
-        const { directories, files } = await getFiles(path);
-        setDirectories(directories);
-        setFiles(files);
+        try {
+            const { directories, files } = await getFiles(path);
+            setDirectories(directories);
+            setFiles(files);
+        } catch (error) {
+            console.error('Error al obtener archivos y carpetas:', error);
+            setMessage('Error al obtener archivos y carpetas');
+        }
     };
 
     const handleFileChange = (e) => {
@@ -49,25 +59,46 @@ const FileManager = () => {
 
     const handleUpload = async () => {
         if (selectedFile) {
-            const response = await uploadFile(selectedFile, currentPath);
-            setMessage(response.message);
-            setSelectedFile(null);
-            fetchFiles(currentPath);
+            try {
+                const response = await uploadFile(selectedFile, currentPath);
+                setMessage(response.message);
+                setSelectedFile(null);
+                fetchFiles(currentPath);
+            } catch (error) {
+                console.error('Error al subir archivo:', error);
+                setMessage('Error al subir archivo');
+            }
+        } else {
+            setMessage('Seleccione un archivo para subir');
         }
     };
 
     const handleDelete = async (filename) => {
-        const response = await deleteFile(filename);
-        setMessage(response.message);
-        fetchFiles(currentPath);
+        if (filename) {
+            try {
+                const response = await deleteFile(filename);
+                setMessage(response.message);
+                fetchFiles(currentPath);
+            } catch (error) {
+                console.error('Error al eliminar archivo:', error);
+                setMessage('Error al eliminar archivo');
+            }
+        }
     };
 
     const handleCreateFolder = async () => {
-        if (folderName) {
-            const response = await createFolder(folderName, currentPath);
-            setMessage(response.message);
-            setFolderName('');
-            fetchFiles(currentPath);
+        if (folderName.trim()) {
+            try {
+                const response = await createFolder(folderName, currentPath);
+                setMessage(response.message);
+                setFolderName('');
+                fetchFiles(currentPath);
+            } catch (error) {
+                console.error('Error al crear carpeta:', error);
+                setMessage('Error al crear carpeta');
+            }
+        } else {
+            setMessage('Ingrese un nombre para la carpeta');
         }
     };
 
@@ -81,84 +112,105 @@ const FileManager = () => {
     };
 
     return (
-        <div className="container mx-auto p-6">
-            <div className="card bg-base-200 shadow-xl p-4">
-                <h1 className="text-2xl font-bold mb-4">Gestor de Archivos</h1>
+        <div className="file-manager-container">
+            <h1 className="file-manager-title">Gestor de Archivos</h1>
 
-                {(userHierarchy === 0 || userHierarchy < 3) && (
-                    <div className="form-control mb-4">
-                        <label className="input-group">
-                            <input
-                                type="text"
-                                value={folderName}
-                                onChange={(e) => setFolderName(e.target.value)}
-                                placeholder="Nombre de la nueva carpeta"
-                                className="input input-bordered w-full mb-2"
-                            />
-                            <button className="btn btn-primary mt-2" onClick={handleCreateFolder}>
-                                <FcAddDatabase className="mr-2" /> Crear Carpeta
-                            </button>
-                        </label>
-                    </div>
-                )}
-
-                <div className="form-control mb-4">
-                    <div className="input-group">
-                        <input type="file" onChange={handleFileChange} className={'file-input file-input-md w-full max-w-xs'} />
-                        <button className="btn btn-secondary" onClick={handleUpload}>
-                            <FcUpload className="mr-2" /> Subir Archivo
+            {/* Crear Carpeta */}
+            {(userHierarchy === 0 || userHierarchy < 3) && (
+                <div className="file-manager-form-control">
+                    <div className="file-manager-form-flex">
+                        <input
+                            type="text"
+                            value={folderName}
+                            onChange={(e) => setFolderName(e.target.value)}
+                            placeholder="Nombre de la nueva carpeta"
+                            className="file-manager-input"
+                        />
+                        <button className="file-manager-create-button" onClick={handleCreateFolder}>
+                            <FcAddDatabase className="mr-2" /> Crear Carpeta
                         </button>
                     </div>
                 </div>
+            )}
 
-                {message && <div className="alert alert-success mb-4">{message}</div>}
-
-                <h2 className="text-xl font-semibold mb-4">Lista de Carpetas y Archivos</h2>
-                <div className="mb-4">
-                    <button onClick={goBack} disabled={currentPath === `public/${userCompany}`} className="btn btn-outline mb-4">
-                        Volver
+            {/* Subir Archivo */}
+            <div className="file-manager-form-control">
+                <div className="file-manager-form-flex">
+                    <input
+                        type="file"
+                        onChange={handleFileChange}
+                        className="file-manager-input"
+                    />
+                    <button className="file-manager-upload-button" onClick={handleUpload}>
+                        <FcUpload className="mr-2" /> Subir Archivo
                     </button>
                 </div>
+            </div>
 
-                <div className="flex flex-col space-y-2">
-                    {directories.map((directory, index) => (
-                        <div
-                            key={index}
-                            className="card bg-base-100 shadow-md p-4 flex items-center justify-between"
-                        >
-                            <button
-                                onClick={() => enterDirectory(directory)}
-                                className="btn btn-link text-left flex items-center w-full text-lg"
-                            >
-                                <FcFolder size={40} className="mr-2" /> {directory.split('/').pop()}
-                            </button>
-                        </div>
-                    ))}
-                    {files.map((file, index) => (
-                        <div
-                            key={index}
-                            className="card bg-base-100 shadow-md p-4 flex items-center justify-between"
-                        >
-                            <a
-                                href={`http://localhost:8000/storage/${file}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="flex items-center w-full"
-                            >
-                                <FcDocument size={40} className="mr-2" /> {file.split('/').pop()}
-                            </a>
-                            <button
-                                onClick={() => handleDelete(file.split('/').pop())}
-                                className="btn btn-error btn-sm ml-4"
-                            >
-                                Eliminar
-                            </button>
-                        </div>
-                    ))}
+            {/* Mensaje de Estado */}
+            {message && (
+                <div className={`file-manager-message ${message.includes('Error') ? 'file-manager-message-error' : 'file-manager-message-success'}`}>
+                    {message}
                 </div>
+            )}
+
+            <h2 className="text-2xl font-semibold mb-6 text-center">Lista de Carpetas y Archivos</h2>
+            <div className="mb-6 flex justify-center">
+                <button
+                    onClick={goBack}
+                    disabled={currentPath === `public/${userCompany}`}
+                    className={`file-manager-back-button ${currentPath === `public/${userCompany}` ? 'file-manager-back-button-disabled' : ''}`}
+                >
+                    Volver
+                </button>
+            </div>
+
+            {/* Lista de Carpetas y Archivos */}
+            <div className="file-manager-grid">
+                {directories.map((directory, index) => (
+                    <div
+                        key={index}
+                        className="file-manager-card"
+                    >
+                        <button
+                            onClick={() => enterDirectory(directory)}
+                            className="file-manager-card-button"
+                        >
+                            <FcFolder className="file-manager-folder-icon" />
+                            <span className="file-manager-name" title={directory.split('/').pop()}>
+                                {directory.split('/').pop()}
+                            </span>
+                        </button>
+                    </div>
+                ))}
+                {files.map((file, index) => (
+                    <div
+                        key={index}
+                        className="file-manager-card"
+                    >
+                        <a
+                            href={`http://localhost:8000/storage/${file}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="file-manager-card-link"
+                        >
+                            <FcDocument className="file-manager-file-icon" />
+                            <span className="file-manager-name" title={file.split('/').pop()}>
+                                {file.split('/').pop()}
+                            </span>
+                        </a>
+                        <button
+                            onClick={() => handleDelete(file.split('/').pop())}
+                            className="file-manager-delete-button"
+                        >
+                            Eliminar
+                        </button>
+                    </div>
+                ))}
             </div>
         </div>
     );
+
 };
 
 export default FileManager;

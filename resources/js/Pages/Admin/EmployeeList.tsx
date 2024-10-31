@@ -13,16 +13,12 @@ const EmployeeList: React.FC = (): React.ReactNode => {
     const [modalOpen, setModalOpen] = useState(false);
 
     const handleEditClick = (employee: Employee) => {
-        // Find the position associated with the employee
         const position = positions.find(position => position.id === employee.position_id);
-        // Get the company_id from the position
         const companyId = position ? position.company_id : null;
-        // Set the editingEmployee with the company_id included
         // @ts-ignore
         setEditingEmployee({ ...employee, company_id: companyId });
         setModalOpen(true);
     };
-
 
     useEffect(() => {
         setLoading(true);
@@ -51,25 +47,29 @@ const EmployeeList: React.FC = (): React.ReactNode => {
     };
 
     if (loading) {
-        return <span className="flex my-auto mx-auto bg-primary loading loading-dots loading-lg w-2/4 h-screen"></span>
+        return (
+            <div className="flex justify-center items-center h-screen">
+                <span className="loading loading-dots loading-lg text-primary"></span>
+            </div>
+        );
     }
 
     if (error) {
         console.log(error);
-        return <div>{error}</div>;
+        return <div className="text-center text-red-500">{error}</div>;
     }
 
     return (
-        <div className='container__75__table'>
-            <h2 className="text-xl font-bold mb-4">Lista de Empleados</h2>
+        <div className="container__75__table">
+            <h2 className="text-2xl font-bold mb-4 text-center">Lista de Empleados</h2>
             <div className="overFlow"> {/* Contenedor desplazable */}
-                <table className="employee__table">
+                <table className="employee__table w-full table-auto">
                     <thead>
-                    <tr className={'text-xl'}>
-                        <th className="px-4 py-2 w-2">Nombre</th>
-                        <th className="px-4 py-2 w-2">Fecha de Registro</th>
-                        <th className="px-4 py-2 w-2">Puesto</th>
-                        <th className={'px-4 py-2 w-2'}>Acciones</th>
+                    <tr className="bg-gray-100">
+                        <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Nombre</th>
+                        <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Fecha de Registro</th>
+                        <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Puesto</th>
+                        <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Acciones</th>
                     </tr>
                     </thead>
                     <tbody>
@@ -77,15 +77,33 @@ const EmployeeList: React.FC = (): React.ReactNode => {
                         const position = positions.find(position => position.id === employee.position_id);
                         const company = position ? companies.find(company => company.id === position.company_id) : null;
                         return (
-                            <tr className={'hover'} key={employee.id}>
-                                <td className="border px-4 py-2 name-cell">{employee.first_name + ' ' + employee.last_name_1}</td>
-                                <td className="border px-4 py-2">{new Date(employee.registered_at).toLocaleDateString()}</td>
-                                <td className="border px-4 py-2">{position?.name}
-                                    <br/>
-                                    <span className="badge bg-primary text-white ">{company?.name}</span>
+                            <tr key={employee.id} className="hover:bg-gray-50">
+                                <td className="border px-4 py-2 text-sm text-gray-900 truncate">
+                                    {employee.first_name} {employee.last_name_1}
                                 </td>
-                                <td className="border px-4 py-2">
-                                    <button onClick={() => handleEditClick(employee)}>Editar</button>
+                                <td className="border px-4 py-2 text-sm text-gray-900">
+                                    {new Date(employee.registered_at).toLocaleDateString('es-ES', {
+                                        day: 'numeric',
+                                        month: 'long',
+                                        year: 'numeric'
+                                    })}
+                                </td>
+                                <td className="border px-4 py-2 text-sm text-gray-900">
+                                    {position?.name}
+                                    <br></br>
+                                    {company && (
+                                        <span className="ml-2 inline-block bg-blue-500 text-white text-xs px-2 py-1 rounded">
+                                                {company.name}
+                                            </span>
+                                    )}
+                                </td>
+                                <td className="border px-4 py-2 text-sm text-gray-900">
+                                    <button
+                                        onClick={() => handleEditClick(employee)}
+                                        className="btn btn-primary"
+                                    >
+                                        Editar
+                                    </button>
                                 </td>
                             </tr>
                         );
