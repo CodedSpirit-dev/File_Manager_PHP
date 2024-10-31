@@ -7,7 +7,6 @@ use App\Http\Controllers\HierarchyLevelController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\PositionController;
 use App\Http\Controllers\UserPermissionsController;
-use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -20,7 +19,7 @@ use Inertia\Inertia;
 // Ruta principal /home después del login (requiere autenticación)
 Route::get('/', function () {
     return Inertia::render('Home');
-})->middleware(['auth:employee', 'verified'])->name('home');
+})->middleware(['auth', 'verified'])->name('home');
 
 // Ruta de prueba
 Route::get('/test', function () {
@@ -28,7 +27,7 @@ Route::get('/test', function () {
 })->name('test');
 
 // Rutas para el perfil del usuario (requiere autenticación)
-Route::middleware('auth:employee')->group(function () {
+Route::middleware('auth')->group(function () {
     Route::get('/profile', [EmployeeController::class, 'show'])->name('profile.show');
     Route::get('/profile/edit', [EmployeeController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [EmployeeController::class, 'update'])->name('profile.update');
@@ -38,13 +37,11 @@ Route::middleware('auth:employee')->group(function () {
 // Rutas para el directorio
 Route::post('/directorio', [DirectorioController::class, 'store'])->name('directorio.store');
 
-// Rutas de autenticación para empleados
-Route::get('/login', [AuthenticatedSessionController::class, 'create'])->name('login');
-Route::post('/login', [AuthenticatedSessionController::class, 'store'])->name('login.submit');
-Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout');
+// Rutas de autenticación
+require __DIR__ . '/auth.php';
 
 // Grupo de rutas de administración (requiere autenticación)
-Route::middleware('auth:employee')->prefix('admin')->name('admin.')->group(function () {
+Route::middleware('auth')->prefix('admin')->name('admin.')->group(function () {
     // Administración de empleados
     Route::get('/employees', [EmployeeController::class, 'index'])->name('employees.index');
     Route::get('/employees/create', [EmployeeController::class, 'create'])->name('employees.create');
@@ -70,10 +67,10 @@ Route::prefix('api')->name('api.')->group(function () {
 });
 
 // Ruta para el perfil del empleado
-Route::get('/admin/employees/profile', [EmployeeController::class, 'profile'])->middleware('auth:employee')->name('admin.employees.profile');
+Route::get('/admin/employees/profile', [EmployeeController::class, 'profile'])->middleware('auth');
 
 // Ruta para obtener la jerarquía del usuario
-Route::middleware('auth:employee')->get('/user/hierarchy', [EmployeeController::class, 'getUserHierarchy'])->name('user.hierarchy');
+Route::middleware('auth:sanctum')->get('/user/hierarchy', [EmployeeController::class, 'getUserHierarchy']);
 
-// Rutas para la gestión de archivos
+// Incluir las rutas de FileManager
 require base_path('routes/filemanager.php');

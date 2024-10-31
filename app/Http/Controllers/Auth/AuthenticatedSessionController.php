@@ -30,15 +30,22 @@ class AuthenticatedSessionController extends Controller
      */
     public function store(LoginRequest $request): RedirectResponse
     {
-        $request->authenticate();
+        // Autenticar usando el guard 'employee'
+        if (Auth::guard('employee')->attempt($request->only('username', 'password'))) {
+            $request->session()->regenerate();
 
-        $request->session()->regenerate();
+            // Actualizar el último login
+            $employee = Auth::guard('employee')->user();
+            $employee->last_login_at = Carbon::now();
+            $employee->save();
 
-        $request->user()->update([
-            'last_login_at' => Carbon::now()->toDateTimeString()
-        ]);
+            return redirect()->intended(route('home', [], false));
+        }
 
-        return redirect()->intended(route('home', absolute: false));
+        // Si la autenticación falla
+        return back()->withErrors([
+            'username' => 'Las credenciales proporcionadas son incorrectas.',
+        ])->onlyInput('username');
     }
 
     /**
@@ -46,7 +53,8 @@ class AuthenticatedSessionController extends Controller
      */
     public function destroy(Request $request): RedirectResponse
     {
-        Auth::guard('web')->logout();
+        // Cerrar sesión usando el guard 'employee'
+        Auth::guard('employee')->logout();
 
         $request->session()->invalidate();
 

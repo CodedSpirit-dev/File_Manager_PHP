@@ -7,15 +7,15 @@ return [
     | Authentication Defaults
     |--------------------------------------------------------------------------
     |
-    | Estas opciones definen el guard de autenticación predeterminado y el broker
-    | de reseteo de contraseñas para tu aplicación. Puedes cambiarlos según
-    | sea necesario, pero son una excelente configuración inicial.
+    | Este valor define el guard de autenticación predeterminado y el broker de
+    | reseteo de contraseña para tu aplicación. Puedes cambiar estos valores
+    | según sea necesario, pero son una excelente configuración inicial.
     |
     */
 
     'defaults' => [
-        'guard' => 'employee', // Establecer 'employee' como guard predeterminado
-        'passwords' => 'employees', // Establecer 'employees' como broker de contraseñas predeterminado
+        'guard' => env('AUTH_GUARD', 'employee'), // Cambiar 'web' por 'employee' si deseas que sea el guard predeterminado
+        'passwords' => 'employees', // Establecer el broker de contraseñas predeterminado
     ],
 
     /*
@@ -91,7 +91,7 @@ return [
         // Broker de contraseñas para empleados
         'employees' => [
             'provider' => 'employees',
-            'table' => 'password_reset_tokens', // Asegúrate de que esta tabla exista
+            'table' => env('AUTH_PASSWORD_RESET_TOKEN_TABLE', 'password_reset_tokens'), // Asegúrate de que esta tabla exista
             'expire' => 60, // Tiempo en minutos para que expire el token
             'throttle' => 60, // Tiempo en segundos antes de permitir otro intento de reseteo
         ],
@@ -108,6 +108,6 @@ return [
     |
     */
 
-    'password_timeout' => 10800, // 3 horas por defecto
+    'password_timeout' => env('AUTH_PASSWORD_TIMEOUT', 10800), // 3 horas por defecto
 
 ];

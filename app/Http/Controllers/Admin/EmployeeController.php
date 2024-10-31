@@ -13,77 +13,92 @@ use Illuminate\Support\Facades\Validator;
 
 class EmployeeController extends Controller
 {
-    // Method to get the authenticated employee's profile
+    /**
+     * Constructor para aplicar middleware de autenticación y autorización.
+     */
+    public function __construct()
+    {
+        $this->middleware('auth:employee'); // Aplicar middleware al guard 'employee'
+    }
+
+    /**
+     * Mostrar el perfil del empleado autenticado.
+     */
     public function show()
     {
-        // Get the authenticated employee
-        $employee = auth()->user();
+        // Obtener el empleado autenticado
+        $employee = Auth::guard('employee')->user();
 
         if (!$employee) {
-            return response()->json(['error' => 'Not authenticated'], 401);
+            return response()->json(['error' => 'No autenticado'], 401);
         }
 
-        // Load specific relationships and attributes
-        $employee->load('position', 'position.company'); // Load position and associated company
+        // Cargar relaciones necesarias
+        $employee->load('position.company');
 
-        // Format the employee's profile data
+        // Formatear los datos del perfil
         $profileData = [
             'first_name' => $employee->first_name,
             'last_name_1' => $employee->last_name_1,
             'last_name_2' => $employee->last_name_2,
             'username' => $employee->username,
-            'position' => $employee->position ? $employee->position->name : 'Unassigned',
-            'company' => $employee->position && $employee->position->company ? $employee->position->company->name : 'Unassigned',
+            'position' => $employee->position ? $employee->position->name : 'Sin asignar',
+            'company' => $employee->position && $employee->position->company ? $employee->position->company->name : 'Sin asignar',
             'registered_at' => $employee->registered_at->format('Y-m-d H:i:s'),
-            'last_login_at' => $employee->last_login_at ? $employee->last_login_at->format('Y-m-d H:i:s') : 'Never'
+            'last_login_at' => $employee->last_login_at ? $employee->last_login_at->format('Y-m-d H:i:s') : 'Nunca'
         ];
 
-        // Return the profile data as JSON
+        // Retornar los datos del perfil como JSON
         return response()->json($profileData);
     }
 
     /**
-     * Display a list of all employees.
+     * Mostrar una lista de todos los empleados.
      */
     public function index()
     {
-        $employees = Employee::with('position.company')->get(); // Cargar posición y compañía
+        $employees = Employee::with('position.company')->get();
         return response()->json($employees);
     }
 
-
-
     /**
-     * Return the view to create a new employee.
+     * Mostrar la vista para crear un nuevo empleado.
      */
     public function create()
     {
-        return view('admin.employees.create');
+        // Obtener posiciones y empresas para los select en la vista
+        $positions = Position::with('company')->get();
+        $companies = Company::all();
+
+        return inertia('Admin/CreateEmployee', [
+            'positions' => $positions,
+            'companies' => $companies,
+        ]);
     }
 
     /**
-     * Store a new employee in the database.
+     * Almacenar un nuevo empleado en la base de datos.
      */
     public function store(Request $request)
     {
-        // Validate the input data
+        // Validar los datos de entrada
         $validator = Validator::make($request->all(), [
             'first_name' => 'required|string|max:255',
             'last_name_1' => 'required|string|max:255',
             'last_name_2' => 'nullable|string|max:255',
-            'position_id' => 'required|integer',
+            'position_id' => 'required|integer|exists:positions,id',
             'username' => 'required|string|unique:employees,username|max:255',
             'password' => 'required|string|min:4|confirmed',
         ]);
 
-        // If validation fails, return with errors
+        // Si la validación falla, retornar errores
         if ($validator->fails()) {
             return response()->json([
                 'errors' => $validator->errors(),
             ], 422);
         }
 
-        // Create a new employee
+        // Crear un nuevo empleado
         $employee = new Employee();
         $employee->first_name = $request->first_name;
         $employee->last_name_1 = $request->last_name_1;
@@ -94,16 +109,18 @@ class EmployeeController extends Controller
         $employee->registered_at = now();
         $employee->save();
 
-        // Return the ID of the created employee
+        // Retornar el ID del empleado creado
         return response()->json(['id' => $employee->id]);
     }
 
-    // En tu controlador de usuarios o de autenticación
+    /**
+     * Obtener la jerarquía del usuario autenticado.
+     */
     public function getUserHierarchy()
     {
-        $employee = auth()->user();
+        $employee = Auth::guard('employee')->user();
         if (!$employee) {
-            return response()->json(['error' => 'Not authenticated'], 401);
+            return response()->json(['error' => 'No autenticado'], 401);
         }
 
         $hierarchyLevel = $employee->position->hierarchy_level;
@@ -115,6 +132,9 @@ class EmployeeController extends Controller
         ]);
     }
 
+    /**
+     * Mostrar la vista para editar un empleado específico.
+     */
     public function edit($id)
     {
         // Buscar el empleado por ID
@@ -122,16 +142,16 @@ class EmployeeController extends Controller
 
         // Verificar si el empleado existe
         if (!$employee) {
-            return redirect()->back()->withErrors(['error' => 'Empleado no encontrado']);
+            return response()->json(['error' => 'Empleado no encontrado'], 404);
         }
 
         // Obtener las posiciones y las empresas disponibles
-        $positions = Position::all();
+        $positions = Position::with('company')->get();
         $companies = Company::all();
 
         $companyId = $employee->position->company_id;
 
-        return inertia('EditEmployee', [
+        return inertia('Admin/EditEmployee', [
             'employee' => [
                 'id' => $employee->id,
                 'first_name' => $employee->first_name,
@@ -146,8 +166,9 @@ class EmployeeController extends Controller
         ]);
     }
 
-
-
+    /**
+     * Actualizar un empleado específico en la base de datos.
+     */
     public function update(Request $request, $id)
     {
         $employee = Employee::find($id);
@@ -161,8 +182,7 @@ class EmployeeController extends Controller
             'first_name' => 'required|string|max:255',
             'last_name_1' => 'required|string|max:255',
             'last_name_2' => 'nullable|string|max:255',
-            'position_id' => 'required|integer',
-            'company_id' => 'required|integer',
+            'position_id' => 'required|integer|exists:positions,id',
             'username' => 'required|string|unique:employees,username,' . $id . '|max:255',
             'password' => 'nullable|string|min:4|confirmed',
         ]);
@@ -171,7 +191,7 @@ class EmployeeController extends Controller
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
-        // Actualizar los campos del empleado solo si se proporciona el valor
+        // Actualizar los campos del empleado
         $employee->first_name = $request->first_name;
         $employee->last_name_1 = $request->last_name_1;
         $employee->last_name_2 = $request->last_name_2;
@@ -188,7 +208,9 @@ class EmployeeController extends Controller
         return response()->json(['message' => 'Empleado actualizado con éxito']);
     }
 
-
+    /**
+     * Obtener los permisos de un empleado específico.
+     */
     public function getPermissions($id)
     {
         $employee = Employee::with('permissions')->find($id);
@@ -199,7 +221,4 @@ class EmployeeController extends Controller
 
         return response()->json($employee->permissions);
     }
-
-
-
 }

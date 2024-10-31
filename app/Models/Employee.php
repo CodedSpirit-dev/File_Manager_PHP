@@ -34,14 +34,26 @@ class Employee extends Authenticatable
         return $this->belongsTo(Position::class);
     }
 
-    // Relación con la tabla 'companies' (Asegúrate de que esto no cause bucles)
+    // Relación con la tabla 'companies'
     public function company()
     {
         return $this->hasOneThrough(Company::class, Position::class, 'id', 'id', 'position_id', 'company_id');
     }
 
+    // Relación con la tabla 'permissions' a través de 'user_permissions'
     public function permissions()
     {
         return $this->belongsToMany(Permission::class, 'user_permissions', 'employee_id', 'permission_id');
+    }
+
+    /**
+     * Verifica si el empleado tiene un permiso específico.
+     *
+     * @param string $permissionName
+     * @return bool
+     */
+    public function hasPermission(string $permissionName): bool
+    {
+        return $this->permissions()->where('permission_name', $permissionName)->exists();
     }
 }
