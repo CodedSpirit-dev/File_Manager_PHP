@@ -3,16 +3,13 @@ import {Company} from '@/types';
 import {Button} from '@headlessui/react';
 import React, {useState} from 'react';
 import CreateEmployee from './Admin/CreateEmployee';
-import Welcome from './Welcome';
 import EmployeeList from './Admin/EmployeeList';
 import axios from 'axios';
 import Profile from './Profile/Profile';
-import GuestLayout from '@/Layouts/GuestLayout';
-import Guest from '@/Layouts/GuestLayout';
 import {Head, usePage} from '@inertiajs/react';
 import CreateCompany from './Admin/CreateCompany';
 import CreatePosition from './Admin/CreatePosition';
-import FileManager from "@/FileSystem/FileManager";
+import FileManager from './FileSystem/FileManager';
 
 const Home: React.FC = () => {
     const {auth} = usePage().props;

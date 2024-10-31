@@ -4,17 +4,13 @@ namespace App\Models;
 
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use App\Models\Company;
-use App\Models\Position;
-use App\Models\HierarchyLevel;
 
 class Employee extends Authenticatable
 {
     use Notifiable;
 
-    protected $table = 'employees'; // Indica que utilizarás la tabla 'employees'
+    protected $table = 'employees';
 
-    // Define qué campos pueden ser llenados
     protected $fillable = [
         'first_name',
         'last_name_1',
@@ -32,40 +28,20 @@ class Employee extends Authenticatable
         'password' => 'hashed',
     ];
 
-    public static function find(int $int)
+    // Relación con la tabla 'positions'
+    public function position()
     {
-        return parent::find($int);
+        return $this->belongsTo(Position::class);
     }
 
-    protected function casts(): array
+    // Relación con la tabla 'companies' (Asegúrate de que esto no cause bucles)
+    public function company()
     {
-        return [
-            'registered_at' => 'datetime',
-            'password' => 'hashed',
-        ];
+        return $this->hasOneThrough(Company::class, Position::class, 'id', 'id', 'position_id', 'company_id');
     }
 
-   // Relación con la tabla 'positions' para obtener el nombre del puesto
-   public function position()
-   {
-       return $this->belongsTo(Position::class, 'position_id', 'id');
-   }
-
-   public function company()
-    {
-         return $this->hasOneThrough(Company::class, Position::class, 'id', 'id', 'position_id', 'company_id');
-    }
     public function userPermissions()
     {
         return $this->hasMany(UserPermission::class, 'employee_id', 'id');
     }
-
-   public function create()
-   {
-       $positions = Position::all(['id', 'name']);
-
-       return inertia('CreateEmployee', [
-           'positions' => $positions
-       ]);
-   }
 }

@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Company;
+use App\Models\Position;
 use Illuminate\Http\Request;
 use App\Models\Employee;
 use Illuminate\Support\Facades\Auth;
@@ -45,9 +47,11 @@ class EmployeeController extends Controller
      */
     public function index()
     {
-        $employees = Employee::all();
+        $employees = Employee::with('position.company')->get(); // Cargar posición y compañía
         return response()->json($employees);
     }
+
+
 
     /**
      * Return the view to create a new employee.
@@ -110,4 +114,82 @@ class EmployeeController extends Controller
             'company_name' => $companyName,
         ]);
     }
+
+    public function edit($id)
+    {
+        // Buscar el empleado por ID
+        $employee = Employee::find($id);
+
+        // Verificar si el empleado existe
+        if (!$employee) {
+            return redirect()->back()->withErrors(['error' => 'Empleado no encontrado']);
+        }
+
+        // Obtener las posiciones y las empresas disponibles
+        $positions = Position::all();
+        $companies = Company::all();
+
+        $companyId = $employee->position->company_id;
+
+        return inertia('EditEmployee', [
+            'employee' => [
+                'id' => $employee->id,
+                'first_name' => $employee->first_name,
+                'last_name_1' => $employee->last_name_1,
+                'last_name_2' => $employee->last_name_2,
+                'username' => $employee->username,
+                'position_id' => $employee->position_id,
+                'company_id' => $companyId,
+            ],
+            'positions' => $positions,
+            'companies' => $companies,
+        ]);
+    }
+
+
+
+    public function update(Request $request, $id)
+    {
+        $employee = Employee::find($id);
+
+        if (!$employee) {
+            return response()->json(['error' => 'Empleado no encontrado'], 404);
+        }
+
+        // Validación
+        $validator = Validator::make($request->all(), [
+            'first_name' => 'required|string|max:255',
+            'last_name_1' => 'required|string|max:255',
+            'last_name_2' => 'nullable|string|max:255',
+            'position_id' => 'required|integer',
+            'company_id' => 'required|integer',
+            'username' => 'required|string|unique:employees,username,' . $id . '|max:255',
+            'password' => 'nullable|string|min:4|confirmed',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        // Actualizar los campos del empleado solo si se proporciona el valor
+        $employee->first_name = $request->first_name;
+        $employee->last_name_1 = $request->last_name_1;
+        $employee->last_name_2 = $request->last_name_2;
+        $employee->username = $request->username;
+        $employee->position_id = $request->position_id;
+
+        // Actualizar la contraseña solo si se proporciona
+        if ($request->filled('password')) {
+            $employee->password = Hash::make($request->password);
+        }
+
+        $employee->save();
+
+        return response()->json(['message' => 'Empleado actualizado con éxito']);
+    }
+
+
+
+
+
 }

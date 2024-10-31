@@ -53,11 +53,9 @@ Route::middleware('auth')->prefix('admin')->name('admin.')->group(function () {
     Route::get('/employees/create', [EmployeeController::class, 'create'])->name('employees.create');
     Route::post('/employees/store', [EmployeeController::class, 'store'])->name('employees.store');
 
-    // Inicio de sesión SGI
-    Route::post('/sgi/login', [LoginController::class, 'login'])->name('sgi.login');
-
-    // Registro de empresa
-    Route::post('/companies/store', [RegisterCompanyController::class, 'store'])->name('companies.store');
+    // Ruta para editar empleado
+    Route::get('/employees/{id}/edit', [EmployeeController::class, 'edit'])->name('employees.edit');
+    Route::patch('/employees/{id}', [EmployeeController::class, 'update'])->name('employees.update'); // o usar PUT
 });
 
 // Grupo de rutas API
@@ -74,9 +72,11 @@ Route::prefix('api')->name('api.')->group(function () {
 // Ruta para el perfil del empleado
 Route::get('/admin/employees/profile', [EmployeeController::class, 'profile'])->middleware('auth');
 
-
+// Rutas para la gestión de archivos
 Route::get('/files', [FileManagerController::class, 'index']);
 Route::post('/files/upload', [FileManagerController::class, 'upload']);
 Route::delete('/files/delete/{filename}', [FileManagerController::class, 'delete']);
 Route::post('/files/createfolder', [FileManagerController::class, 'createFolder']);
+
+// Ruta para obtener la jerarquía del usuario
 Route::middleware('auth:sanctum')->get('/user/hierarchy', [EmployeeController::class, 'getUserHierarchy']);

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getFiles, uploadFile, deleteFile, createFolder, getUserHierarchy } from './api';
+import { getFiles, uploadFile, deleteFile, createFolder, getUserHierarchy } from './api.jsx';
 import { FcFolder, FcDocument, FcUpload, FcAddDatabase } from 'react-icons/fc';
 
 const FileManager = () => {
@@ -104,7 +104,7 @@ const FileManager = () => {
 
                 <div className="form-control mb-4">
                     <div className="input-group">
-                        <input type="file" onChange={handleFileChange} className="input input-bordered w-full" />
+                        <input type="file" onChange={handleFileChange} className={'file-input file-input-md w-full max-w-xs'} />
                         <button className="btn btn-secondary" onClick={handleUpload}>
                             <FcUpload className="mr-2" /> Subir Archivo
                         </button>
@@ -130,7 +130,7 @@ const FileManager = () => {
                                 onClick={() => enterDirectory(directory)}
                                 className="btn btn-link text-left flex items-center w-full text-lg"
                             >
-                                <FcFolder className="mr-2" /> {directory.split('/').pop()}
+                                <FcFolder  size={40} className="mr-2" /> {directory.split('/').pop()}
                             </button>
                         </div>
                     ))}
@@ -145,7 +145,7 @@ const FileManager = () => {
                                 rel="noopener noreferrer"
                                 className="flex items-center w-full"
                             >
-                                <FcDocument className="mr-2" /> {file.split('/').pop()}
+                                <FcDocument size={40} className="mr-2" /> {file.split('/').pop()}
                             </a>
                             <button
                                 onClick={() => handleDelete(file.split('/').pop())}
