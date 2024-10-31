@@ -4,29 +4,51 @@ import PrimaryButton from '@/Components/PrimaryButton';
 import TextInput from '@/Components/TextInput';
 import { Transition } from '@headlessui/react';
 import { Link, useForm, usePage } from '@inertiajs/react';
-import { FormEventHandler } from 'react';
+import axios from 'axios';
+import { useState } from 'react';
+
+interface UpdateProfileInformationProps {
+    mustVerifyEmail: boolean;
+    status: string;
+    className?: string;
+}
 
 export default function UpdateProfileInformation({
-    mustVerifyEmail,
-    status,
-    className = '',
-}: {
-    mustVerifyEmail: boolean;
-    status?: string;
-    className?: string;
-}) {
+                                                     mustVerifyEmail,
+                                                     status,
+                                                     className = '',
+                                                 }: UpdateProfileInformationProps) {
     const user = usePage().props.auth.user;
 
-    const { data, setData, patch, errors, processing, recentlySuccessful } =
-        useForm({
-            name: user.name,
-            email: user.email,
-        });
+    // Estado para manejar los datos del formulario
+    const { data, setData, errors, processing, recentlySuccessful } = useForm({
+        name: user.name,
+        email: user.email,
+    });
 
-    const submit: FormEventHandler = (e) => {
+    // Estados para el manejo de mensajes y modales
+    const [successMessage, setSuccessMessage] = useState('');
+    const [errorMessage, setErrorMessage] = useState('');
+    const [modalSuccess, setModalSuccess] = useState(false);
+    const [modalError, setModalError] = useState(false);
+
+    // Función para manejar el envío del formulario
+    const submit = (e: React.FormEvent) => {
         e.preventDefault();
 
-        patch(route('profile.update'));
+        axios.patch('/profile', data)
+            .then(() => {
+                // Manejar éxito
+                setSuccessMessage('Perfil actualizado exitosamente.');
+                setErrorMessage('');
+                setModalSuccess(true);
+            })
+            .catch(error => {
+                // Manejar error
+                setErrorMessage('Hubo un error al actualizar el perfil.');
+                setSuccessMessage('');
+                setModalError(true);
+            });
     };
 
     return (
@@ -35,7 +57,6 @@ export default function UpdateProfileInformation({
                 <h2 className="text-lg font-medium text-gray-900">
                     Información del perfil
                 </h2>
-
                 <p className="mt-1 text-sm text-gray-600">
                     Actualiza la información del perfil y la dirección de correo electrónico de tu cuenta.
                 </p>
@@ -112,6 +133,31 @@ export default function UpdateProfileInformation({
                     </Transition>
                 </div>
             </form>
+
+            {/* Modal de éxito */}
+            {modalSuccess && (
+                <div className="modal modal-open">
+                    <div className="modal-box">
+                        <h3 className="font-bold text-lg">Perfil actualizado exitosamente</h3>
+                        <div className="modal-action">
+                            <button className="btn btn-primary" onClick={() => setModalSuccess(false)}>Cerrar</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Modal de error */}
+            {modalError && (
+                <div className="modal modal-open">
+                    <div className="modal-box">
+                        <h3 className="font-bold text-lg">Error al actualizar el perfil</h3>
+                        <p className="py-4">{errorMessage}</p>
+                        <div className="modal-action">
+                            <button className="btn btn-primary" onClick={() => setModalError(false)}>Cerrar</button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </section>
     );
 }

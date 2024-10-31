@@ -1,18 +1,13 @@
 <?php
 
-use App\Http\Controllers\Files\FileManagerController;
-use App\Http\Controllers\FolderController;
-use App\Http\Controllers\ProfileController;
-use App\Http\Controllers\DirectorioController;
+use App\Http\Controllers\Admin\CompanyController;
 use App\Http\Controllers\Admin\EmployeeController;
-use App\Http\Controllers\Admin\LoginController;
-use App\Http\Controllers\Admin\RegisterCompanyController;
-use App\Http\Controllers\CompanyController;
-use App\Http\Controllers\PositionController;
+use App\Http\Controllers\DirectorioController;
+use App\Http\Controllers\Files\FileManagerController;
 use App\Http\Controllers\HierarchyLevelController;
 use App\Http\Controllers\PermissionController;
+use App\Http\Controllers\PositionController;
 use App\Http\Controllers\UserPermissionsController;
-use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -52,16 +47,18 @@ Route::middleware('auth')->prefix('admin')->name('admin.')->group(function () {
     Route::get('/employees', [EmployeeController::class, 'index'])->name('employees.index');
     Route::get('/employees/create', [EmployeeController::class, 'create'])->name('employees.create');
     Route::post('/employees/store', [EmployeeController::class, 'store'])->name('employees.store');
-
-    // Ruta para editar empleado
     Route::get('/employees/{id}/edit', [EmployeeController::class, 'edit'])->name('employees.edit');
     Route::patch('/employees/{id}', [EmployeeController::class, 'update'])->name('employees.update'); // o usar PUT
+
+    // Administración de empresas
+    Route::get('/companies', [CompanyController::class, 'index'])->name('companies.index');
+    Route::get('/companies/create', [CompanyController::class, 'create'])->name('companies.create');
+    Route::post('/companies/store', [CompanyController::class, 'store'])->name('companies.store');
 });
 
 // Grupo de rutas API
 Route::prefix('api')->name('api.')->group(function () {
     Route::get('/employees', [EmployeeController::class, 'index'])->name('employees.index');
-    Route::get('/companies', [CompanyController::class, 'index'])->name('companies.index');
     Route::get('/positions', [PositionController::class, 'index'])->name('positions.index');
     Route::post('/positions', [PositionController::class, 'store'])->name('positions.store');
     Route::get('/hierarchylevels', [HierarchyLevelController::class, 'index'])->name('hierarchylevels.index');

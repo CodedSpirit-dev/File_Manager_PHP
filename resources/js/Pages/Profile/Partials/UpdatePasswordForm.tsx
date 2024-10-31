@@ -5,10 +5,11 @@ import TextInput from '@/Components/TextInput';
 import { Transition } from '@headlessui/react';
 import { useForm } from '@inertiajs/react';
 import { FormEventHandler, useRef } from 'react';
+import axios from "axios";
 
 export default function UpdatePasswordForm({
-    className = '',
-}: {
+                                               className = '',
+                                           }: {
     className?: string;
 }) {
     const passwordInput = useRef<HTMLInputElement>(null);
@@ -31,21 +32,21 @@ export default function UpdatePasswordForm({
     const updatePassword: FormEventHandler = (e) => {
         e.preventDefault();
 
-        put(route('password.update'), {
-            preserveScroll: true,
-            onSuccess: () => reset(),
-            onError: (errors) => {
-                if (errors.password) {
+        axios.put('password', data)
+            .then(() => {
+                reset();
+            })
+            .catch((errors) => {
+                if (errors.response?.data?.password) {
                     reset('password', 'password_confirmation');
                     passwordInput.current?.focus();
                 }
 
-                if (errors.current_password) {
+                if (errors.response?.data?.current_password) {
                     reset('current_password');
                     currentPasswordInput.current?.focus();
                 }
-            },
-        });
+            });
     };
 
     return (

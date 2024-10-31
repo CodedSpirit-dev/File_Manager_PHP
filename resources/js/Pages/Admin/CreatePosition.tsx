@@ -26,7 +26,7 @@ export default function CreatePosition() {
 
     // Función para el manejo del envío del formulario
     const onSubmit = (data: { name: string; company_id: string; hierarchy_level: string }) => {
-        axios.post(route('api.positions.store'), data)
+        axios.post('/api/positions', data)
             .then(() => {
                 setSuccessMessage('El puesto ha sido registrado exitosamente.');
                 reset(); // Limpiar el formulario después del registro exitoso

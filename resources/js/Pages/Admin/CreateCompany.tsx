@@ -18,7 +18,7 @@ export default function CreateCompany() {
 
 
     const onSubmit = (data: { name: string }) => {
-        axios.post(route('admin.companies.store'), data)
+        axios.post('/admin/companies/store', data)
             .then(() => {
                 setSuccessMessage('La empresa ha sido registrada exitosamente.');
                 setErrorMessage('');

@@ -78,7 +78,7 @@ export default function CreateEmployee() {
         if (step < totalSteps) {
             setStep(step + 1);
         } else {
-            axios.post(route('admin.employees.store'), data)
+            axios.post('/admin/employees/store', data)
                 .then(response => {
                     const employeeId = response.data.id;
                     if (data.enable_permissions) {
