@@ -30,7 +30,7 @@ const EmployeeList: React.FC = (): React.ReactNode => {
         Promise.all([
             axios.get('admin/employees'),
             axios.get('api/positions'),
-            axios.get('api/companies'),
+            axios.get('admin/companies'),
         ])
             .then(([employeeResponse, positionsResponse, companiesResponse]) => {
                 setEmployees(employeeResponse.data);

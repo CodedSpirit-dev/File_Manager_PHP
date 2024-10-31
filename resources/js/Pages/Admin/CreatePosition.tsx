@@ -45,7 +45,7 @@ export default function CreatePosition() {
     };
 
     useEffect(() => {
-        axios.get('api/companies')
+        axios.get('admin/companies')
             .then(response => setCompanies(response.data))
             .catch(error => console.error('Error al cargar las empresas', error));
 
