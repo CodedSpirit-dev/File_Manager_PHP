@@ -16,12 +16,10 @@ export default function CreatePosition() {
     const [hierarchyLevels, setHierarchyLevels] = useState<HierarchyLevel[]>([]);
     const [successMessage, setSuccessMessage] = useState('');
     const [errorMessage, setErrorMessage] = useState('');
-    const [nameErrorMessage, setNameErrorMessage] = useState('');
 
     // Refs para modales
     const successModalRef = useRef<HTMLDialogElement | null>(null);
     const errorModalRef = useRef<HTMLDialogElement | null>(null);
-    const nameErrorModalRef = useRef<HTMLDialogElement | null>(null);
     const confirmModalRef = useRef<HTMLDialogElement | null>(null);
 
     // Función para el manejo del envío del formulario
@@ -34,13 +32,13 @@ export default function CreatePosition() {
                 successModalRef.current?.showModal();  // Mostrar modal de éxito
             })
             .catch(error => {
+                confirmModalRef.current?.close(); // Asegúrate de cerrar el modal de confirmación
                 if (error.response?.status === 480) {  // Conflicto: nombre ya tomado
                     setErrorMessage('El nombre del puesto ya está en uso.');
-                    errorModalRef.current?.showModal(); // Mostrar modal de error por nombre
                 } else {
                     setErrorMessage('Hubo un error al registrar el puesto.');
-                    errorModalRef.current?.showModal();  // Mostrar modal de error general
                 }
+                errorModalRef.current?.showModal();  // Mostrar modal de error general
             });
     };
 
@@ -174,16 +172,6 @@ export default function CreatePosition() {
                     <h2 className="text-center text-red-600">{errorMessage}</h2>
                     <div className="modal-action justify-center">
                         <button className="btn btn-info" onClick={() => errorModalRef.current?.close()}>Cerrar</button>
-                    </div>
-                </div>
-            </dialog>
-
-            {/* Modal de error por nombre ya tomado */}
-            <dialog ref={nameErrorModalRef} id="modal_position_name_error" className="modal">
-                <div className="modal-box">
-                    <h1 className="font-bold text-lg text-center text-red-600">{nameErrorMessage}</h1>
-                    <div className="modal-action justify-center">
-                        <button className="btn btn-info" onClick={() => nameErrorModalRef.current?.close()}>Cerrar</button>
                     </div>
                 </div>
             </dialog>
