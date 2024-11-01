@@ -11,6 +11,7 @@ import {
     deleteFile,
     createFolder,
     updateFolder,
+    deleteFolder,
 } from './api'
 import { usePage } from '@inertiajs/react';
 
@@ -263,6 +264,7 @@ const FileManager: React.FC = () => {
                     </button>
                 </div>
             </ModalToolbar>
+
 
             {/* Lista de ítems */}
             <div className="p-4">

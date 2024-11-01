@@ -103,18 +103,6 @@ export const updateFolder = async (oldFolderName: string, newFolderName: string,
     }
 };
 
-export const deleteFolder = async (folderName: string, path: string): Promise<any> => {
-    try {
-        const response = await axios.delete(`${FILEMANAGER_PREFIX}/folders/delete`, {
-            data: { folder_name: folderName, path }
-        });
-        return response.data;
-    } catch (error) {
-        console.error('Error al eliminar carpeta:', error);
-        throw error;
-    }
-}
-
 /**
  * Obtener permisos del usuario.
  * @returns {Promise<Object>} - Respuesta del servidor.
