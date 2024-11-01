@@ -3,8 +3,6 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Auth\LoginRequest;
-use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -28,7 +26,10 @@ class AuthenticatedSessionController extends Controller
     /**
      * Handle an incoming authentication request.
      */
-    public function store(Request $request)
+    /**
+     * Handle an incoming authentication request.
+     */
+    public function store(Request $request): RedirectResponse
     {
         // Validar las credenciales
         $credentials = $request->validate([
@@ -44,48 +45,9 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
-        // Cargar relaciones necesarias
-        $employee = Auth::user()->load(['permissions', 'position.company', 'position.hierarchy_level_detail']);
-
-        // Enviar datos al frontend
-        return Inertia::render('Home', [
-            'auth' => [
-                'employee' => [
-                    'id' => $employee->id,
-                    'first_name' => $employee->first_name,
-                    'last_name_1' => $employee->last_name_1,
-                    'last_name_2' => $employee->last_name_2,
-                    'position_id' => $employee->position_id,
-                    'username' => $employee->username,
-                    'registered_at' => $employee->registered_at,
-                    'last_login_at' => $employee->last_login_at,
-                    'company_id' => $employee->position->company_id ?? null,
-                    'position' => [
-                        'id' => $employee->position->id,
-                        'name' => $employee->position->name,
-                        'company_id' => $employee->position->company_id,
-                        'hierarchy_level' => $employee->position->hierarchy_level,
-                        'company' => [
-                            'id' => $employee->position->company->id,
-                            'name' => $employee->position->company->name,
-                        ],
-                        'hierarchy_level_detail' => [
-                            'level' => $employee->position->hierarchy_level_detail->level,
-                            'name' => $employee->position->hierarchy_level_detail->name,
-                        ],
-                    ],
-                    'permissions' => $employee->permissions->pluck('name'), // Array de nombres de permisos
-                ],
-                'user' => [
-                    'id' => Auth::user()->id,
-                    'name' => Auth::user()->name,
-                    'email' => Auth::user()->email,
-                    'email_verified_at' => Auth::user()->email_verified_at,
-                ],
-            ],
-        ]);
+        // Redirigir al usuario a la página raíz
+        return redirect()->intended('/');
     }
-
 
     /**
      * Destroy an authenticated session.

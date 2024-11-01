@@ -1,6 +1,6 @@
 // src/contexts/PermissionsContext.tsx
 
-import React, { createContext, useContext, ReactNode } from 'react';
+import React, { createContext, useContext } from 'react';
 import { usePage } from '@inertiajs/react';
 import { EmployeePageProps } from '@/types';
 
@@ -10,11 +10,7 @@ interface PermissionsContextProps {
 
 const PermissionsContext = createContext<PermissionsContextProps | undefined>(undefined);
 
-interface PermissionsProviderProps {
-    children: ReactNode;
-}
-
-export const PermissionsProvider: React.FC<PermissionsProviderProps> = ({ children }) => {
+export const PermissionsProvider: React.FC = ({ children }) => {
     const { auth } = usePage<EmployeePageProps>().props;
     const permissions = auth.user?.permissions || [];
 

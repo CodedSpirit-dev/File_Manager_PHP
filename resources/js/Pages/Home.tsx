@@ -11,7 +11,6 @@ import { Head, usePage } from '@inertiajs/react';
 import CreateCompany from './Admin/CreateCompany';
 import CreatePosition from './Admin/CreatePosition';
 import FileManager from './FileSystem/FileManager';
-import { hasPermission} from "@/Pages/utils/permissions";
 import AdminDropdown from '@/Components/AdminDropdown';
 import { PermissionsProvider, usePermissions } from '@/contexts/PermissionsContext';
 import Loading from "@/Components/Loading";
@@ -19,7 +18,7 @@ import Loading from "@/Components/Loading";
 const HomeContent: React.FC = () => {
     const { hasPermission } = usePermissions();
     const { auth } = usePage<EmployeePageProps>().props;
-    const employee = auth.employee;
+    const employee = auth.user; // Actualizado a auth.user
 
     const [component, setComponent] = useState<JSX.Element | null>(null);
 
@@ -96,6 +95,7 @@ const HomeContent: React.FC = () => {
                                             No cerrar sesión
                                         </button>
                                         <button
+                                            type="button" // Añadir type="button" para evitar el envío del formulario
                                             className="btn m-3 btn-warning"
                                             onClick={closeSession}
                                         >

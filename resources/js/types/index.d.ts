@@ -1,6 +1,7 @@
 // src/types/index.ts
 
 export interface User {
+    permissions: any[];
     id: number;
     name: string;
     email: string;
