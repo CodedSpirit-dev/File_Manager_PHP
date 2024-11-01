@@ -1,5 +1,7 @@
 <?php
 
+// routes/web.php
+
 use App\Http\Controllers\Files\FileManagerController;
 use Illuminate\Support\Facades\Route;
 
@@ -30,6 +32,6 @@ Route::prefix('filemanager')->name('filemanager.')->middleware('auth:employee')-
     // Ruta para actualizar (renombrar) carpetas
     Route::put('/folders/update', [FileManagerController::class, 'updateFolder'])->name('folders.update');
 
-    // Opcional: Ruta para actualizar archivos
-    Route::put('/files/update', [FileManagerController::class, 'updateFile'])->name('files.update');
+    // Ruta para descargar archivos
+    Route::get('/files/download', [FileManagerController::class, 'download'])->name('files.download');
 });
