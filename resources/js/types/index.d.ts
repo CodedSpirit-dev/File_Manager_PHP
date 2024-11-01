@@ -1,3 +1,5 @@
+// interfaces.ts
+
 export interface User {
     id: number;
     name: string;
@@ -14,24 +16,26 @@ export type PageProps<
 };
 
 export interface Employee {
-    'id': number;
-    'first_name': string;
-    'last_name_1': string;
-    'last_name_2': string;
-    'position_id': number;
-    'hierarchy_level': number;
-    'username': string;
-    'password': string;
-    'registered_at': string;
-    company_id?: number | null;
+    company_id: any;
+    id: number;
+    first_name: string;
+    last_name_1: string;
+    last_name_2: string;
+    position_id: number;
+    username: string;
+    registered_at: string;
+    last_login_at?: string;
+    // Relaciones
+    position: Position;
+    permissions: Permission[];
 }
 
-export type EmployeePageProps <
-T extends Record<string, unknown> = Record<string, unknown>,
+export type EmployeePageProps<
+    T extends Record<string, unknown> = Record<string, unknown>,
 > = T & {
-auth: {
-    employee: Employee;
-};
+    auth: {
+        employee: Employee;
+    };
 };
 
 export interface Company {
@@ -44,8 +48,10 @@ export interface Position {
     name: string;
     company_id: number;
     hierarchy_level: number;
+    // Relaciones
+    company: Company;
+    hierarchy_level_detail: HierarchyLevel;
 }
-
 
 export interface HierarchyLevel {
     level: number;
@@ -54,6 +60,6 @@ export interface HierarchyLevel {
 
 export interface Permission {
     id: number;
-    permission_name: string;
-    permission_description: string;
+    name: string;
+    description: string;
 }

@@ -399,7 +399,7 @@ export default function CreateEmployee() {
                                                     onChange={() => handlePermissionChange(permission.id)} // Cambia aquí
                                                     className="checkbox checkbox-primary mr-2"
                                                 />
-                                                <span>{permission.permission_description}</span>
+                                                <span>{permission.description}</span>
                                             </label>
                                         ))}
                                     </div>

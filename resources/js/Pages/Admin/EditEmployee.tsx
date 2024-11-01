@@ -438,7 +438,7 @@ const EditEmployee: React.FC<EditEmployeeProps> = ({ employee, positions, compan
                                                     onChange={() => handlePermissionChange(permission.id)}
                                                     className="checkbox checkbox-primary mr-2"
                                                 />
-                                                <span>{permission.permission_description}</span>
+                                                <span>{permission.description}</span>
                                             </label>
                                         ))}
                                     </div>
