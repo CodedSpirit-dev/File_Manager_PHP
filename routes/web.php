@@ -3,10 +3,10 @@
 use App\Http\Controllers\Admin\CompanyController;
 use App\Http\Controllers\Admin\EmployeeController;
 use App\Http\Controllers\DirectorioController;
+use App\Http\Controllers\EmployeePermissionsController;
 use App\Http\Controllers\HierarchyLevelController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\PositionController;
-use App\Http\Controllers\UserPermissionsController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -65,7 +65,7 @@ Route::prefix('api')->name('api.')->group(function () {
     Route::post('/positions', [PositionController::class, 'store'])->name('positions.store');
     Route::get('/hierarchylevels', [HierarchyLevelController::class, 'index'])->name('hierarchylevels.index');
     Route::get('/permissions', [PermissionController::class, 'index'])->name('permissions.index');
-    Route::post('/userpermissions', [UserPermissionsController::class, 'store'])->name('userpermissions.store');
+    Route::post('/userpermissions', [EmployeePermissionsController::class, 'store'])->name('userpermissions.store');
     Route::get('/employees/{id}/permissions', [EmployeeController::class, 'getPermissions'])->name('employees.permissions');
 });
 
