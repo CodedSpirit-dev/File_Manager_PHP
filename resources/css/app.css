@@ -10,6 +10,10 @@
         @apply min-h-screen bg-gray-100 text-gray-800;
     }
 
+    .btn{
+        @apply rounded-xl;
+    }
+
     /* Contenedor Principal */
     .container__25 {
         @apply mx-auto max-w-7xl bg-white p-6 shadow-md rounded-lg w-full;
@@ -247,6 +251,18 @@
     /* Animación de hover para el botón de eliminar */
     .file-manager-delete-button:hover {
         background-color: #c0392b;
+    }
+    /* src/index.css */
+
+    .loader {
+        border-top-color: #3490dc; /* Color principal del loader */
+        animation: spin 1s infinite linear;
+    }
+
+    @keyframes spin {
+        to {
+            transform: rotate(360deg);
+        }
     }
 
 

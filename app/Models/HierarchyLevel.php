@@ -2,14 +2,14 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 
 /**
  * Class HierarchyLevel
  *
  * This model represents a hierarchy level entity in the application.
- * It defines the fillable attributes and the relationships with the User and Position models.
+ * It defines the fillable attributes and the relationships with the Position models.
  *
  * @package App\Models
  *

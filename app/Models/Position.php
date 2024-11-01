@@ -6,12 +6,11 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\HierarchyLevel;
 
-
 /**
  * Class Position
  *
  * This model represents a position entity in the application.
- * It defines the fillable attributes and the relationships with the Company, HierarchyLevel, and User models.
+ * It defines the fillable attributes and the relationships with the Company, HierarchyLevel, and Employee models.
  *
  * @package App\Models
  *
@@ -30,7 +29,7 @@ class Position extends Model
 {
     use HasFactory;
 
-    protected $table = 'positions'; // Indica que utilizarás la tabla 'companies'
+    protected $table = 'positions';
 
     /**
      * The primary key associated with the table.
@@ -64,17 +63,17 @@ class Position extends Model
     }
 
     /**
-     * Get the hierarchy level that owns the position.
+     * Get the hierarchy level detail associated with the position.
      *
      * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
      */
-    public function hierarchyLevels()
+    public function hierarchy_level_detail()
     {
-        return $this->belongsTo(HierarchyLevel::class, 'level', 'hierarchy_level');
+        return $this->belongsTo(HierarchyLevel::class, 'hierarchy_level', 'level');
     }
 
     /**
-     * Get the users associated with the position.
+     * Get the employees associated with the position.
      *
      * @return \Illuminate\Database\Eloquent\Relations\HasMany
      */

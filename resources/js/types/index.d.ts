@@ -1,4 +1,4 @@
-// interfaces.ts
+// src/types/index.ts
 
 export interface User {
     id: number;
@@ -12,11 +12,11 @@ export type PageProps<
 > = T & {
     auth: {
         user: User;
+        employee: Employee;
     };
 };
 
 export interface Employee {
-    company_id: any;
     id: number;
     first_name: string;
     last_name_1: string;
@@ -25,16 +25,18 @@ export interface Employee {
     username: string;
     registered_at: string;
     last_login_at?: string;
-    // Relaciones
+    company_id?: number | null;
     position: Position;
-    permissions: Permission[];
+    permissions: string[]; // Array de nombres de permisos
 }
+
 
 export type EmployeePageProps<
     T extends Record<string, unknown> = Record<string, unknown>,
 > = T & {
     auth: {
         employee: Employee;
+        user: User;
     };
 };
 
@@ -48,7 +50,6 @@ export interface Position {
     name: string;
     company_id: number;
     hierarchy_level: number;
-    // Relaciones
     company: Company;
     hierarchy_level_detail: HierarchyLevel;
 }

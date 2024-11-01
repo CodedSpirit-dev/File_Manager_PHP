@@ -227,7 +227,7 @@ class EmployeeController extends Controller
     {
         return $this->belongsToMany(Permission::class, 'employee_permissions', 'employee_id', 'permission_id');
     }
-
+    
     public function position()
     {
         return $this->belongsTo(Position::class);

@@ -28,25 +28,64 @@ class AuthenticatedSessionController extends Controller
     /**
      * Handle an incoming authentication request.
      */
-    public function store(LoginRequest $request): RedirectResponse
+    public function store(Request $request)
     {
-        // Autenticar usando el guard 'employee'
-        if (Auth::guard('employee')->attempt($request->only('username', 'password'))) {
-            $request->session()->regenerate();
+        // Validar las credenciales
+        $credentials = $request->validate([
+            'username' => ['required', 'string'],
+            'password' => ['required', 'string'],
+        ]);
 
-            // Actualizar el último login
-            $employee = Auth::guard('employee')->user();
-            $employee->last_login_at = Carbon::now();
-            $employee->save();
-
-            return redirect()->intended(route('home', [], false));
+        if (!Auth::attempt($credentials, $request->boolean('remember'))) {
+            return back()->withErrors([
+                'username' => 'Las credenciales proporcionadas son incorrectas.',
+            ]);
         }
 
-        // Si la autenticación falla
-        return back()->withErrors([
-            'username' => 'Las credenciales proporcionadas son incorrectas.',
-        ])->onlyInput('username');
+        $request->session()->regenerate();
+
+        // Cargar relaciones necesarias
+        $employee = Auth::user()->load(['permissions', 'position.company', 'position.hierarchy_level_detail']);
+
+        // Enviar datos al frontend
+        return Inertia::render('Home', [
+            'auth' => [
+                'employee' => [
+                    'id' => $employee->id,
+                    'first_name' => $employee->first_name,
+                    'last_name_1' => $employee->last_name_1,
+                    'last_name_2' => $employee->last_name_2,
+                    'position_id' => $employee->position_id,
+                    'username' => $employee->username,
+                    'registered_at' => $employee->registered_at,
+                    'last_login_at' => $employee->last_login_at,
+                    'company_id' => $employee->position->company_id ?? null,
+                    'position' => [
+                        'id' => $employee->position->id,
+                        'name' => $employee->position->name,
+                        'company_id' => $employee->position->company_id,
+                        'hierarchy_level' => $employee->position->hierarchy_level,
+                        'company' => [
+                            'id' => $employee->position->company->id,
+                            'name' => $employee->position->company->name,
+                        ],
+                        'hierarchy_level_detail' => [
+                            'level' => $employee->position->hierarchy_level_detail->level,
+                            'name' => $employee->position->hierarchy_level_detail->name,
+                        ],
+                    ],
+                    'permissions' => $employee->permissions->pluck('name'), // Array de nombres de permisos
+                ],
+                'user' => [
+                    'id' => Auth::user()->id,
+                    'name' => Auth::user()->name,
+                    'email' => Auth::user()->email,
+                    'email_verified_at' => Auth::user()->email_verified_at,
+                ],
+            ],
+        ]);
     }
+
 
     /**
      * Destroy an authenticated session.
