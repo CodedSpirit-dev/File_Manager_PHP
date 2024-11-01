@@ -142,7 +142,7 @@ const FileManager = () => {
                         className="file-manager-input"
                     />
                     <button className="file-manager-upload-button" onClick={handleUpload}>
-                        <FcUpload className="mr-2" /> Subir Archivo
+                        <FcUpload size={36} className="mr-2" /> Subir Archivo
                     </button>
                 </div>
             </div>
@@ -194,10 +194,10 @@ const FileManager = () => {
                             rel="noopener noreferrer"
                             className="file-manager-card-link"
                         >
-                            <FcDocument className="file-manager-file-icon" />
+                            <FcDocument size={70}/>
                             <span className="file-manager-name" title={file.split('/').pop()}>
-                                {file.split('/').pop()}
-                            </span>
+            {file.split('/').pop()}
+        </span>
                         </a>
                         <button
                             onClick={() => handleDelete(file.split('/').pop())}
@@ -206,6 +206,7 @@ const FileManager = () => {
                             Eliminar
                         </button>
                     </div>
+
                 ))}
             </div>
         </div>
