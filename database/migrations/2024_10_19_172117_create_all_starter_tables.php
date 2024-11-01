@@ -7,33 +7,35 @@ use Illuminate\Support\Facades\Schema;
 /**
  * Class CreateAllStarterTables
  *
- * Esta migración crea las tablas iniciales para la aplicación, incluyendo niveles de jerarquía,
- * empresas, puestos, empleados y permisos.
+ * This migration creates the initial tables for the application, including hierarchy levels,
+ * companies, positions, employees, and permissions.
  */
 class CreateAllStarterTables extends Migration
 {
     /**
      * Run the migrations.
      *
+     * This method creates the necessary tables for the application.
+     *
      * @return void
      */
     public function up()
     {
-        // Tabla de niveles de jerarquía
+        // Table for hierarchy levels
         Schema::create('hierarchy_levels', function (Blueprint $table) {
             $table->unsignedInteger('level')->primary();
             $table->string('name');
             $table->timestamps();
         });
 
-        // Tabla de empresas
+        // Table for companies
         Schema::create('companies', function (Blueprint $table) {
             $table->increments('id');
             $table->string('name');
             $table->timestamps();
         });
 
-        // Tabla de puestos
+        // Table for positions
         Schema::create('positions', function (Blueprint $table) {
             $table->increments('id');
             $table->string('name');
@@ -45,34 +47,34 @@ class CreateAllStarterTables extends Migration
             $table->foreign('hierarchy_level')->references('level')->on('hierarchy_levels');
         });
 
-        // Tabla de empleados
+        // Table for employees
         Schema::create('employees', function (Blueprint $table) {
             $table->increments('id');
             $table->string('first_name');
             $table->string('last_name_1');
-            $table->string('last_name_2');
-            $table->unsignedInteger('position_id');
+            $table->string('last_name_2')->nullable();
+            $table->unsignedInteger('position_id')->nullable();
             $table->string('username')->unique();
             $table->string('password');
-            $table->date('registered_at');
+            $table->date('registered_at')->nullable();
+            $table->timestamp('last_login_at')->nullable();
             $table->timestamps();
 
             $table->foreign('position_id')->references('id')->on('positions');
         });
 
-        // Tabla de permisos
+        // Table for permissions
         Schema::create('permissions', function (Blueprint $table) {
             $table->increments('id');
-            $table->string('permission_name');
-            $table->string('permission_description');
+            $table->string('name');
+            $table->string('description');
             $table->timestamps();
-
         });
 
-        // Migración para la tabla pivote user_permissions
-        Schema::create('user_permissions', function (Blueprint $table) {
-            $table->unsignedInteger('employee_id'); // ID del empleado
-            $table->unsignedInteger('permission_id'); // ID del permiso
+        // Pivot table for employee permissions
+        Schema::create('employee_permissions', function (Blueprint $table) {
+            $table->unsignedInteger('employee_id'); // Employee ID
+            $table->unsignedInteger('permission_id'); // Permission ID
 
             $table->foreign('employee_id')->references('id')->on('employees');
             $table->foreign('permission_id')->references('id')->on('permissions');
@@ -82,11 +84,13 @@ class CreateAllStarterTables extends Migration
     /**
      * Reverse the migrations.
      *
+     * This method drops the tables created by the up() method.
+     *
      * @return void
      */
     public function down()
     {
-        Schema::dropIfExists('user_permissions');
+        Schema::dropIfExists('employee_permissions');
         Schema::dropIfExists('permissions');
         Schema::dropIfExists('employees');
         Schema::dropIfExists('positions');

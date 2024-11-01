@@ -30,14 +30,14 @@ class Permission extends Model
     use HasFactory;
 
     protected $fillable = [
-        'id',
-        'permission_name',
-        'permission_description',
+        'name',
+        'description',
     ];
 
-    public function userPermissions()
+
+    public function employeePermissions()
     {
-        return $this->hasMany(UserPermission::class, 'permission_id', 'id');
+        return $this->hasMany(EmployeePermission::class, 'permission_id', 'id');
     }
 
 }

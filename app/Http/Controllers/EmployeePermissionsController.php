@@ -3,9 +3,10 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
+use App\Models\Employee;
+use App\Models\Permission;
 
-class UserPermissionsController extends Controller
+class EmployeePermissionsController extends Controller
 {
     /**
      * Asignar permisos a un empleado.
@@ -26,19 +27,12 @@ class UserPermissionsController extends Controller
         $employeeId = $request->input('employee_id');
         $permissions = $request->input('permissions');
 
-        // Eliminar permisos anteriores del empleado si existen
-        DB::table('user_permissions')->where('employee_id', $employeeId)->delete();
+        // Obtener el empleado usando Eloquent
+        $employee = Employee::findOrFail($employeeId);
 
-        // Insertar nuevos permisos asignados
-        $data = [];
-        foreach ($permissions as $permissionId) {
-            $data[] = [
-                'employee_id' => $employeeId,
-                'permission_id' => $permissionId,
-            ];
-        }
-
-        DB::table('user_permissions')->insert($data);
+        // Asignar los permisos utilizando la relación Eloquent 'permissions'
+        // Esto eliminará los permisos anteriores y asignará los nuevos
+        $employee->permissions()->sync($permissions);
 
         // Retornar respuesta exitosa
         return response()->json(['message' => 'Permisos asignados exitosamente']);
