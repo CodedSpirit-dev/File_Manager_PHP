@@ -1,4 +1,4 @@
-// src/components/FileManager/Modal.tsx
+// src/components/FileManager/Components/Modal.tsx
 
 import React from 'react';
 
@@ -9,7 +9,7 @@ interface ModalProps {
     onClose: () => void;
 }
 
-const ModalToolbar: React.FC<ModalProps> = ({ isOpen, title, children, onClose }) => {
+const Modal: React.FC<ModalProps> = ({ isOpen, title, children, onClose }) => {
     if (!isOpen) return null;
 
     return (
@@ -25,7 +25,7 @@ const ModalToolbar: React.FC<ModalProps> = ({ isOpen, title, children, onClose }
                     <button className="btn btn-secondary mr-2" onClick={onClose}>
                         Cancelar
                     </button>
-                    <button className="btn btn-primary" onClick={() => {}}>
+                    <button className="btn btn-primary" onClick={() => { /* Acción definida en el padre */ }}>
                         Confirmar
                     </button>
                 </div>
@@ -34,4 +34,4 @@ const ModalToolbar: React.FC<ModalProps> = ({ isOpen, title, children, onClose }
     );
 };
 
-export default ModalToolbar;
+export default Modal;

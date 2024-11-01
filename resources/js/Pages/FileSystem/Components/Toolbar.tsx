@@ -1,9 +1,8 @@
-// src/components/FileManager/FileManagerToolbar.tsx
+// src/components/FileManager/Components/FileManagerToolbar.tsx
 
 import React from 'react';
 import { FcFolder, FcUpload, FcFile, FcDownload, FcDeleteRow, FcMenu } from 'react-icons/fc';
-import {HiChevronDoubleDown} from "react-icons/hi2";
-
+import {BiSolidChevronDown} from "react-icons/bi";
 interface FileManagerToolbarProps {
     onCreateFolder: () => void;
     onUploadFolder: () => void;
@@ -26,7 +25,7 @@ const FileManagerToolbar: React.FC<FileManagerToolbarProps> = ({
                                                                    hasPermission,
                                                                }) => {
     return (
-        <div className="flex items-center justify-start space-x-4 p-4 bg-white shadow">
+        <div className="flex items-center justify-start space-x-4 p-4 bg-white">
             {/* Botón: Crear nueva carpeta */}
             {hasPermission('can_create_folders') && (
                 <button
@@ -34,12 +33,12 @@ const FileManagerToolbar: React.FC<FileManagerToolbarProps> = ({
                     onClick={onCreateFolder}
                 >
                     <FcFolder className="w-5 h-5" />
-                    <span>Crear carpeta</span>
+                    <span>Crear nueva carpeta</span>
                 </button>
             )}
 
             {/* Botón: Subir carpeta */}
-            {hasPermission('can_upload_folders') && (
+            {hasPermission('can_create_folders') && (
                 <button
                     className="btn btn-primary flex items-center space-x-2"
                     onClick={onUploadFolder}
@@ -50,7 +49,7 @@ const FileManagerToolbar: React.FC<FileManagerToolbarProps> = ({
             )}
 
             {/* Botón: Subir archivo */}
-            {hasPermission('can_upload_files') && (
+            {hasPermission('can_create_files') && (
                 <button
                     className="btn btn-primary flex items-center space-x-2"
                     onClick={onUploadFile}
@@ -68,12 +67,12 @@ const FileManagerToolbar: React.FC<FileManagerToolbarProps> = ({
                     disabled={!isItemSelected}
                 >
                     <FcDownload className="w-5 h-5" />
-                    <span>Descargar</span>
+                    <span>Descargar archivo</span>
                 </button>
             )}
 
             {/* Botón: Eliminar */}
-            {hasPermission('can_delete_files') && (
+            {(hasPermission('can_delete_files') || hasPermission('can_delete_folders')) && (
                 <button
                     className="btn btn-error flex items-center space-x-2"
                     onClick={onDelete}
@@ -85,29 +84,27 @@ const FileManagerToolbar: React.FC<FileManagerToolbarProps> = ({
             )}
 
             {/* Dropdown: Ordenar */}
-            {hasPermission('can_sort_files') && (
-                <div className="dropdown dropdown-end">
-                    <button
-                        tabIndex={0}
-                        className="btn btn-secondary flex items-center space-x-2"
-                    >
-                        <FcMenu className="w-5 h-5" />
-                        <span>Ordenar</span>
-                        <HiChevronDoubleDown className="w-4 h-4 ml-1" />
-                    </button>
-                    <ul
-                        tabIndex={0}
-                        className="dropdown-content menu p-2 shadow bg-base-100 rounded-box w-52"
-                    >
-                        <li>
-                            <button onClick={() => onSort('date')}>Por fecha</button>
-                        </li>
-                        <li>
-                            <button onClick={() => onSort('name')}>Por nombre</button>
-                        </li>
-                    </ul>
-                </div>
-            )}
+            <div className="dropdown dropdown-end">
+                <button
+                    tabIndex={0}
+                    className="btn btn-secondary flex items-center space-x-2"
+                >
+                    <FcMenu className="w-5 h-5" />
+                    <span>Ordenar</span>
+                    <BiSolidChevronDown className="w-4 h-4 ml-1" />
+                </button>
+                <ul
+                    tabIndex={0}
+                    className="dropdown-content menu p-2 shadow bg-base-100 rounded-box w-52"
+                >
+                    <li>
+                        <button onClick={() => onSort('date')}>Por fecha</button>
+                    </li>
+                    <li>
+                        <button onClick={() => onSort('name')}>Por nombre</button>
+                    </li>
+                </ul>
+            </div>
         </div>
     );
 };

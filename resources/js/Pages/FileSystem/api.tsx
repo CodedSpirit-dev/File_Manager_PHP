@@ -1,4 +1,5 @@
 // src/api/fileManagerApi.ts
+
 import axios from "axios";
 
 const FILEMANAGER_PREFIX = '/filemanager';
@@ -46,6 +47,31 @@ export const uploadFile = async (file: File, path: string): Promise<any> => {
 };
 
 /**
+ * Subir una carpeta como archivo zip.
+ * @param {File} zipFile - Archivo zip que representa la carpeta.
+ * @param {string} path - Ruta donde se extraerá la carpeta.
+ * @returns {Promise<Object>} - Respuesta del servidor.
+ */
+export const uploadFolder = async (zipFile: File, path: string): Promise<any> => {
+    try {
+        const formData = new FormData();
+        formData.append('file', zipFile);
+        formData.append('path', path);
+
+        const response = await axios.post(`${FILEMANAGER_PREFIX}/folders/upload`, formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data'
+            }
+        });
+
+        return response.data;
+    } catch (error) {
+        console.error('Error al subir carpeta:', error);
+        throw error;
+    }
+};
+
+/**
  * Eliminar un archivo.
  * @param {string} filename - Nombre del archivo a eliminar.
  * @param {string} path - Ruta donde se encuentra el archivo.
@@ -59,6 +85,24 @@ export const deleteFile = async (filename: string, path: string): Promise<any> =
         return response.data;
     } catch (error) {
         console.error('Error al eliminar archivo:', error);
+        throw error;
+    }
+};
+
+/**
+ * Eliminar una carpeta.
+ * @param {string} folderName - Nombre de la carpeta a eliminar.
+ * @param {string} path - Ruta donde se encuentra la carpeta.
+ * @returns {Promise<Object>} - Respuesta del servidor.
+ */
+export const deleteFolder = async (folderName: string, path: string): Promise<any> => {
+    try {
+        const response = await axios.delete(`${FILEMANAGER_PREFIX}/folders/delete`, {
+            data: { folder_name: folderName, path }
+        });
+        return response.data;
+    } catch (error) {
+        console.error('Error al eliminar carpeta:', error);
         throw error;
     }
 };
@@ -99,32 +143,6 @@ export const updateFolder = async (oldFolderName: string, newFolderName: string,
         return response.data;
     } catch (error) {
         console.error('Error al renombrar carpeta:', error);
-        throw error;
-    }
-};
-
-export const deleteFolder = async (folderName: string, path: string): Promise<any> => {
-    try {
-        const response = await axios.delete(`${FILEMANAGER_PREFIX}/folders/delete`, {
-            data: { folder_name: folderName, path }
-        });
-        return response.data;
-    } catch (error) {
-        console.error('Error al eliminar carpeta:', error);
-        throw error;
-    }
-}
-
-/**
- * Obtener permisos del usuario.
- * @returns {Promise<Object>} - Respuesta del servidor.
- */
-export const getUserPermissions = async (): Promise<any> => {
-    try {
-        const response = await axios.get('/api/user/permissions');
-        return response.data;
-    } catch (error) {
-        console.error('Error al obtener permisos del usuario:', error);
         throw error;
     }
 };

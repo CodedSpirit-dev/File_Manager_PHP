@@ -1,4 +1,5 @@
-// src/components/FileManager/Modal.tsx
+// src/components/FileManager/Components/Modal.tsx
+
 import React from 'react';
 
 interface ModalProps {
@@ -8,7 +9,7 @@ interface ModalProps {
     onClose: () => void;
 }
 
-const ModalToolbar: React.FC<ModalProps> = ({ isOpen, title, children, onClose }) => {
+const Modal: React.FC<ModalProps> = ({ isOpen, title, children, onClose }) => {
     if (!isOpen) return null;
 
     return (
@@ -25,4 +26,4 @@ const ModalToolbar: React.FC<ModalProps> = ({ isOpen, title, children, onClose }
     );
 };
 
-export default ModalToolbar;
+export default Modal;

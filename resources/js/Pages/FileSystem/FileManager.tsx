@@ -1,8 +1,7 @@
 // src/components/FileManager/FileManager.tsx
 
 import React, { useState, useEffect } from 'react';
-import FileManagerToolbar from './Components/Toolbar';
-import ModalToolbar from './Components/Modal';
+import Modal from './Components/Modal';
 import { FaFolder, FaFile } from 'react-icons/fa';
 import axios from 'axios';
 import {
@@ -10,10 +9,11 @@ import {
     uploadFile,
     deleteFile,
     createFolder,
-    updateFolder,
+    uploadFolder,
     deleteFolder,
-} from './api'
+} from './api';
 import { usePage } from '@inertiajs/react';
+import FileManagerToolbar from "@/Pages/FileSystem/Components/Toolbar";
 
 interface Item {
     id: number;
@@ -98,7 +98,7 @@ const FileManager: React.FC = () => {
     };
 
     // Funciones de manejo de acciones desde la toolbar
-    const handleCreateFolder = () => {
+    const handleCreateFolderAction = () => {
         setIsCreateFolderOpen(true);
     };
 
@@ -123,12 +123,28 @@ const FileManager: React.FC = () => {
         }
     };
 
-    const handleUploadFolder = () => {
-        // Implementar lógica para subir una carpeta si es necesario
-        alert('Funcionalidad de subir carpeta no implementada aún.');
+    const handleUploadFolderAction = async () => {
+        const zipInput = document.createElement('input');
+        zipInput.type = 'file';
+        zipInput.accept = 'application/zip';
+        zipInput.onchange = async () => {
+            if (zipInput.files && zipInput.files[0]) {
+                const zipFile = zipInput.files[0];
+                try {
+                    const response = await uploadFolder(zipFile, currentPath);
+                    alert(response.message);
+                    // Actualizar la lista de ítems
+                    fetchFiles();
+                } catch (error) {
+                    alert('Error al subir la carpeta.');
+                    console.error(error);
+                }
+            }
+        };
+        zipInput.click();
     };
 
-    const handleUploadFile = async () => {
+    const handleUploadFileAction = async () => {
         const fileInput = document.createElement('input');
         fileInput.type = 'file';
         fileInput.onchange = async () => {
@@ -147,7 +163,7 @@ const FileManager: React.FC = () => {
         fileInput.click();
     };
 
-    const handleDownloadFile = async () => {
+    const handleDownloadFileAction = async () => {
         if (selectedItem) {
             const item = items.find(i => i.name === selectedItem);
             if (item && item.type === 'file') {
@@ -176,7 +192,7 @@ const FileManager: React.FC = () => {
         }
     };
 
-    const handleDelete = async () => {
+    const handleDeleteAction = async () => {
         if (selectedItem) {
             const confirmDelete = window.confirm(`¿Estás seguro de eliminar "${selectedItem}"?`);
             if (confirmDelete) {
@@ -187,9 +203,8 @@ const FileManager: React.FC = () => {
                             const response = await deleteFile(selectedItem, currentPath);
                             alert(response.message);
                         } else if (item.type === 'folder') {
-                            // Implementar lógica para eliminar carpeta
-                            alert('Eliminar carpetas no está implementado aún.');
-                            return;
+                            const response = await deleteFolder(selectedItem, currentPath);
+                            alert(response.message);
                         }
 
                         // Actualizar la lista de ítems
@@ -232,18 +247,18 @@ const FileManager: React.FC = () => {
 
             {/* Cinta de opciones */}
             <FileManagerToolbar
-                onCreateFolder={handleCreateFolder}
-                onUploadFolder={handleUploadFolder}
-                onUploadFile={handleUploadFile}
-                onDownloadFile={handleDownloadFile}
-                onDelete={handleDelete}
+                onCreateFolder={handleCreateFolderAction}
+                onUploadFolder={handleUploadFolderAction}
+                onUploadFile={handleUploadFileAction}
+                onDownloadFile={handleDownloadFileAction}
+                onDelete={handleDeleteAction}
                 onSort={handleSort}
                 isItemSelected={selectedItem !== null}
                 hasPermission={hasPermission}
             />
 
             {/* Modal para Crear Nueva Carpeta */}
-            <ModalToolbar
+            <Modal
                 isOpen={isCreateFolderOpen}
                 title="Crear Nueva Carpeta"
                 onClose={() => setIsCreateFolderOpen(false)}
@@ -263,8 +278,7 @@ const FileManager: React.FC = () => {
                         Crear
                     </button>
                 </div>
-            </ModalToolbar>
-
+            </Modal>
 
             {/* Lista de ítems */}
             <div className="p-4">
@@ -293,7 +307,6 @@ const FileManager: React.FC = () => {
             </div>
         </div>
     );
-
 };
 
 export default FileManager;
