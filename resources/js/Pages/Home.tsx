@@ -57,7 +57,7 @@ const HomeContent: React.FC = () => {
         <>
             <Head title="Inicio" />
             <section className="container mx-auto">
-                <nav className="nav__bar rounded-lg flex items-center justify-between p-4 bg-gray-100">
+                <nav className="nav__bar rounded-lg flex items-center justify-between p-4">
                     <div className="flex space-x-4">
                         {hasPermission('can_read_files') && (
                             <Button
