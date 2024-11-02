@@ -33,8 +33,8 @@ Route::prefix('filemanager')->name('filemanager.')->middleware('auth:employee')-
     // Ruta para descargar archivos
     Route::get('/files/download', [FileManagerController::class, 'download'])->name('files.download');
 
-    // Ruta para subir carpetas (como archivos zip)
-    Route::post('/folders/upload', [FileManagerController::class, 'uploadFolder'])->name('folders.upload');
+    // Ruta para subir directorios
+    Route::post('/folders/upload-directory', [FileManagerController::class, 'uploadDirectory'])->name('folders.uploadDirectory');
 
     // Ruta para eliminar carpetas
     Route::delete('/folders/delete', [FileManagerController::class, 'deleteFolder'])->name('folders.delete');

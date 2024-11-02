@@ -2,7 +2,8 @@
 
 import React from 'react';
 import { FcFolder, FcUpload, FcFile, FcDownload, FcDeleteRow, FcMenu } from 'react-icons/fc';
-import {BiSolidChevronDown} from "react-icons/bi";
+import {BarsArrowDownIcon} from "@heroicons/react/16/solid";
+
 interface FileManagerToolbarProps {
     onCreateFolder: () => void;
     onUploadFolder: () => void;
@@ -29,7 +30,7 @@ const FileManagerToolbar: React.FC<FileManagerToolbarProps> = ({
             {/* Botón: Crear nueva carpeta */}
             {hasPermission('can_create_folders') && (
                 <button
-                    className="btn btn-primary flex items-center space-x-2"
+                    className="btn flex items-center space-x-2"
                     onClick={onCreateFolder}
                 >
                     <FcFolder className="w-5 h-5" />
@@ -40,7 +41,7 @@ const FileManagerToolbar: React.FC<FileManagerToolbarProps> = ({
             {/* Botón: Subir carpeta */}
             {hasPermission('can_create_folders') && (
                 <button
-                    className="btn btn-primary flex items-center space-x-2"
+                    className="btn flex items-center space-x-2"
                     onClick={onUploadFolder}
                 >
                     <FcUpload className="w-5 h-5" />
@@ -51,7 +52,7 @@ const FileManagerToolbar: React.FC<FileManagerToolbarProps> = ({
             {/* Botón: Subir archivo */}
             {hasPermission('can_create_files') && (
                 <button
-                    className="btn btn-primary flex items-center space-x-2"
+                    className="btn flex items-center space-x-2"
                     onClick={onUploadFile}
                 >
                     <FcFile className="w-5 h-5" />
@@ -87,11 +88,10 @@ const FileManagerToolbar: React.FC<FileManagerToolbarProps> = ({
             <div className="dropdown dropdown-end">
                 <button
                     tabIndex={0}
-                    className="btn btn-secondary flex items-center space-x-2"
+                    className="btn flex items-center space-x-2"
                 >
                     <FcMenu className="w-5 h-5" />
                     <span>Ordenar</span>
-                    <BiSolidChevronDown className="w-4 h-4 ml-1" />
                 </button>
                 <ul
                     tabIndex={0}

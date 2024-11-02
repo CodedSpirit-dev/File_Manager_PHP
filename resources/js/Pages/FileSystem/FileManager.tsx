@@ -1,19 +1,19 @@
 // src/components/FileManager/FileManager.tsx
 
 import React, { useState, useEffect } from 'react';
+import FileManagerToolbar from './Components/Toolbar';
 import Modal from './Components/Modal';
 import { FaFolder, FaFile } from 'react-icons/fa';
-import axios from 'axios';
 import {
     getFiles,
     uploadFile,
     deleteFile,
     createFolder,
-    uploadFolder,
+    uploadDirectory,
     deleteFolder,
 } from './api';
 import { usePage } from '@inertiajs/react';
-import FileManagerToolbar from "@/Pages/FileSystem/Components/Toolbar";
+import axios from "axios";
 
 interface Item {
     id: number;
@@ -124,14 +124,13 @@ const FileManager: React.FC = () => {
     };
 
     const handleUploadFolderAction = async () => {
-        const zipInput = document.createElement('input');
-        zipInput.type = 'file';
-        zipInput.accept = 'application/zip';
-        zipInput.onchange = async () => {
-            if (zipInput.files && zipInput.files[0]) {
-                const zipFile = zipInput.files[0];
+        const folderInput = document.createElement('input');
+        folderInput.type = 'file';
+        folderInput.webkitdirectory = true; // Habilitar selección de directorio
+        folderInput.onchange = async () => {
+            if (folderInput.files && folderInput.files.length > 0) {
                 try {
-                    const response = await uploadFolder(zipFile, currentPath);
+                    const response = await uploadDirectory(folderInput.files, currentPath);
                     alert(response.message);
                     // Actualizar la lista de ítems
                     fetchFiles();
@@ -141,7 +140,7 @@ const FileManager: React.FC = () => {
                 }
             }
         };
-        zipInput.click();
+        folderInput.click();
     };
 
     const handleUploadFileAction = async () => {

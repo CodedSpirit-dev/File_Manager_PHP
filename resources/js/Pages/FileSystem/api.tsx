@@ -2,6 +2,9 @@
 
 import axios from "axios";
 
+// Configurar Axios para incluir credenciales si estás utilizando cookies de sesión
+axios.defaults.withCredentials = true;
+
 const FILEMANAGER_PREFIX = '/filemanager';
 
 /**
@@ -47,18 +50,21 @@ export const uploadFile = async (file: File, path: string): Promise<any> => {
 };
 
 /**
- * Subir una carpeta como archivo zip.
- * @param {File} zipFile - Archivo zip que representa la carpeta.
- * @param {string} path - Ruta donde se extraerá la carpeta.
+ * Subir una carpeta como directorio.
+ * @param {FileList} files - Lista de archivos a subir.
+ * @param {string} path - Ruta donde se subirá la carpeta.
  * @returns {Promise<Object>} - Respuesta del servidor.
  */
-export const uploadFolder = async (zipFile: File, path: string): Promise<any> => {
+export const uploadDirectory = async (files: FileList, path: string): Promise<any> => {
     try {
         const formData = new FormData();
-        formData.append('file', zipFile);
+        Array.from(files).forEach(file => {
+            // Append each file with its relative path
+            formData.append('files[]', file, file.webkitRelativePath);
+        });
         formData.append('path', path);
 
-        const response = await axios.post(`${FILEMANAGER_PREFIX}/folders/upload`, formData, {
+        const response = await axios.post(`${FILEMANAGER_PREFIX}/folders/upload-directory`, formData, {
             headers: {
                 'Content-Type': 'multipart/form-data'
             }

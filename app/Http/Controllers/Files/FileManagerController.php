@@ -88,6 +88,57 @@ class FileManagerController extends Controller
     }
 
     /**
+     * Subre una carpeta como un directorio.
+     * */
+     public function uploadDirectory(Request $request)
+     {
+         $employee = Auth::guard('employee')->user();
+
+         //Verificar permisos
+         if (!$employee->hasPermission('can_create_folders' || !$employee->hasPermission('can_create_files'))) {
+             return response()->json(['error' => 'No tienes permiso crear archivos o carpetas.'], 403);
+         }
+
+         //Validar la solicitud
+            $validator = Validator::make($request->all(), [
+                'files' => 'required|array',
+                'files.*' => 'required|file|max:10240', // Máximo 10MB
+                'path' => 'required|string',
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json(['errors' => $validator->errors()], 422);
+            }
+
+            $path = $request->input('path');
+
+            //Validar la ruta para prevenir ataques de Path Traversal
+            if (!$this->isValidPath($path)) {
+                return response()->json(['error' => 'Ruta inválida.'], 400);
+            }
+
+            //Manejar los archivos individualmente
+         foreach ($request->file('files') as $file) {
+             // Obtener la ruta relativa desde el nombre original del archivo
+             $relativePath = $file->getClientOriginalName();
+
+             // Definir la ruta completa donde se almacenará el archivo
+             $fullPath = rtrim($path, '/') . '/' . ltrim($relativePath, '/');
+
+             // Crear la estructura de directorios si no existe
+             $directory = dirname($fullPath);
+             if (!Storage::disk('local')->exists($directory)) {
+                 Storage::disk('local')->makeDirectory($directory);
+             }
+
+             // Subir el archivo a la ruta completa
+             $file->storeAs($directory, basename($fullPath), 'local');
+         }
+
+         return response()->json(['message' => 'Carpeta subida exitosamente.', 'path' => $path]);
+     }
+
+    /**
      * Sube una carpeta como un archivo zip y la extrae en la ruta especificada.
      */
     public function uploadFolder(Request $request)
