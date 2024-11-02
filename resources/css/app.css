@@ -74,11 +74,6 @@
         @apply text-lg md:text-xl;
     }
 
-    /* Hover para Botones */
-    button:hover {
-        @apply text-white;
-    }
-
     /* Tabla de Empleados */
     .employee__table {
         @apply table min-w-full;
@@ -177,11 +172,6 @@
     /* Botón Eliminar */
     .file-manager-delete-button {
         @apply btn btn-error btn-sm mt-2;
-    }
-
-    /* Hover para Botones */
-    button:hover {
-        @apply text-white;
     }
 
     /* Estilo general del contenedor de la tarjeta */

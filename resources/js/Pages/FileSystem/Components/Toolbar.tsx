@@ -3,15 +3,14 @@
 import React from 'react';
 import {
     FcFolder,
-    FcUpload,
-    FcFile,
     FcDownload,
     FcDeleteRow,
-    FcMenu,
     FcPlus,
+    FcFile, FcOpenedFolder, FcGenericSortingAsc, FcList,
 } from 'react-icons/fc';
-import {BarsArrowDownIcon} from "@heroicons/react/16/solid";
-import {TbCopy, TbCursorText, TbDownload, TbFileUpload, TbFolderPlus, TbFolderUp} from "react-icons/tb";
+import {TbCopy, TbCursorText, TbFolderPlus, TbFolderUp} from "react-icons/tb";
+import {BsFileEarmarkArrowDown, BsFileEarmarkArrowUp} from "react-icons/bs";
+import {MdOutlineDeleteOutline, MdOutlineDriveFileMove} from "react-icons/md";
 
 interface FileManagerToolbarProps {
     onCreateFolder: () => void,
@@ -42,98 +41,98 @@ const FileManagerToolbar: React.FC<FileManagerToolbarProps> = ({
                                                                }) => {
     return (
         <div className="flex items-center justify-end p-4 bg-white flex-wrap">
-            {/* Grupo de botones para pantallas grandes (≥1024px) */}
+            {/* Grupo de dropdowns para pantallas grandes (≥1024px) */}
             <div className="hidden lg:flex items-center space-x-4">
-                {/* Botón: Crear nueva carpeta */}
-                <button
-                    className="btn flex items-center space-x-2"
-                    onClick={onCreateFolder}
-                >
-                    <TbFolderPlus className="w-5 h-5"/>
-                    <span>Crear carpeta</span>
-                </button>
 
-                {/* Botón: Subir carpeta */}
-                <button
-                    className="btn flex items-center space-x-2"
-                    onClick={onUploadFolder}
-                >
-                    <FcUpload className="w-5 h-5"/>
-                    <span>Subir carpeta</span>
-                </button>
-
-                {/* Botón: Subir archivo */}
-                <button
-                    className="btn flex items-center space-x-2"
-                    onClick={onUploadFile}
-                >
-                    <TbFileUpload className="w-5 h-5"/>
-                    <span>Subir archivo</span>
-                </button>
-
-                {/* Botón: Descargar archivo */}
-                {isItemSelected && (
+                {/* Dropdown: Acciones de Carpetas */}
+                <div className="dropdown dropdown-bottom">
                     <button
-                        className="btn btn-secondary flex items-center space-x-2"
-                        onClick={onDownloadFile}
-                    >
-                        <TbDownload className="w-5 h-5"/>
-                        <span>Descargar archivo</span>
-                    </button>
-                )}
-
-                {/* Botón: Copiar */}
-                {isItemSelected && (
-                    <button
+                        tabIndex={0}
                         className="btn flex items-center space-x-2"
-                        onClick={onCopy}
                     >
-                        {/* Reemplaza con un icono adecuado para Copiar */}
-                        <FcFolder className="w-5 h-5"/>
-                        <span>Copiar</span>
+                        <FcOpenedFolder className="w-5 h-5"/>
+                        <span>Acciones de Carpetas</span>
                     </button>
-                )}
+                    <ul
+                        tabIndex={0}
+                        className="dropdown-content menu p-2 shadow bg-base-100 rounded-box w-52"
+                    >
+                        <li>
+                            <button onClick={onCreateFolder} className="flex items-center space-x-2 w-full text-left">
+                                <TbFolderPlus className="w-5 h-5"/>
+                                <span>Crear carpeta</span>
+                            </button>
+                        </li>
+                        <li>
+                            <button onClick={onUploadFolder} className="flex items-center space-x-2 w-full text-left">
+                                <TbFolderUp className="w-5 h-5"/>
+                                <span>Subir carpeta</span>
+                            </button>
+                        </li>
+                    </ul>
+                </div>
 
-                {/* Botón: Cambiar nombre */}
-                {isItemSelected && (
+                {/* Dropdown: Acciones de Archivos */}
+                <div className="dropdown dropdown-bottom">
                     <button
+                        tabIndex={0}
                         className="btn flex items-center space-x-2"
-                        onClick={onRename}
                     >
-                        {/* Reemplaza con un icono adecuado para Cambiar nombre */}
-                        <FcFolder className="w-5 h-5"/>
-                        <span>Cambiar nombre</span>
+                        <FcFile className="w-5 h-5"/>
+                        <span>Acciones de Archivos</span>
                     </button>
-                )}
-
-                {/* Botón: Mover */}
-                {isItemSelected && (
-                    <button
-                        className="btn flex items-center space-x-2"
-                        onClick={onMove}
+                    <ul
+                        tabIndex={0}
+                        className="dropdown-content menu p-2 shadow bg-base-100 rounded-box w-52"
                     >
-                        {/* Reemplaza con un icono adecuado para Mover */}
-                        <FcFolder className="w-5 h-5"/>
-                        <span>Mover</span>
-                    </button>
-                )}
-
-                {/* Botón: Eliminar */}
-                {isItemSelected && (
-                    <button
-                        className="btn btn-error flex items-center space-x-2"
-                        onClick={onDelete}
-                    >
-                        <FcDeleteRow className="w-5 h-5"/>
-                        <span>Eliminar</span>
-                    </button>
-                )}
+                        <li>
+                            <button onClick={onUploadFile} className="flex items-center space-x-2 w-full text-left">
+                                <BsFileEarmarkArrowUp  className="w-5 h-5"/>
+                                <span>Subir archivo</span>
+                            </button>
+                        </li>
+                        {isItemSelected && (
+                            <>
+                                <li>
+                                    <button onClick={onDownloadFile}
+                                            className="flex items-center space-x-2 w-full text-left">
+                                        <BsFileEarmarkArrowDown className="w-5 h-5"/>
+                                        <span>Descargar archivo</span>
+                                    </button>
+                                </li>
+                                <li>
+                                    <button onClick={onCopy} className="flex items-center space-x-2 w-full text-left">
+                                        <TbCopy className="w-5 h-5"/>
+                                        <span>Copiar</span>
+                                    </button>
+                                </li>
+                                <li>
+                                    <button onClick={onRename} className="flex items-center space-x-2 w-full text-left">
+                                        <TbCursorText className="w-5 h-5"/>
+                                        <span>Cambiar nombre</span>
+                                    </button>
+                                </li>
+                                <li>
+                                    <button onClick={onMove} className="flex items-center space-x-2 w-full text-left">
+                                        <MdOutlineDriveFileMove className="w-5 h-5"/>
+                                        <span>Mover</span>
+                                    </button>
+                                </li>
+                                <li>
+                                    <button onClick={onDelete} className="flex items-center space-x-2 w-full text-left">
+                                        <MdOutlineDeleteOutline className="w-5 h-5"/>
+                                        <span>Eliminar</span>
+                                    </button>
+                                </li>
+                            </>
+                        )}
+                    </ul>
+                </div>
             </div>
 
             {/* Grupo de botones para pantallas pequeñas (<1024px) */}
             <div className="flex lg:hidden items-center space-x-2">
-                {/* Botón agrupado con FcPlus */}
-                <div className="dropdown dropdown-right z-[10]">
+                <div className="dropdown dropdown-left mr-2">
                     <button
                         tabIndex={0}
                         className="btn flex items-center space-x-2"
@@ -145,87 +144,70 @@ const FileManagerToolbar: React.FC<FileManagerToolbarProps> = ({
                         tabIndex={0}
                         className="dropdown-content menu p-2 shadow bg-base-100 rounded-box w-52"
                     >
-                        {/* Botón: Crear nueva carpeta */}
                         <li>
                             <button onClick={onCreateFolder} className="flex items-center space-x-2 w-full text-left">
-                                <FcFolder className="w-5 h-5"/>
+                                <TbFolderPlus  className="w-5 h-5"/>
                                 <span>Crear carpeta</span>
                             </button>
                         </li>
-                        {/* Botón: Subir carpeta */}
                         <li>
                             <button onClick={onUploadFolder} className="flex items-center space-x-2 w-full text-left">
                                 <TbFolderUp className="w-5 h-5"/>
                                 <span>Subir carpeta</span>
                             </button>
                         </li>
-                        {/* Botón: Subir archivo */}
                         <li>
                             <button onClick={onUploadFile} className="flex items-center space-x-2 w-full text-left">
-                                <FcFile className="w-5 h-5"/>
+                                <BsFileEarmarkArrowUp className="w-5 h-5"/>
                                 <span>Subir archivo</span>
                             </button>
                         </li>
-                        {/* Botón: Descargar archivo */}
                         {isItemSelected && (
-                            <li>
-                                <button onClick={onDownloadFile}
-                                        className="flex items-center space-x-2 w-full text-left">
-                                    <FcDownload className="w-5 h-5"/>
-                                    <span>Descargar archivo</span>
-                                </button>
-                            </li>
-                        )}
-                        {/* Botón: Copiar */}
-                        {isItemSelected && (
-                            <li>
-                                <button onClick={onCopy} className="flex items-center space-x-2 w-full text-left">
-                                    {/* Reemplaza con un icono adecuado para Copiar */}
-                                    <TbCopy className="w-5 h-5"/>
-                                    <span>Copiar</span>
-                                </button>
-                            </li>
-                        )}
-                        {/* Botón: Cambiar nombre */}
-                        {isItemSelected && (
-                            <li>
-                                <button onClick={onRename} className="flex items-center space-x-2 w-full text-left">
-                                    {/* Reemplaza con un icono adecuado para Cambiar nombre */}
-                                    <TbCursorText className="w-5 h-5"/>
-                                    <span>Cambiar nombre</span>
-                                </button>
-                            </li>
-                        )}
-                        {/* Botón: Mover */}
-                        {isItemSelected && (
-                            <li>
-                                <button onClick={onMove} className="flex items-center space-x-2 w-full text-left">
-                                    {/* Reemplaza con un icono adecuado para Mover */}
-                                    <FcFolder className="w-5 h-5"/>
-                                    <span>Mover</span>
-                                </button>
-                            </li>
-                        )}
-                        {/* Botón: Eliminar */}
-                        {isItemSelected && (
-                            <li>
-                                <button onClick={onDelete} className="flex items-center space-x-2 w-full text-left">
-                                    <FcDeleteRow className="w-5 h-5"/>
-                                    <span>Eliminar</span>
-                                </button>
-                            </li>
+                            <>
+                                <li>
+                                    <button onClick={onDownloadFile}
+                                            className="flex items-center space-x-2 w-full text-left">
+                                        <BsFileEarmarkArrowDown className="w-5 h-5"/>
+                                        <span>Descargar archivo</span>
+                                    </button>
+                                </li>
+                                <li>
+                                    <button onClick={onCopy} className="flex items-center space-x-2 w-full text-left">
+                                        <TbCopy className="w-5 h-5"/>
+                                        <span>Copiar</span>
+                                    </button>
+                                </li>
+                                <li>
+                                    <button onClick={onRename} className="flex items-center space-x-2 w-full text-left">
+                                        <TbCursorText className="w-5 h-5"/>
+                                        <span>Cambiar nombre</span>
+                                    </button>
+                                </li>
+                                <li>
+                                    <button onClick={onMove} className="flex items-center space-x-2 w-full text-left">
+                                        <MdOutlineDriveFileMove className="w-5 h-5"/>
+                                        <span>Mover</span>
+                                    </button>
+                                </li>
+                                <li>
+                                    <button onClick={onDelete} className="flex items-center space-x-2 w-full text-left">
+                                        <MdOutlineDeleteOutline className="w-5 h-5"/>
+                                        <span>Eliminar</span>
+                                    </button>
+                                </li>
+                            </>
                         )}
                     </ul>
                 </div>
             </div>
 
             {/* Dropdown: Ordenar */}
-            <div className="dropdown dropdown-right z-[3]">
+            <div className="dropdown ml-2">
                 <button
                     tabIndex={0}
                     className="btn flex items-center space-x-2"
                 >
-                    <FcMenu className="w-5 h-5"/>
+                    <FcList className="w-5 h-5"/>
                     <span>Ordenar</span>
                 </button>
                 <ul
@@ -242,7 +224,6 @@ const FileManagerToolbar: React.FC<FileManagerToolbarProps> = ({
             </div>
         </div>
     );
-
 };
 
 export default FileManagerToolbar;

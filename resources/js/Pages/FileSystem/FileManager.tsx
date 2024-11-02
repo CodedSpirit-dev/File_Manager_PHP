@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import FileManagerToolbar from './Components/Toolbar';
 import Modal from './Components/Modal';
+import FileViewer from './Components/FileViewer';
 import { FaFolder, FaFile } from 'react-icons/fa';
 import {
     getFiles,
@@ -10,7 +11,7 @@ import {
     deleteFile,
     createFolder,
     uploadDirectory,
-    deleteFolder,
+    deleteFolder, updateFolder,
 } from './api';
 import { usePage } from '@inertiajs/react';
 import axios from "axios";
@@ -22,17 +23,6 @@ interface Item {
     date: Date;
 }
 
-async function copyItem(name: string, currentPath: string) {
-
-}
-
-async function renameItem(name: string, currentPath: string) {
-
-}
-
-async function moveItem(name: string, currentPath: string) {
-
-}
 const FileManager: React.FC = () => {
     const { auth } = usePage().props;
     const userPermissions: string[] = auth.user?.permissions || [];
@@ -42,6 +32,8 @@ const FileManager: React.FC = () => {
     const [currentPath, setCurrentPath] = useState<string>('public'); // Ruta inicial
     const [isCreateFolderOpen, setIsCreateFolderOpen] = useState<boolean>(false);
     const [newFolderName, setNewFolderName] = useState<string>('');
+    const [isFileViewerOpen, setIsFileViewerOpen] = useState<boolean>(false);
+    const [fileToView, setFileToView] = useState<{ url: string; type: 'pdf' | 'docx' | 'xlsx' | null } | null>(null);
 
     // Obtener archivos y carpetas al cargar o cambiar de ruta
     useEffect(() => {
@@ -56,6 +48,15 @@ const FileManager: React.FC = () => {
         } catch (error) {
             console.error('Error al obtener archivos:', error);
             alert('Error al obtener archivos.');
+        }
+    };
+
+    // Mover esta función dentro de FileManager para acceder al estado
+    const handleNavigateBack = () => {
+        const paths = currentPath.split('/');
+        if (paths.length > 1) {
+            paths.pop(); // Elimina el último segmento de la ruta
+            setCurrentPath(paths.join('/')); // Actualiza el estado con la nueva ruta
         }
     };
 
@@ -94,17 +95,27 @@ const FileManager: React.FC = () => {
         if (item.type === 'folder') {
             setCurrentPath(`${currentPath}/${item.name}`);
         } else {
-            // Implementar lógica para abrir o visualizar el archivo si es necesario
-            alert(`Abrir archivo: ${item.name}`);
-        }
-    };
+            // Obtener la extensión del archivo
+            const extension = item.name.split('.').pop()?.toLowerCase();
+            let fileType: 'pdf' | 'docx' | 'xlsx' | null = null;
 
-    // Manejo de navegación hacia atrás
-    const handleNavigateBack = () => {
-        const paths = currentPath.split('/');
-        if (paths.length > 1) {
-            paths.pop();
-            setCurrentPath(paths.join('/'));
+            if (extension === 'pdf') {
+                fileType = 'pdf';
+            } else if (extension === 'docx') {
+                fileType = 'docx';
+            } else if (extension === 'xlsx') {
+                fileType = 'xlsx';
+            } else {
+                alert('Tipo de archivo no soportado para visualización.');
+                return;
+            }
+
+            // Construir la URL del archivo
+            const fileUrl = `/filemanager/files/view?filename=${encodeURIComponent(item.name)}&path=${encodeURIComponent(currentPath)}`;
+
+            // Establecer el estado para mostrar el FileViewer
+            setFileToView({ url: fileUrl, type: fileType });
+            setIsFileViewerOpen(true);
         }
     };
 
@@ -137,14 +148,13 @@ const FileManager: React.FC = () => {
     const handleUploadFolderAction = async () => {
         const folderInput = document.createElement('input');
         folderInput.type = 'file';
-        folderInput.webkitdirectory = true; // Habilitar selección de directorio
+        folderInput.webkitdirectory = true; // Habilita la selección de directorio
         folderInput.onchange = async () => {
             if (folderInput.files && folderInput.files.length > 0) {
                 try {
                     const response = await uploadDirectory(folderInput.files, currentPath);
                     alert(response.message);
-                    // Actualizar la lista de ítems
-                    fetchFiles();
+                    fetchFiles(); // Actualizar lista de ítems
                 } catch (error) {
                     alert('Error al subir la carpeta.');
                     console.error(error);
@@ -154,50 +164,6 @@ const FileManager: React.FC = () => {
         folderInput.click();
     };
 
-    const handleCopy = async () => {
-        if (selectedItem) {
-            const item = items.find(i => i.name === selectedItem);
-            if (item) {
-                try {
-                    const response = await copyItem(item.name, currentPath);
-                    alert('No se ha implementado la copia de elementos.');
-                } catch (error) {
-                    alert('Error al copiar el elemento.');
-                    console.error(error);
-                }
-            }
-        }
-    }
-
-    const handleMove = async () => {
-        if (selectedItem) {
-            const item = items.find(i => i.name === selectedItem);
-            if (item) {
-                try {
-                    const response = await moveItem(item.name, currentPath);
-                    alert('No se ha implementado el movimiento de elementos.');
-                } catch (error) {
-                    alert('Error al mover el elemento.');
-                    console.error(error);
-                }
-            }
-        }
-    }
-
-    const handleRename = async () => {
-        if (selectedItem) {
-            const item = items.find(i => i.name === selectedItem);
-            if (item) {
-                try {
-                    const response = await renameItem(item.name, currentPath);
-                    alert('No se ha implementado la renombrar elementos.');
-                } catch (error) {
-                    alert('Error al renombrar el elemento.');
-                    console.error(error);
-                }
-            }
-        }
-    }
     const handleUploadFileAction = async () => {
         const fileInput = document.createElement('input');
         fileInput.type = 'file';
@@ -206,8 +172,7 @@ const FileManager: React.FC = () => {
                 try {
                     const response = await uploadFile(fileInput.files[0], currentPath);
                     alert(response.message);
-                    // Actualizar la lista de ítems
-                    fetchFiles();
+                    fetchFiles(); // Actualizar lista de ítems
                 } catch (error) {
                     alert('Error al subir el archivo.');
                     console.error(error);
@@ -223,10 +188,7 @@ const FileManager: React.FC = () => {
             if (item && item.type === 'file') {
                 try {
                     const response = await axios.get(`/filemanager/files/download`, {
-                        params: {
-                            filename: selectedItem,
-                            path: currentPath,
-                        },
+                        params: { filename: selectedItem, path: currentPath },
                         responseType: 'blob',
                     });
                     const url = window.URL.createObjectURL(new Blob([response.data]));
@@ -253,16 +215,14 @@ const FileManager: React.FC = () => {
                 try {
                     const item = items.find(i => i.name === selectedItem);
                     if (item) {
+                        let response;
                         if (item.type === 'file') {
-                            const response = await deleteFile(selectedItem, currentPath);
-                            alert(response.message);
+                            response = await deleteFile(selectedItem, currentPath);
                         } else if (item.type === 'folder') {
-                            const response = await deleteFolder(selectedItem, currentPath);
-                            alert(response.message);
+                            response = await deleteFolder(selectedItem, currentPath);
                         }
-
-                        // Actualizar la lista de ítems
-                        fetchFiles();
+                        alert(response.message);
+                        fetchFiles(); // Actualizar lista de ítems
                         setSelectedItem(null);
                     }
                 } catch (error) {
@@ -273,8 +233,47 @@ const FileManager: React.FC = () => {
         }
     };
 
+    const handleCopy = async () => {
+        if (selectedItem) {
+            alert('Funcionalidad de copiar aún no implementada.');
+            // Aquí podrías implementar la lógica para copiar el archivo
+        }
+    };
+
+    const handleMove = async () => {
+        if (selectedItem) {
+            alert('Funcionalidad de mover aún no implementada.');
+            // Aquí podrías implementar la lógica para mover el archivo
+        }
+    };
+
+    const handleRename = async () => {
+        if (selectedItem) {
+            const newName = prompt(`Ingresa el nuevo nombre para "${selectedItem}":`);
+            if (newName && newName.trim() !== '') {
+                try {
+                    const item = items.find(i => i.name === selectedItem);
+                    if (item) {
+                        let response;
+                        if (item.type === 'folder') {
+                            response = await updateFolder(item.name, newName, currentPath);
+                        } else {
+                            alert('Renombrar archivos aún no está implementado.');
+                            return;
+                        }
+                        alert(response.message);
+                        fetchFiles(); // Actualizar lista de ítems
+                        setSelectedItem(null);
+                    }
+                } catch (error) {
+                    alert('Error al renombrar el elemento.');
+                    console.error(error);
+                }
+            }
+        }
+    };
+
     const handleSort = (criteria: 'date' | 'name') => {
-        // Ordenar en el frontend
         const sortedItems = [...items].sort((a, b) => {
             if (criteria === 'date') {
                 return new Date(a.date).getTime() - new Date(b.date).getTime();
@@ -309,7 +308,10 @@ const FileManager: React.FC = () => {
                 onSort={handleSort}
                 isItemSelected={selectedItem !== null}
                 hasPermission={hasPermission}
-             onCopy={handleCopy} onMove={handleMove} onRename={handleRename}/>
+                onCopy={handleCopy}
+                onMove={handleMove}
+                onRename={handleRename}
+            />
 
             {/* Modal para Crear Nueva Carpeta */}
             <Modal
@@ -333,6 +335,19 @@ const FileManager: React.FC = () => {
                     </button>
                 </div>
             </Modal>
+
+            {/* Modal para Visualizar Archivos */}
+            {isFileViewerOpen && fileToView && fileToView.type && (
+                <Modal
+                    isOpen={isFileViewerOpen}
+                    title={`Visualizando: ${selectedItem}`}
+                    onClose={() => setIsFileViewerOpen(false)}
+                >
+                    <div className="h-96 overflow-auto">
+                        <FileViewer fileUrl={fileToView.url} fileType={fileToView.type} />
+                    </div>
+                </Modal>
+            )}
 
             {/* Lista de ítems */}
             <div className="p-4">
