@@ -13,7 +13,9 @@ export default {
     theme: {
         extend: {
             fontFamily: {
-                sans: ['Figtree', ...defaultTheme.fontFamily.sans],
+                sans: ['Comfortaa','Be Vietnam Pro ','Lexend','Figtree', ...defaultTheme.fontFamily.sans],
+                serif:[' Josefin Slab ','Merriweather','Playfair Display','Roboto Slab', ...defaultTheme.fontFamily.serif],
+                mono: ['ui-monospace', 'SFMono-Regular', ...defaultTheme.fontFamily.mono],
             },
         },
     },
