@@ -11,7 +11,11 @@
     }
 
     .btn{
-        @apply rounded-xl;
+        @apply rounded-md hover:ring-2;
+    }
+
+    .btn-primary{
+        @apply text-base-100;
     }
 
     /* Contenedor Principal */
@@ -53,7 +57,7 @@
     }
 
     .nav__bar__button {
-        @apply btn btn-ghost text-sm font-semibold sm:text-lg md:text-base;
+        @apply btn accent-base-300 text-base-content;
     }
 
     .nav__bar__logo {
