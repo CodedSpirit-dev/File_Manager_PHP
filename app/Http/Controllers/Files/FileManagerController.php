@@ -50,7 +50,7 @@ class FileManagerController extends Controller
     }
 
     /**
-     * Sube un nuevo archivo a una ruta específica.
+     * Sube un nuevo archivo a una ruta específica sin cambiar el nombre.
      */
     public function upload(Request $request)
     {
@@ -78,9 +78,11 @@ class FileManagerController extends Controller
             return response()->json(['error' => 'Ruta inválida.'], 400);
         }
 
-        // Subir el archivo a la ruta especificada
+        // Subir el archivo a la ruta especificada sin cambiar el nombre
         if ($request->hasFile('file')) {
-            $filePath = $request->file('file')->store($path, 'local'); // Usar el disco 'local'
+            $file = $request->file('file');
+            $originalName = $file->getClientOriginalName();
+            $filePath = $file->storeAs($path, $originalName, 'local'); // Usar storeAs para mantener el nombre original
             return response()->json(['message' => 'Archivo subido exitosamente.', 'path' => $filePath]);
         }
 
@@ -88,55 +90,50 @@ class FileManagerController extends Controller
     }
 
     /**
-     * Subre una carpeta como un directorio.
-     * */
-     public function uploadDirectory(Request $request)
-     {
-         $employee = Auth::guard('employee')->user();
+     * Sube una carpeta como un directorio.
+     */
 
-         //Verificar permisos
-         if (!$employee->hasPermission('can_create_folders' || !$employee->hasPermission('can_create_files'))) {
-             return response()->json(['error' => 'No tienes permiso crear archivos o carpetas.'], 403);
-         }
+    public function uploadDirectory(Request $request)
+    {
+        $employee = Auth::guard('employee')->user();
 
-         //Validar la solicitud
-            $validator = Validator::make($request->all(), [
-                'files' => 'required|array',
-                'files.*' => 'required|file|max:10240', // Máximo 10MB
-                'path' => 'required|string',
-            ]);
+        // Verificar permisos correctamente
+        if (
+            !$employee->hasPermission('can_create_folders') ||
+            !$employee->hasPermission('can_create_files')
+        ) {
+            return response()->json(['error' => 'No tienes permiso para crear archivos o carpetas.'], 403);
+        }
 
-            if ($validator->fails()) {
-                return response()->json(['errors' => $validator->errors()], 422);
-            }
+        // Validar la solicitud
+        $validator = Validator::make($request->all(), [
+            'files' => 'required|array',
+            'files.*' => 'required|file|max:10240', // Máximo 10MB por archivo
+            'path' => 'required|string',
+        ]);
 
-            $path = $request->input('path');
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
 
-            //Validar la ruta para prevenir ataques de Path Traversal
-            if (!$this->isValidPath($path)) {
-                return response()->json(['error' => 'Ruta inválida.'], 400);
-            }
+        $path = $request->input('path');
 
-            //Manejar los archivos individualmente
-         foreach ($request->file('files') as $file) {
-             // Obtener la ruta relativa desde el nombre original del archivo
-             $relativePath = $file->getClientOriginalName();
+        // Validar la ruta para prevenir ataques de Path Traversal
+        if (!$this->isValidPath($path)) {
+            return response()->json(['error' => 'Ruta inválida.'], 400);
+        }
 
-             // Definir la ruta completa donde se almacenará el archivo
-             $fullPath = rtrim($path, '/') . '/' . ltrim($relativePath, '/');
+        // Manejar cada archivo
+        foreach ($request->file('files') as $file) {
+            // Obtener la ruta relativa desde el nombre original del archivo
+            $relativePath = $file->getClientOriginalName();
 
-             // Crear la estructura de directorios si no existe
-             $directory = dirname($fullPath);
-             if (!Storage::disk('local')->exists($directory)) {
-                 Storage::disk('local')->makeDirectory($directory);
-             }
+            // Subir el archivo a la ruta completa sin cambiar el nombre
+            $file->storeAs($path, $relativePath, 'local');
+        }
 
-             // Subir el archivo a la ruta completa
-             $file->storeAs($directory, basename($fullPath), 'local');
-         }
-
-         return response()->json(['message' => 'Carpeta subida exitosamente.', 'path' => $path]);
-     }
+        return response()->json(['message' => 'Carpeta subida exitosamente.', 'path' => $path]);
+    }
 
     /**
      * Sube una carpeta como un archivo zip y la extrae en la ruta especificada.

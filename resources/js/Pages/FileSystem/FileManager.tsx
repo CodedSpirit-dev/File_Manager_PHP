@@ -22,6 +22,17 @@ interface Item {
     date: Date;
 }
 
+async function copyItem(name: string, currentPath: string) {
+
+}
+
+async function renameItem(name: string, currentPath: string) {
+
+}
+
+async function moveItem(name: string, currentPath: string) {
+
+}
 const FileManager: React.FC = () => {
     const { auth } = usePage().props;
     const userPermissions: string[] = auth.user?.permissions || [];
@@ -143,6 +154,50 @@ const FileManager: React.FC = () => {
         folderInput.click();
     };
 
+    const handleCopy = async () => {
+        if (selectedItem) {
+            const item = items.find(i => i.name === selectedItem);
+            if (item) {
+                try {
+                    const response = await copyItem(item.name, currentPath);
+                    alert('No se ha implementado la copia de elementos.');
+                } catch (error) {
+                    alert('Error al copiar el elemento.');
+                    console.error(error);
+                }
+            }
+        }
+    }
+
+    const handleMove = async () => {
+        if (selectedItem) {
+            const item = items.find(i => i.name === selectedItem);
+            if (item) {
+                try {
+                    const response = await moveItem(item.name, currentPath);
+                    alert('No se ha implementado el movimiento de elementos.');
+                } catch (error) {
+                    alert('Error al mover el elemento.');
+                    console.error(error);
+                }
+            }
+        }
+    }
+
+    const handleRename = async () => {
+        if (selectedItem) {
+            const item = items.find(i => i.name === selectedItem);
+            if (item) {
+                try {
+                    const response = await renameItem(item.name, currentPath);
+                    alert('No se ha implementado la renombrar elementos.');
+                } catch (error) {
+                    alert('Error al renombrar el elemento.');
+                    console.error(error);
+                }
+            }
+        }
+    }
     const handleUploadFileAction = async () => {
         const fileInput = document.createElement('input');
         fileInput.type = 'file';
@@ -254,7 +309,7 @@ const FileManager: React.FC = () => {
                 onSort={handleSort}
                 isItemSelected={selectedItem !== null}
                 hasPermission={hasPermission}
-            />
+             onCopy={handleCopy} onMove={handleMove} onRename={handleRename}/>
 
             {/* Modal para Crear Nueva Carpeta */}
             <Modal
