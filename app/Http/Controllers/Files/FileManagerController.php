@@ -368,12 +368,12 @@ class FileManagerController extends Controller
     {
         $employee = Auth::guard('employee')->user();
 
-        // Verify permissions
+        // Verificar permisos
         if (!$employee->hasPermission('can_read_files')) {
             return response()->json(['error' => 'No tienes permiso para ver archivos.'], 403);
         }
 
-        // Validate request
+        // Validar request
         $validator = Validator::make($request->all(), [
             'filename' => 'required|string',
             'path' => 'required|string',
@@ -386,7 +386,7 @@ class FileManagerController extends Controller
         $filename = $request->input('filename');
         $path = $request->input('path');
 
-        // Validate the path to prevent path traversal
+        // Validar la ruta para evitar path traversal
         if (!$this->isValidPath($path)) {
             return response()->json(['error' => 'Ruta inválida.'], 400);
         }
@@ -397,18 +397,67 @@ class FileManagerController extends Controller
             return response()->json(['error' => 'El archivo no existe.'], 404);
         }
 
-        // Get the full path to the file
+        // Obtener la ruta completa y MIME type
         $fullPath = Storage::disk('local')->path($filePath);
-
-        // Get the MIME type
         $mimeType = mime_content_type($fullPath);
 
-        // Return the file content with appropriate headers
+        // Configurar encabezado Content-Disposition para mostrar en el navegador
         return response()->file($fullPath, [
             'Content-Type' => $mimeType,
             'Content-Disposition' => 'inline; filename="' . $filename . '"'
         ]);
     }
+
+    public function getPublicFileUrl(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'filename' => 'required|string',
+            'path' => 'required|string',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        $filename = $request->input('filename');
+        $path = $request->input('path');
+        $filePath = rtrim($path, '/') . '/' . ltrim($filename, '/');
+
+        if (!Storage::disk('local')->exists($filePath)) {
+            return response()->json(['error' => 'El archivo no existe.'], 404);
+        }
+
+        // Generar una URL temporal (válida durante una hora) para el archivo
+        $publicUrl = Storage::disk('local')->temporaryUrl($filePath, now()->addHour());
+
+        return response()->json(['url' => $publicUrl]);
+    }
+
+
+    public function publicView(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'filename' => 'required|string',
+            'path' => 'required|string',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        $filename = $request->input('filename');
+        $path = $request->input('path');
+        $filePath = rtrim($path, '/') . '/' . ltrim($filename, '/');
+
+        if (!Storage::disk('local')->exists($filePath)) {
+            return response()->json(['error' => 'El archivo no existe.'], 404);
+        }
+
+        return response()->file(Storage::disk('local')->path($filePath), [
+            'Content-Disposition' => 'inline; filename="' . $filename . '"',
+        ]);
+    }
+
 
 
     /**

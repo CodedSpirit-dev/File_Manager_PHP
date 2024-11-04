@@ -40,6 +40,7 @@ Route::prefix('filemanager')->name('filemanager.')->middleware('auth:employee')-
     Route::delete('/folders/delete', [FileManagerController::class, 'deleteFolder'])->name('folders.delete');
 
     // Ruta para ver archivos
-    Route::get('/filemanager/files/view', [FileManagerController::class, 'view']);
+    Route::get('files/view', [FileManagerController::class, 'view']);
+    Route::get('/public-file-url', [FileManagerController::class, 'getPublicFileUrl']);
 
 });
