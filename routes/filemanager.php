@@ -42,5 +42,6 @@ Route::prefix('filemanager')->name('filemanager.')->middleware('auth:employee')-
     // Ruta para ver archivos
     Route::get('files/view', [FileManagerController::class, 'view']);
     Route::get('/public-file-url', [FileManagerController::class, 'getPublicFileUrl']);
+    Route::get('/public-file', [FileManagerController::class, 'getPublicFile']);
 
 });

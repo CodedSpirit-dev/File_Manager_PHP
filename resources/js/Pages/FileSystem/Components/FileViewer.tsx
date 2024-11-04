@@ -15,11 +15,13 @@ const FileViewer: React.FC<FileViewerProps> = ({ fileName, fileType, filePath })
     useEffect(() => {
         const fetchPublicFileUrl = async () => {
             try {
-                const response = await axios.get('/filemanager/public-file-url', {
+                // Solicita la URL pública del archivo al backend
+                const response = await axios.get('/filemanager/public-file', {
                     params: { filename: fileName, path: filePath },
                 });
-                const publicUrl = response.data.url;
+                const publicUrl = `filemanager/public-file?filename=${encodeURIComponent(fileName)}&path=${encodeURIComponent(filePath)}`;
 
+                // Ajusta la URL de visualización dependiendo del tipo de archivo
                 if (fileType === 'docx' || fileType === 'xlsx') {
                     setViewerUrl(`https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(publicUrl)}`);
                 } else {

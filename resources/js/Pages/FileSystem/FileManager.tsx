@@ -331,7 +331,7 @@ const FileManager: React.FC = () => {
                     </button>
                 </div>
             </Modal>
-            
+
             {isFileViewerOpen && fileToView && (
                 <Modal
                     isOpen={isFileViewerOpen}

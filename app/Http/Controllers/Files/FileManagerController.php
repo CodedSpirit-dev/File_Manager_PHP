@@ -433,6 +433,31 @@ class FileManagerController extends Controller
         return response()->json(['url' => $publicUrl]);
     }
 
+    public function getPublicFile(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'filename' => 'required|string',
+            'path' => 'required|string',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        $filename = $request->input('filename');
+        $path = $request->input('path');
+        $filePath = rtrim($path, '/') . '/' . ltrim($filename, '/');
+
+        if (!Storage::disk('local')->exists($filePath)) {
+            return response()->json(['error' => 'El archivo no existe.'], 404);
+        }
+
+        return response()->file(Storage::disk('local')->path($filePath), [
+            'Content-Disposition' => 'inline; filename="' . $filename . '"',
+        ]);
+    }
+
+
 
     public function publicView(Request $request)
     {
