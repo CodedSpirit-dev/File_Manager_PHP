@@ -1,10 +1,14 @@
+// src/components/FileManager/Components/Toolbar.tsx
+
 import React from 'react';
 import {
     FcFolder,
     FcDownload,
     FcDeleteRow,
     FcPlus,
-    FcFile, FcOpenedFolder, FcGenericSortingAsc, FcList,
+    FcFile,
+    FcOpenedFolder,
+    FcList,
 } from 'react-icons/fc';
 import { TbCopy, TbCursorText, TbFolderPlus, TbFolderUp } from "react-icons/tb";
 import { BsFileEarmarkArrowDown, BsFileEarmarkArrowUp, BsSortAlphaDown, BsSortNumericUp } from "react-icons/bs";
@@ -39,16 +43,16 @@ const FileManagerToolbar: React.FC<FileManagerToolbarProps> = ({
                                                                }) => {
     return (
         <div className="flex items-center justify-end p-4 bg-white flex-wrap">
-            {/* Grupo de dropdowns para pantallas grandes (≥1024px) */}
-            <div className="hidden lg:flex items-center space-x-4">
-                {/* Dropdown: Acciones de Carpetas */}
+            {/* Dropdowns Separados para Pantallas Grandes (≥640px) */}
+            <div className="hidden sm:flex items-center space-x-4">
+                {/* Dropdown: Crear */}
                 <div className="dropdown dropdown-bottom">
                     <button
                         tabIndex={0}
                         className="btn flex items-center space-x-2"
                     >
-                        <FcOpenedFolder className="w-5 h-5" />
-                        <span>Acciones de Carpetas</span>
+                        <FcPlus className="w-5 h-5" />
+                        <span>Crear</span>
                     </button>
                     <ul
                         tabIndex={0}
@@ -66,33 +70,33 @@ const FileManagerToolbar: React.FC<FileManagerToolbarProps> = ({
                                 <span>Subir carpeta</span>
                             </button>
                         </li>
-                    </ul>
-                </div>
-
-                {/* Dropdown: Acciones de Archivos */}
-                <div className="dropdown">
-                    <button
-                        tabIndex={0}
-                        className="btn flex items-center space-x-2"
-                    >
-                        <FcFile className="w-5 h-5" />
-                        <span>Acciones de Archivos</span>
-                    </button>
-                    <ul
-                        tabIndex={0}
-                        className="dropdown-content menu p-2 shadow bg-base-100 rounded-box w-52"
-                    >
                         <li>
                             <button onClick={onUploadFile} className="flex items-center space-x-2 w-full text-left">
                                 <BsFileEarmarkArrowUp className="w-5 h-5" />
                                 <span>Subir archivo</span>
                             </button>
                         </li>
+                    </ul>
+                </div>
+
+                {/* Dropdown: Acciones */}
+                <div className="dropdown">
+                    <button
+                        tabIndex={0}
+                        className={`btn flex items-center space-x-2 ${!isItemSelected ? 'btn-disabled' : ''}`}
+                        disabled={!isItemSelected}
+                    >
+                        <FcFolder className="w-5 h-5" />
+                        <span>Acciones</span>
+                    </button>
+                    <ul
+                        tabIndex={0}
+                        className="dropdown-content menu p-2 shadow bg-base-100 rounded-box w-52"
+                    >
                         {isItemSelected && (
                             <>
                                 <li>
-                                    <button onClick={onDownloadFile}
-                                            className="flex items-center space-x-2 w-full text-left">
+                                    <button onClick={onDownloadFile} className="flex items-center space-x-2 w-full text-left">
                                         <BsFileEarmarkArrowDown className="w-5 h-5" />
                                         <span>Descargar archivo</span>
                                     </button>
@@ -123,12 +127,18 @@ const FileManagerToolbar: React.FC<FileManagerToolbarProps> = ({
                                 </li>
                             </>
                         )}
+                        {!isItemSelected && (
+                            <li className="px-4 py-2 text-gray-500">
+                                Selecciona un elemento para ver las acciones disponibles.
+                            </li>
+                        )}
                     </ul>
                 </div>
             </div>
 
-            {/* Grupo de botones para pantallas pequeñas (<1024px) */}
-            <div className="flex lg:hidden items-center space-x-2">
+            {/* Dropdown Único para Pantallas Pequeñas (<640px) */}
+            <div className="flex sm:hidden items-center space-x-2">
+                {/* Dropdown: Crear y Acciones */}
                 <div className="dropdown dropdown-bottom mr-2">
                     <button
                         tabIndex={0}
@@ -139,8 +149,10 @@ const FileManagerToolbar: React.FC<FileManagerToolbarProps> = ({
                     </button>
                     <ul
                         tabIndex={0}
-                        className="dropdown-content menu p-2 shadow bg-base-100 rounded-box w-52"
+                        className="dropdown-content menu p-2 shadow bg-base-100 rounded-box w-64"
                     >
+                        {/* Sección: Crear */}
+                        <li className="font-semibold px-2 py-1">Crear</li>
                         <li>
                             <button onClick={onCreateFolder} className="flex items-center space-x-2 w-full text-left">
                                 <TbFolderPlus className="w-5 h-5" />
@@ -159,11 +171,13 @@ const FileManagerToolbar: React.FC<FileManagerToolbarProps> = ({
                                 <span>Subir archivo</span>
                             </button>
                         </li>
-                        {isItemSelected && (
+                        <hr className="my-2 border-gray-300" />
+                        {/* Sección: Acciones */}
+                        <li className="font-semibold px-2 py-1">Acciones</li>
+                        {isItemSelected ? (
                             <>
                                 <li>
-                                    <button onClick={onDownloadFile}
-                                            className="flex items-center space-x-2 w-full text-left">
+                                    <button onClick={onDownloadFile} className="flex items-center space-x-2 w-full text-left">
                                         <BsFileEarmarkArrowDown className="w-5 h-5" />
                                         <span>Descargar archivo</span>
                                     </button>
@@ -193,12 +207,16 @@ const FileManagerToolbar: React.FC<FileManagerToolbarProps> = ({
                                     </button>
                                 </li>
                             </>
+                        ) : (
+                            <li className="px-4 py-2 text-gray-500">
+                                Selecciona un elemento para ver las acciones disponibles.
+                            </li>
                         )}
                     </ul>
                 </div>
             </div>
 
-            {/* Dropdown: Ordenar */}
+            {/* Dropdown: Ordenar (Visible en todas las pantallas) */}
             <div className="dropdown dropdown-bottom dropdown-end ml-2">
                 <button
                     tabIndex={0}

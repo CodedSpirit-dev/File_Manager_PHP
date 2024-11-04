@@ -70,7 +70,7 @@ import {
 } from './api';
 import { usePage } from '@inertiajs/react';
 import axios from 'axios';
-import {IoClose} from "react-icons/io5";
+import { IoClose } from "react-icons/io5";
 import Breadcrumb from "@/Pages/FileSystem/Components/Breadcrumb";
 
 interface Item {
@@ -86,15 +86,16 @@ const FileManager: React.FC = () => {
 
     const [selectedItem, setSelectedItem] = useState<string | null>(null);
     const [items, setItems] = useState<Item[]>([]);
-    const [currentPath, setCurrentPath] = useState<string>('public'); // Initial path
+    const [currentPath, setCurrentPath] = useState<string>('public'); // Ruta inicial
     const [isCreateFolderOpen, setIsCreateFolderOpen] = useState<boolean>(false);
     const [newFolderName, setNewFolderName] = useState<string>('');
     const [isFileViewerOpen, setIsFileViewerOpen] = useState<boolean>(false);
     const [fileToView, setFileToView] = useState<{ url: string; type: 'pdf' | 'docx' | 'xlsx' } | null>(null);
 
-    // Fetch files and directories when the component mounts or currentPath changes
+    // Fetch files and directories cuando el componente se monta o currentPath cambia
     useEffect(() => {
         fetchFiles();
+        setSelectedItem(null); // Deseleccionar cualquier elemento seleccionado al cambiar de carpeta
     }, [currentPath]);
 
     const fetchFiles = async () => {
@@ -225,7 +226,7 @@ const FileManager: React.FC = () => {
         }
     };
 
-    // Format server data into Item objects
+    // Formatear los datos del servidor en objetos Item
     const formatItems = (directories: string[], files: string[]): Item[] => {
         let idCounter = 1;
         const formattedDirectories = directories.map((dir) => ({
@@ -243,17 +244,17 @@ const FileManager: React.FC = () => {
         return [...formattedDirectories, ...formattedFiles];
     };
 
-    // Check user permissions
+    // Verificar permisos del usuario
     const hasPermission = (permission: string): boolean => {
         return userPermissions.includes(permission);
     };
 
-    // Handle item selection
+    // Manejar la selección de un elemento
     const handleSelectItem = (itemName: string) => {
         setSelectedItem((prev) => (prev === itemName ? null : itemName));
     };
 
-    // Handle double-click on items (folders or files)
+    // Manejar doble clic en elementos (carpetas o archivos)
     const handleDoubleClickItem = (item: Item) => {
         if (item.type === 'folder') {
             setCurrentPath(`${currentPath}/${item.name}`);
@@ -272,7 +273,7 @@ const FileManager: React.FC = () => {
     };
 
 
-    // Toolbar action handlers
+    // Acciones del Toolbar
     const handleCreateFolderAction = () => {
         setIsCreateFolderOpen(true);
     };
@@ -287,7 +288,7 @@ const FileManager: React.FC = () => {
             const response = await createFolder(newFolderName, currentPath);
             alert(response.message);
 
-            // Refresh items
+            // Refrescar elementos
             fetchFiles();
 
             setNewFolderName('');
@@ -301,13 +302,13 @@ const FileManager: React.FC = () => {
     const handleUploadFolderAction = async () => {
         const folderInput = document.createElement('input');
         folderInput.type = 'file';
-        (folderInput as any).webkitdirectory = true; // Enable directory selection
+        (folderInput as any).webkitdirectory = true; // Habilitar selección de directorio
         folderInput.onchange = async () => {
             if (folderInput.files && folderInput.files.length > 0) {
                 try {
                     const response = await uploadDirectory(folderInput.files, currentPath);
                     alert(response.message);
-                    fetchFiles(); // Refresh items
+                    fetchFiles(); // Refrescar elementos
                 } catch (error) {
                     alert('Error uploading folder.');
                     console.error(error);
@@ -325,7 +326,7 @@ const FileManager: React.FC = () => {
                 try {
                     const response = await uploadFile(fileInput.files[0], currentPath);
                     alert(response.message);
-                    fetchFiles(); // Refresh items
+                    fetchFiles(); // Refrescar elementos
                 } catch (error) {
                     alert('Error uploading file.');
                     console.error(error);
@@ -375,7 +376,7 @@ const FileManager: React.FC = () => {
                             response = await deleteFolder(selectedItem, currentPath);
                         }
                         alert(response.message);
-                        fetchFiles(); // Refresh items
+                        fetchFiles(); // Refrescar elementos
                         setSelectedItem(null);
                     }
                 } catch (error) {
@@ -389,14 +390,14 @@ const FileManager: React.FC = () => {
     const handleCopy = async () => {
         if (selectedItem) {
             alert('Copy functionality not implemented yet.');
-            // Implement copy logic here
+            // Implementar lógica de copia aquí
         }
     };
 
     const handleMove = async () => {
         if (selectedItem) {
             alert('Move functionality not implemented yet.');
-            // Implement move logic here
+            // Implementar lógica de mover aquí
         }
     };
 
@@ -415,7 +416,7 @@ const FileManager: React.FC = () => {
                             return;
                         }
                         alert(response.message);
-                        fetchFiles(); // Refresh items
+                        fetchFiles(); // Refrescar elementos
                         setSelectedItem(null);
                     }
                 } catch (error) {
@@ -440,98 +441,99 @@ const FileManager: React.FC = () => {
     return (
         <>
             <Breadcrumb currentPath={currentPath} onNavigateTo={handleNavigateToPath}/>
-        <div className="file-manager bg-white">
+            <div className="file-manager bg-white">
 
-            {/* Navigation bar */}
-{/*            <div className="flex items-center p-4 bg-gray-100 shadow">
-                <button
-                    className={`btn btn-secondary mr-2 ${currentPath === 'public' ? 'btn-disabled' : ''}`}
-                    onClick={handleNavigateBack}
-                    disabled={currentPath === 'public'}
-                >
-                    Back
-                </button>
-                <span className="text-lg font-semibold">Path: /{currentPath}</span>
-            </div>*/}
+                {/* Barra de navegación (comentada) */}
+                {/* <div className="flex items-center p-4 bg-gray-100 shadow">
+                    <button
+                        className={`btn btn-secondary mr-2 ${currentPath === 'public' ? 'btn-disabled' : ''}`}
+                        onClick={handleNavigateBack}
+                        disabled={currentPath === 'public'}
+                    >
+                        Back
+                    </button>
+                    <span className="text-lg font-semibold">Path: /{currentPath}</span>
+                </div> */}
 
-            {/* Toolbar */}
-            <FileManagerToolbar
-                onCreateFolder={handleCreateFolderAction}
-                onUploadFolder={handleUploadFolderAction}
-                onUploadFile={handleUploadFileAction}
-                onDownloadFile={handleDownloadFileAction}
-                onDelete={handleDeleteAction}
-                onSort={handleSort}
-                isItemSelected={selectedItem !== null}
-                hasPermission={hasPermission}
-                onCopy={handleCopy}
-                onMove={handleMove}
-                onRename={handleRename}
-            />
-
-            {/* Modal for Creating New Folder */}
-            <Modal
-                isOpen={isCreateFolderOpen}
-                title="Create New Folder"
-                onClose={() => setIsCreateFolderOpen(false)}
-            >
-                <input
-                    type="text"
-                    value={newFolderName}
-                    onChange={(e) => setNewFolderName(e.target.value)}
-                    placeholder="Folder name"
-                    className="input input-bordered w-full"
+                {/* Toolbar */}
+                <FileManagerToolbar
+                    onCreateFolder={handleCreateFolderAction}
+                    onUploadFolder={handleUploadFolderAction}
+                    onUploadFile={handleUploadFileAction}
+                    onDownloadFile={handleDownloadFileAction}
+                    onDelete={handleDeleteAction}
+                    onSort={handleSort}
+                    isItemSelected={selectedItem !== null}
+                    hasPermission={hasPermission}
+                    onCopy={handleCopy}
+                    onMove={handleMove}
+                    onRename={handleRename}
                 />
-                <div className="flex justify-end mt-4 space-x-2">
-                    <button className="btn btn-secondary" onClick={() => setIsCreateFolderOpen(false)}>
-                        Cancel
-                    </button>
-                    <button className="btn btn-primary" onClick={handleConfirmCreateFolder}>
-                        Create
-                    </button>
-                </div>
-            </Modal>
 
-            {/* Modal for Viewing Files */}
-            {isFileViewerOpen && fileToView && fileToView.type && (
+                {/* Modal para crear una nueva carpeta */}
                 <Modal
-                    isOpen={isFileViewerOpen}
-                    title={`Visualizando: ${selectedItem}`}
-                    onClose={() => setIsFileViewerOpen(false)}
+                    isOpen={isCreateFolderOpen}
+                    title="Create New Folder"
+                    onClose={() => setIsCreateFolderOpen(false)}
                 >
-                    <div className="flex justify-between items-center mb-4">
-                    </div>
-                    <div className="h-96 overflow-auto">
-                        <FileViewer fileUrl={fileToView.url} fileType={fileToView.type}/>
+                    <input
+                        type="text"
+                        value={newFolderName}
+                        onChange={(e) => setNewFolderName(e.target.value)}
+                        placeholder="Folder name"
+                        className="input input-bordered w-full"
+                    />
+                    <div className="flex justify-end mt-4 space-x-2">
+                        <button className="btn btn-secondary" onClick={() => setIsCreateFolderOpen(false)}>
+                            Cancel
+                        </button>
+                        <button className="btn btn-primary" onClick={handleConfirmCreateFolder}>
+                            Create
+                        </button>
                     </div>
                 </Modal>
-            )}
 
-            {/* Items List */}
-            <div className="p-4">
-                {items.length === 0 ? (
-                    <p>No files or folders available.</p>
-                ) : (
-                    <ul className="grid grid-cols-4 gap-4">
-                        {items.map((item) => (
-                            <li
-                                key={item.id}
-                                className={`p-4 border rounded-lg cursor-pointer flex flex-col items-center ${
-                                    selectedItem === item.name ? 'bg-blue-100' : 'bg-white'
-                                } hover:bg-gray-200 transition-colors duration-200`}
-                                onClick={() => handleSelectItem(item.name)}
-                                onDoubleClick={() => handleDoubleClickItem(item)}
-                            >
-            <span className="text-4xl">
-                {item.type === 'folder' ? <FaFolder/> : getFileIcon(item.name)}
-            </span>
-                                <span className="mt-2 text-center truncate w-full">{item.name}</span>
-                            </li>
-                        ))}
-                    </ul>
+                {/* Modal para visualizar archivos */}
+                {isFileViewerOpen && fileToView && fileToView.type && (
+                    <Modal
+                        isOpen={isFileViewerOpen}
+                        title={`Visualizando: ${selectedItem}`}
+                        onClose={() => setIsFileViewerOpen(false)}
+                    >
+                        <div className="flex justify-between items-center mb-4">
+                            {/* Puedes agregar botones o información adicional aquí si es necesario */}
+                        </div>
+                        <div className="h-96 overflow-auto">
+                            <FileViewer fileUrl={fileToView.url} fileType={fileToView.type}/>
+                        </div>
+                    </Modal>
                 )}
+
+                {/* Lista de elementos */}
+                <div className="p-4">
+                    {items.length === 0 ? (
+                        <p>No files or folders available.</p>
+                    ) : (
+                        <ul className="grid grid-cols-4 gap-4">
+                            {items.map((item) => (
+                                <li
+                                    key={item.id}
+                                    className={`p-4 border rounded-lg cursor-pointer flex flex-col items-center ${
+                                        selectedItem === item.name ? 'bg-blue-100' : 'bg-white'
+                                    } hover:bg-gray-200 transition-colors duration-200`}
+                                    onClick={() => handleSelectItem(item.name)}
+                                    onDoubleClick={() => handleDoubleClickItem(item)}
+                                >
+                                    <span className="text-4xl">
+                                        {item.type === 'folder' ? <FaFolder/> : getFileIcon(item.name)}
+                                    </span>
+                                    <span className="mt-2 text-center truncate w-full">{item.name}</span>
+                                </li>
+                            ))}
+                        </ul>
+                    )}
+                </div>
             </div>
-        </div>
         </>
     );
 };
