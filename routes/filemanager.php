@@ -31,7 +31,16 @@ Route::prefix('filemanager')->name('filemanager.')->middleware('auth:employee')-
     Route::put('/folders/update', [FileManagerController::class, 'updateFolder'])->name('folders.update');
 
     // Ruta para descargar archivos
-    Route::get('/files/download', [FileManagerController::class, 'download'])->name('files.download');
+    Route::get('/files/download', [FileManagerController::class, 'downloadFile'])->name('files.download');
+
+    // Ruta para renombrar archivos
+    Route::post('/files/rename-file', [FileManagerController::class, 'renameFile'])->name('files.renameFile');
+
+    // Ruta para copiar archivos
+    Route::post('/files/copy-file', [FileManagerController::class, 'copyFile'])->name('files.copyFile');
+
+    // Ruta para mover archivos
+    Route::post('/files/move-file', [FileManagerController::class, 'moveFile'])->name('files.moveFile');
 
     // Ruta para subir directorios
     Route::post('/folders/upload-directory', [FileManagerController::class, 'uploadDirectory'])->name('folders.uploadDirectory');
@@ -40,8 +49,14 @@ Route::prefix('filemanager')->name('filemanager.')->middleware('auth:employee')-
     Route::delete('/folders/delete', [FileManagerController::class, 'deleteFolder'])->name('folders.delete');
 
     // Ruta para ver archivos
-    Route::get('files/view', [FileManagerController::class, 'view']);
-    Route::get('/public-file-url', [FileManagerController::class, 'getPublicFileUrl']);
-    Route::get('/public-file', [FileManagerController::class, 'getPublicFile']);
+    Route::get('/files/view', [FileManagerController::class, 'view'])->name('files.view');
 
+    // Ruta para obtener la URL pública de un archivo
+    Route::get('/public-file-url', [FileManagerController::class, 'getPublicFileUrl'])->name('files.getPublicFileUrl');
+
+    // Ruta para servir un archivo públicamente
+    Route::get('/public-file', [FileManagerController::class, 'getPublicFile'])->name('files.getPublicFile');
+
+    // Ruta para descargar carpetas como ZIP
+    Route::get('/folders/download', [FileManagerController::class, 'downloadFolder'])->name('folders.download');
 });

@@ -1,6 +1,6 @@
 // src/components/FileManager/FileManager.tsx
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import FileManagerToolbar from './Components/Toolbar';
 import Modal from './Components/Modal';
 import FileViewer from './Components/FileViewer';
@@ -67,17 +67,26 @@ import {
     uploadDirectory,
     deleteFolder,
     updateFolder,
-} from './api';
+    downloadFile,
+    renameFile,
+    copyFile,
+    moveFile,
+    downloadFolder, // Asegúrate de importar downloadFolder
+} from './fileManagerApi'; // Asegúrate de que la ruta sea correcta
 import { usePage } from '@inertiajs/react';
-import axios from 'axios';
-import { IoClose } from "react-icons/io5";
 import Breadcrumb from "@/Pages/FileSystem/Components/Breadcrumb";
+import { IoClose } from "react-icons/io5";
 
 interface Item {
     id: number;
     name: string;
     type: 'file' | 'folder';
     date: Date;
+}
+
+interface SortPayload {
+    criteria: 'name' | 'date';
+    order: 'asc' | 'desc';
 }
 
 const FileManager: React.FC = () => {
@@ -92,6 +101,26 @@ const FileManager: React.FC = () => {
     const [isFileViewerOpen, setIsFileViewerOpen] = useState<boolean>(false);
     const [fileToView, setFileToView] = useState<{ url: string; type: 'pdf' | 'docx' | 'xlsx' } | null>(null);
 
+    // Estados para manejar la acción de copiar
+    const [isCopying, setIsCopying] = useState<boolean>(false);
+    const [copySource, setCopySource] = useState<{ filename: string; path: string } | null>(null);
+
+    // Nuevos estados para manejar la acción de mover
+    const [isMoving, setIsMoving] = useState<boolean>(false);
+    const [moveSource, setMoveSource] = useState<{ filename: string; path: string } | null>(null);
+
+    // Estados para el Modal de Estado
+    const [modalOpen, setModalOpen] = useState<boolean>(false);
+    const [modalTitle, setModalTitle] = useState<string>('');
+    const [modalMessage, setModalMessage] = useState<string>('');
+    const [modalType, setModalType] = useState<'success' | 'error'>('success');
+
+    // Nuevos estados para el Modal de Renombrar
+    const [renameModalOpen, setRenameModalOpen] = useState<boolean>(false);
+    const [renameNewName, setRenameNewName] = useState<string>('');
+    const [renameNewExtension, setRenameNewExtension] = useState<string>('');
+    const [renameItemType, setRenameItemType] = useState<'file' | 'folder' | null>(null);
+
     // Fetch files and directories cuando el componente se monta o currentPath cambia
     useEffect(() => {
         fetchFiles();
@@ -104,15 +133,7 @@ const FileManager: React.FC = () => {
             setItems(formatItems(data.directories, data.files));
         } catch (error) {
             console.error('Error fetching files:', error);
-            alert('Error fetching files.');
-        }
-    };
-
-    const handleNavigateBack = () => {
-        const paths = currentPath.split('/');
-        if (paths.length > 1) {
-            paths.pop();
-            setCurrentPath(paths.join('/'));
+            showModal('Error', 'Error al obtener los archivos.', 'error');
         }
     };
 
@@ -267,11 +288,18 @@ const FileManager: React.FC = () => {
                 });
                 setIsFileViewerOpen(true);
             } else {
-                alert('File type not supported for viewing.');
+                showModal('Error', 'Tipo de archivo no soportado para visualización.', 'error');
             }
         }
     };
 
+    // Función auxiliar para mostrar el modal de estado
+    const showModal = (title: string, message: string, type: 'success' | 'error') => {
+        setModalTitle(title);
+        setModalMessage(message);
+        setModalType(type);
+        setModalOpen(true);
+    };
 
     // Acciones del Toolbar
     const handleCreateFolderAction = () => {
@@ -280,21 +308,25 @@ const FileManager: React.FC = () => {
 
     const handleConfirmCreateFolder = async () => {
         if (newFolderName.trim() === '') {
-            alert('Folder name cannot be empty.');
+            showModal('Error', 'El nombre de la carpeta no puede estar vacío.', 'error');
             return;
         }
 
         try {
             const response = await createFolder(newFolderName, currentPath);
-            alert(response.message);
+            showModal('Éxito', 'Carpeta creada exitosamente.', 'success');
 
             // Refrescar elementos
             fetchFiles();
 
             setNewFolderName('');
             setIsCreateFolderOpen(false);
-        } catch (error) {
-            alert('Error creating folder.');
+        } catch (error: any) {
+            if (error.response && error.response.status === 403) {
+                showModal('Error', 'No tienes permiso para crear carpetas.', 'error');
+            } else {
+                showModal('Error', 'Error al crear la carpeta.', 'error');
+            }
             console.error(error);
         }
     };
@@ -307,10 +339,14 @@ const FileManager: React.FC = () => {
             if (folderInput.files && folderInput.files.length > 0) {
                 try {
                     const response = await uploadDirectory(folderInput.files, currentPath);
-                    alert(response.message);
+                    showModal('Éxito', 'Carpeta subida exitosamente.', 'success');
                     fetchFiles(); // Refrescar elementos
-                } catch (error) {
-                    alert('Error uploading folder.');
+                } catch (error: any) {
+                    if (error.response && error.response.status === 403) {
+                        showModal('Error', 'No tienes permiso para subir carpetas.', 'error');
+                    } else {
+                        showModal('Error', 'Error al subir la carpeta.', 'error');
+                    }
                     console.error(error);
                 }
             }
@@ -325,10 +361,14 @@ const FileManager: React.FC = () => {
             if (fileInput.files && fileInput.files[0]) {
                 try {
                     const response = await uploadFile(fileInput.files[0], currentPath);
-                    alert(response.message);
+                    showModal('Éxito', 'Archivo subido exitosamente.', 'success');
                     fetchFiles(); // Refrescar elementos
-                } catch (error) {
-                    alert('Error uploading file.');
+                } catch (error: any) {
+                    if (error.response && error.response.status === 403) {
+                        showModal('Error', 'No tienes permiso para subir archivos.', 'error');
+                    } else {
+                        showModal('Error', 'Error al subir el archivo.', 'error');
+                    }
                     console.error(error);
                 }
             }
@@ -339,32 +379,48 @@ const FileManager: React.FC = () => {
     const handleDownloadFileAction = async () => {
         if (selectedItem) {
             const item = items.find((i) => i.name === selectedItem);
-            if (item && item.type === 'file') {
+            if (item) {
                 try {
-                    const response = await axios.get(`/filemanager/files/download`, {
-                        params: { filename: selectedItem, path: currentPath },
-                        responseType: 'blob',
-                    });
-                    const url = window.URL.createObjectURL(new Blob([response.data]));
-                    const link = document.createElement('a');
-                    link.href = url;
-                    link.setAttribute('download', selectedItem);
-                    document.body.appendChild(link);
-                    link.click();
-                    link.parentNode?.removeChild(link);
-                } catch (error) {
-                    alert('Error downloading file.');
+                    if (item.type === 'file') {
+                        const blob = await downloadFile(selectedItem, currentPath);
+                        const url = window.URL.createObjectURL(new Blob([blob]));
+                        const link = document.createElement('a');
+                        link.href = url;
+                        link.setAttribute('download', selectedItem);
+                        document.body.appendChild(link);
+                        link.click();
+                        link.parentNode?.removeChild(link);
+                        showModal('Éxito', 'Archivo descargado exitosamente.', 'success');
+                    } else if (item.type === 'folder') {
+                        const blob = await downloadFolder(selectedItem, currentPath);
+                        const url = window.URL.createObjectURL(new Blob([blob]));
+                        const link = document.createElement('a');
+                        link.href = url;
+                        link.setAttribute('download', `${selectedItem}.zip`);
+                        document.body.appendChild(link);
+                        link.click();
+                        link.parentNode?.removeChild(link);
+                        showModal('Éxito', 'Carpeta descargada exitosamente.', 'success');
+                    }
+                } catch (error: any) {
+                    if (error.response && error.response.status === 403) {
+                        showModal('Error', `No tienes permiso para descargar ${item.type}.`, 'error');
+                    } else {
+                        showModal('Error', `Error al descargar el ${item.type}.`, 'error');
+                    }
                     console.error(error);
                 }
             } else {
-                alert('Please select a file to download.');
+                showModal('Error', 'El elemento seleccionado no existe.', 'error');
             }
+        } else {
+            showModal('Error', 'Por favor, selecciona un elemento para descargar.', 'error');
         }
     };
 
     const handleDeleteAction = async () => {
         if (selectedItem) {
-            const confirmDelete = window.confirm(`Are you sure you want to delete "${selectedItem}"?`);
+            const confirmDelete = window.confirm(`¿Estás seguro de que deseas eliminar "${selectedItem}"?`);
             if (confirmDelete) {
                 try {
                     const item = items.find((i) => i.name === selectedItem);
@@ -375,12 +431,16 @@ const FileManager: React.FC = () => {
                         } else if (item.type === 'folder') {
                             response = await deleteFolder(selectedItem, currentPath);
                         }
-                        alert(response.message);
+                        showModal('Éxito', response.message, 'success');
                         fetchFiles(); // Refrescar elementos
                         setSelectedItem(null);
                     }
-                } catch (error) {
-                    alert('Error deleting item.');
+                } catch (error: any) {
+                    if (error.response && error.response.status === 403) {
+                        showModal('Error', 'No tienes permiso para eliminar este elemento.', 'error');
+                    } else {
+                        showModal('Error', 'Error al eliminar el elemento.', 'error');
+                    }
                     console.error(error);
                 }
             }
@@ -389,106 +449,225 @@ const FileManager: React.FC = () => {
 
     const handleCopy = async () => {
         if (selectedItem) {
-            alert('Copy functionality not implemented yet.');
-            // Implementar lógica de copia aquí
+            const item = items.find((i) => i.name === selectedItem);
+            if (item && item.type === 'file') {
+                setCopySource({ filename: selectedItem, path: currentPath });
+                setIsCopying(true);
+            } else {
+                showModal('Error', 'Solo se pueden copiar archivos.', 'error');
+            }
         }
+    };
+
+    const handleConfirmCopy = async () => {
+        if (copySource) {
+            try {
+                const response = await copyFile(copySource.filename, copySource.path, currentPath);
+                showModal('Éxito', 'Archivo copiado exitosamente.', 'success');
+                fetchFiles(); // Refrescar la lista de archivos
+                setIsCopying(false);
+                setCopySource(null);
+            } catch (error: any) {
+                if (error.response && error.response.status === 403) {
+                    showModal('Error', 'No tienes permiso para copiar archivos.', 'error');
+                } else {
+                    showModal('Error', 'Error al copiar el archivo.', 'error');
+                }
+                console.error(error);
+            }
+        }
+    };
+
+    const handleCancelCopy = () => {
+        setIsCopying(false);
+        setCopySource(null);
     };
 
     const handleMove = async () => {
         if (selectedItem) {
-            alert('Move functionality not implemented yet.');
-            // Implementar lógica de mover aquí
-        }
-    };
-
-    const handleRename = async () => {
-        if (selectedItem) {
-            const newName = prompt(`Enter the new name for "${selectedItem}":`);
-            if (newName && newName.trim() !== '') {
-                try {
-                    const item = items.find((i) => i.name === selectedItem);
-                    if (item) {
-                        let response;
-                        if (item.type === 'folder') {
-                            response = await updateFolder(item.name, newName, currentPath);
-                        } else {
-                            alert('Renaming files is not implemented yet.');
-                            return;
-                        }
-                        alert(response.message);
-                        fetchFiles(); // Refrescar elementos
-                        setSelectedItem(null);
-                    }
-                } catch (error) {
-                    alert('Error renaming item.');
-                    console.error(error);
-                }
-            }
-        }
-    };
-
-    const handleSort = (criteria: 'date' | 'name') => {
-        const sortedItems = [...items].sort((a, b) => {
-            if (criteria === 'date') {
-                return new Date(a.date).getTime() - new Date(b.date).getTime();
+            const item = items.find((i) => i.name === selectedItem);
+            if (item && item.type === 'file') {
+                setMoveSource({ filename: selectedItem, path: currentPath });
+                setIsMoving(true);
             } else {
-                return a.name.localeCompare(b.name);
+                showModal('Error', 'Solo se pueden mover archivos.', 'error');
             }
+        }
+    };
+
+    const handleConfirmMove = async () => {
+        if (moveSource) {
+            try {
+                const response = await moveFile(moveSource.filename, moveSource.path, currentPath);
+                showModal('Éxito', 'Archivo movido exitosamente.', 'success');
+                fetchFiles(); // Refrescar la lista de archivos
+                setIsMoving(false);
+                setMoveSource(null);
+                setSelectedItem(null); // Deseleccionar el elemento movido
+            } catch (error: any) {
+                if (error.response && error.response.status === 403) {
+                    showModal('Error', 'No tienes permiso para mover archivos.', 'error');
+                } else {
+                    showModal('Error', 'Error al mover el archivo.', 'error');
+                }
+                console.error(error);
+            }
+        }
+    };
+
+    const handleCancelMove = () => {
+        setIsMoving(false);
+        setMoveSource(null);
+    };
+
+    const handleRename = () => {
+        if (selectedItem) {
+            const item = items.find((i) => i.name === selectedItem);
+            if (item) {
+                const [currentName, currentExtension] = selectedItem.split('.').length > 1
+                    ? [selectedItem.slice(0, selectedItem.lastIndexOf('.')), selectedItem.slice(selectedItem.lastIndexOf('.') + 1)]
+                    : [selectedItem, ''];
+                setRenameNewName(currentName);
+                setRenameNewExtension(currentExtension);
+                setRenameItemType(item.type); // Establecer el tipo de elemento
+                setRenameModalOpen(true);
+            }
+        }
+    };
+
+    const handleConfirmRename = async (e: React.MouseEvent<HTMLButtonElement>) => {
+        e.preventDefault(); // Prevenir comportamiento por defecto del formulario
+
+        // Validaciones
+        if (renameNewName.trim() === '') {
+            showModal('Error', 'El nombre de archivo no puede estar vacío.', 'error');
+            return;
+        }
+
+        // Si es un archivo, la extensión no puede estar vacía
+        if (renameItemType === 'file' && renameNewExtension.trim() === '') {
+            showModal('Error', 'La extensión del archivo no puede estar vacía.', 'error');
+            return;
+        }
+
+        let newFilename = renameNewName;
+        if (renameItemType === 'file') {
+            newFilename = `${renameNewName}.${renameNewExtension}`;
+        }
+
+        try {
+            const response = await renameFile(selectedItem!, newFilename, currentPath);
+            showModal('Éxito', 'Archivo renombrado exitosamente.', 'success');
+            fetchFiles(); // Refrescar elementos
+            setSelectedItem(null);
+            setRenameModalOpen(false);
+            setRenameNewName('');
+            setRenameNewExtension('');
+            setRenameItemType(null);
+        } catch (error: any) {
+            if (error.response && error.response.status === 403) {
+                showModal('Error', 'No tienes permiso para renombrar este archivo.', 'error');
+            } else {
+                showModal('Error', 'Error al renombrar el archivo.', 'error');
+            }
+            console.error(error);
+        }
+    };
+
+    const handleCancelRename = () => {
+        setRenameModalOpen(false);
+        setRenameNewName('');
+        setRenameNewExtension('');
+        setRenameItemType(null);
+    };
+
+    const handleSort = ({ criteria, order }: SortPayload) => {
+        const sortedItems = [...items].sort((a, b) => {
+            let comparison = 0;
+            if (criteria === 'name') {
+                comparison = a.name.localeCompare(b.name);
+            } else if (criteria === 'date') {
+                comparison = new Date(a.date).getTime() - new Date(b.date).getTime();
+            }
+
+            return order === 'asc' ? comparison : -comparison;
         });
+
         setItems(sortedItems);
     };
 
+    // Manejar el evento de tecla ESC para cancelar la copia, mover y renombrar
+    const handleKeyDown = useCallback((event: KeyboardEvent) => {
+        if (event.key === 'Escape') {
+            if (isCopying) {
+                handleCancelCopy();
+            }
+            if (isMoving) {
+                handleCancelMove();
+            }
+            if (renameModalOpen) {
+                handleCancelRename();
+            }
+        }
+    }, [isCopying, isMoving, renameModalOpen]);
+
+    useEffect(() => {
+        if (isCopying || isMoving || renameModalOpen) {
+            window.addEventListener('keydown', handleKeyDown);
+        } else {
+            window.removeEventListener('keydown', handleKeyDown);
+        }
+
+        return () => {
+            window.removeEventListener('keydown', handleKeyDown);
+        };
+    }, [isCopying, isMoving, renameModalOpen, handleKeyDown]);
+
     return (
         <>
-            <Breadcrumb currentPath={currentPath} onNavigateTo={handleNavigateToPath}/>
+            <Breadcrumb currentPath={currentPath} onNavigateTo={handleNavigateToPath} />
             <div className="file-manager bg-white">
-
-                {/* Barra de navegación (comentada) */}
-                {/* <div className="flex items-center p-4 bg-gray-100 shadow">
-                    <button
-                        className={`btn btn-secondary mr-2 ${currentPath === 'public' ? 'btn-disabled' : ''}`}
-                        onClick={handleNavigateBack}
-                        disabled={currentPath === 'public'}
-                    >
-                        Back
-                    </button>
-                    <span className="text-lg font-semibold">Path: /{currentPath}</span>
-                </div> */}
 
                 {/* Toolbar */}
                 <FileManagerToolbar
                     onCreateFolder={handleCreateFolderAction}
                     onUploadFolder={handleUploadFolderAction}
                     onUploadFile={handleUploadFileAction}
-                    onDownloadFile={handleDownloadFileAction}
+                    onDownloadFile={handleDownloadFileAction} // Corregido
                     onDelete={handleDeleteAction}
+                    onCopy={handleCopy}
+                    onRename={handleRename}
+                    onMove={handleMove}
                     onSort={handleSort}
                     isItemSelected={selectedItem !== null}
                     hasPermission={hasPermission}
-                    onCopy={handleCopy}
-                    onMove={handleMove}
-                    onRename={handleRename}
+                    onCopyHere={handleConfirmCopy}
+                    onCancelCopy={handleCancelCopy}
+                    isCopying={isCopying}
+                    onMoveHere={handleConfirmMove}
+                    onCancelMove={handleCancelMove}
+                    isMoving={isMoving}
                 />
 
                 {/* Modal para crear una nueva carpeta */}
                 <Modal
                     isOpen={isCreateFolderOpen}
-                    title="Create New Folder"
+                    title="Crear Nueva Carpeta"
                     onClose={() => setIsCreateFolderOpen(false)}
                 >
                     <input
                         type="text"
                         value={newFolderName}
                         onChange={(e) => setNewFolderName(e.target.value)}
-                        placeholder="Folder name"
+                        placeholder="Nombre de la carpeta"
                         className="input input-bordered w-full"
                     />
                     <div className="flex justify-end mt-4 space-x-2">
                         <button className="btn btn-secondary" onClick={() => setIsCreateFolderOpen(false)}>
-                            Cancel
+                            Cancelar
                         </button>
                         <button className="btn btn-primary" onClick={handleConfirmCreateFolder}>
-                            Create
+                            Crear
                         </button>
                     </div>
                 </Modal>
@@ -504,15 +683,60 @@ const FileManager: React.FC = () => {
                             {/* Puedes agregar botones o información adicional aquí si es necesario */}
                         </div>
                         <div className="h-96 overflow-auto">
-                            <FileViewer fileUrl={fileToView.url} fileType={fileToView.type}/>
+                            <FileViewer fileUrl={fileToView.url} fileType={fileToView.type} />
                         </div>
                     </Modal>
                 )}
 
+                {/* Modal de Renombrar Archivo o Carpeta */}
+                <dialog id="rename-modal" className={`modal ${renameModalOpen ? 'modal-open' : ''}`} open={renameModalOpen}>
+                    <div className="modal-box">
+                        <form method="dialog">
+                            <button className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2" onClick={() => setRenameModalOpen(false)}>✕</button>
+                        </form>
+                        <h3 className="text-lg font-bold">Cambiar Nombre</h3>
+                        {renameItemType === 'file' && (
+                            <p className="py-2 text-red-500">Cuidado con cambiar la extensión del archivo ya que podría dejar de funcionar.</p>
+                        )}
+                        <div className="flex flex-col space-y-4">
+                            <div>
+                                <label className="label">
+                                    <span className="label-text">Nombre</span>
+                                </label>
+                                <input
+                                    type="text"
+                                    value={renameNewName}
+                                    onChange={(e) => setRenameNewName(e.target.value)}
+                                    className="input input-bordered w-full"
+                                    placeholder="Nombre"
+                                />
+                            </div>
+                            {renameItemType === 'file' && (
+                                <div>
+                                    <label className="label">
+                                        <span className="label-text">Extensión del archivo</span>
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={renameNewExtension}
+                                        onChange={(e) => setRenameNewExtension(e.target.value)}
+                                        className="input input-bordered w-full"
+                                        placeholder="Extensión del archivo"
+                                    />
+                                </div>
+                            )}
+                        </div>
+                        <div className="modal-action">
+                            <button className="btn btn-secondary" onClick={() => setRenameModalOpen(false)}>Cancelar</button>
+                            <button className="btn btn-primary" onClick={handleConfirmRename}>Renombrar</button>
+                        </div>
+                    </div>
+                </dialog>
+
                 {/* Lista de elementos */}
                 <div className="p-4">
                     {items.length === 0 ? (
-                        <p>No files or folders available.</p>
+                        <p>No hay archivos o carpetas disponibles.</p>
                     ) : (
                         <ul className="grid grid-cols-4 gap-4">
                             {items.map((item) => (
@@ -525,7 +749,7 @@ const FileManager: React.FC = () => {
                                     onDoubleClick={() => handleDoubleClickItem(item)}
                                 >
                                     <span className="text-4xl">
-                                        {item.type === 'folder' ? <FaFolder/> : getFileIcon(item.name)}
+                                        {item.type === 'folder' ? <FaFolder /> : getFileIcon(item.name)}
                                     </span>
                                     <span className="mt-2 text-center truncate w-full">{item.name}</span>
                                 </li>
@@ -534,8 +758,23 @@ const FileManager: React.FC = () => {
                     )}
                 </div>
             </div>
+
+            {/* Modal de Estado (Éxito/Error) */}
+            <dialog id="status-modal" className={`modal ${modalOpen ? 'modal-open' : ''}`} open={modalOpen}>
+                <div className="modal-box">
+                    <form method="dialog">
+                        <button className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2" onClick={() => setModalOpen(false)}>✕</button>
+                    </form>
+                    <h3 className="text-lg font-bold">{modalTitle}</h3>
+                    <p className="py-4">{modalMessage}</p>
+                    <div className="modal-action">
+                        <button className="btn" onClick={() => setModalOpen(false)}>Aceptar</button>
+                    </div>
+                </div>
+            </dialog>
         </>
     );
+
 };
 
 export default FileManager;

@@ -34,7 +34,10 @@ class FileManagerController extends Controller
         }
 
         // Verificar permisos
-        if (!$employee->hasPermission('can_read_folders') || !$employee->hasPermission('can_read_files')) {
+        if (
+            !$employee->hasPermission('can_read_folders') ||
+            !$employee->hasPermission('can_read_files')
+        ) {
             return response()->json(['error' => 'No tienes permiso para ver los archivos o carpetas.'], 403);
         }
 
@@ -329,9 +332,22 @@ class FileManagerController extends Controller
 
         // Validar la solicitud
         $validator = Validator::make($request->all(), [
-            'old_folder_name' => 'required|string',
-            'new_folder_name' => 'required|string|max:255',
+            'old_folder_name' => [
+                'required',
+                'string',
+                'max:255',
+                'regex:/^[\w\- ]+$/'
+            ],
+            'new_folder_name' => [
+                'required',
+                'string',
+                'max:255',
+                'regex:/^[\w\- ]+$/'
+            ],
             'path' => 'required|string',
+        ], [
+            'old_folder_name.regex' => 'El nombre de la carpeta original contiene caracteres inválidos.',
+            'new_folder_name.regex' => 'El nuevo nombre de la carpeta contiene caracteres inválidos.',
         ]);
 
         if ($validator->fails()) {
@@ -342,7 +358,7 @@ class FileManagerController extends Controller
         $newFolderName = $request->input('new_folder_name');
         $path = $request->input('path');
 
-        // Validar la ruta
+        // Validar la ruta para prevenir ataques de Path Traversal
         if (!$this->isValidPath($path)) {
             return response()->json(['error' => 'Ruta inválida.'], 400);
         }
@@ -350,17 +366,28 @@ class FileManagerController extends Controller
         $oldPath = rtrim($path, '/') . '/' . ltrim($oldFolderName, '/');
         $newPath = rtrim($path, '/') . '/' . ltrim($newFolderName, '/');
 
-        if (!Storage::disk('local')->exists($oldPath)) {
-            return response()->json(['error' => 'La carpeta original no existe.'], 404);
+        try {
+            if (!Storage::disk('local')->exists($oldPath)) {
+                return response()->json(['error' => 'La carpeta original no existe.'], 404);
+            }
+
+            if (Storage::disk('local')->exists($newPath)) {
+                return response()->json(['error' => 'La nueva carpeta ya existe.'], 400);
+            }
+
+            Storage::disk('local')->move($oldPath, $newPath);
+
+            return response()->json([
+                'message' => 'Carpeta renombrada exitosamente.',
+                'old_path' => $oldPath,
+                'new_path' => $newPath
+            ]);
+        } catch (\Exception $e) {
+            // Registrar el error para depuración
+            \Log::error('Error al renombrar la carpeta: ' . $e->getMessage());
+
+            return response()->json(['error' => 'Error al renombrar la carpeta.'], 500);
         }
-
-        if (Storage::disk('local')->exists($newPath)) {
-            return response()->json(['error' => 'La nueva carpeta ya existe.'], 400);
-        }
-
-        Storage::disk('local')->move($oldPath, $newPath);
-
-        return response()->json(['message' => 'Carpeta renombrada exitosamente.', 'path' => $newPath]);
     }
 
     /**
@@ -435,6 +462,277 @@ class FileManagerController extends Controller
         return response()->file(Storage::disk('local')->path($filePath), [
             'Content-Disposition' => 'inline; filename="' . $filename . '"',
         ]);
+    }
+
+    /**
+     * Descarga un archivo específico.
+     */
+    public function downloadFile(Request $request)
+    {
+        $employee = Auth::guard('employee')->user();
+
+        // Verificar permisos
+        if (!$employee->hasPermission('can_download_files')) {
+            return response()->json(['error' => 'No tienes permiso para descargar archivos.'], 403);
+        }
+
+        // Validar la solicitud
+        $validator = Validator::make($request->all(), [
+            'filename' => 'required|string',
+            'path' => 'required|string',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        $filename = $request->input('filename');
+        $path = $request->input('path');
+
+        // Validar la ruta para prevenir ataques de Path Traversal
+        if (!$this->isValidPath($path)) {
+            return response()->json(['error' => 'Ruta inválida.'], 400);
+        }
+
+        $filePath = rtrim($path, '/') . '/' . ltrim($filename, '/');
+
+        if (!Storage::disk('local')->exists($filePath)) {
+            return response()->json(['error' => 'El archivo no existe.'], 404);
+        }
+
+        return Storage::disk('local')->download($filePath, $filename);
+    }
+
+    /**
+     * Copia un archivo a otra carpeta.
+     */
+    public function copyFile(Request $request)
+    {
+        $employee = Auth::guard('employee')->user();
+
+        // Verificar permisos
+        if (!$employee->hasPermission('can_copy_files')) {
+            return response()->json(['error' => 'No tienes permiso para copiar archivos.'], 403);
+        }
+
+        // Validar la solicitud
+        $validator = Validator::make($request->all(), [
+            'filename' => 'required|string',
+            'source_path' => 'required|string',
+            'target_path' => 'required|string',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        $filename = $request->input('filename');
+        $sourcePath = $request->input('source_path');
+        $targetPath = $request->input('target_path');
+
+        // Validar las rutas para prevenir ataques de Path Traversal
+        if (!$this->isValidPath($sourcePath) || !$this->isValidPath($targetPath)) {
+            return response()->json(['error' => 'Ruta inválida.'], 400);
+        }
+
+        $sourceFilePath = rtrim($sourcePath, '/') . '/' . ltrim($filename, '/');
+        $targetFilePath = rtrim($targetPath, '/') . '/' . ltrim($filename, '/');
+
+        if (!Storage::disk('local')->exists($sourceFilePath)) {
+            return response()->json(['error' => 'El archivo original no existe.'], 404);
+        }
+
+        if (Storage::disk('local')->exists($targetFilePath)) {
+            return response()->json(['error' => 'Ya existe un archivo con el mismo nombre en la carpeta de destino.'], 400);
+        }
+
+        // Copiar el archivo
+        Storage::disk('local')->copy($sourceFilePath, $targetFilePath);
+
+        return response()->json(['message' => 'Archivo copiado exitosamente.', 'path' => $targetFilePath]);
+    }
+
+    /**
+     * Mueve un archivo a otra carpeta.
+     */
+    public function moveFile(Request $request)
+    {
+        $employee = Auth::guard('employee')->user();
+
+        // Verificar permisos
+        if (!$employee->hasPermission('can_move_files')) {
+            return response()->json(['error' => 'No tienes permiso para mover archivos.'], 403);
+        }
+
+        // Validar la solicitud
+        $validator = Validator::make($request->all(), [
+            'filename' => 'required|string',
+            'source_path' => 'required|string',
+            'target_path' => 'required|string',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        $filename = $request->input('filename');
+        $sourcePath = $request->input('source_path');
+        $targetPath = $request->input('target_path');
+
+        // Validar las rutas para prevenir ataques de Path Traversal
+        if (!$this->isValidPath($sourcePath) || !$this->isValidPath($targetPath)) {
+            return response()->json(['error' => 'Ruta inválida.'], 400);
+        }
+
+        $sourceFilePath = rtrim($sourcePath, '/') . '/' . ltrim($filename, '/');
+        $targetFilePath = rtrim($targetPath, '/') . '/' . ltrim($filename, '/');
+
+        if (!Storage::disk('local')->exists($sourceFilePath)) {
+            return response()->json(['error' => 'El archivo original no existe.'], 404);
+        }
+
+        if (Storage::disk('local')->exists($targetFilePath)) {
+            return response()->json(['error' => 'Ya existe un archivo con el mismo nombre en la carpeta de destino.'], 400);
+        }
+
+        // Mover el archivo
+        Storage::disk('local')->move($sourceFilePath, $targetFilePath);
+
+        return response()->json(['message' => 'Archivo movido exitosamente.', 'path' => $targetFilePath]);
+    }
+
+    /**
+     * Renombra un archivo específico.
+     */
+    public function renameFile(Request $request)
+    {
+        $employee = Auth::guard('employee')->user();
+
+        // Verificar permisos
+        if (!$employee->hasPermission('can_rename_files')) {
+            return response()->json(['error' => 'No tienes permiso para renombrar archivos.'], 403);
+        }
+
+        // Validar la solicitud
+        $validator = Validator::make($request->all(), [
+            'old_filename' => 'required|string',
+            'new_filename' => 'required|string|max:255',
+            'path' => 'required|string',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        $oldFilename = $request->input('old_filename');
+        $newFilename = $request->input('new_filename');
+        $path = $request->input('path');
+
+        // Validar la ruta para prevenir ataques de Path Traversal
+        if (!$this->isValidPath($path)) {
+            return response()->json(['error' => 'Ruta inválida.'], 400);
+        }
+
+        $oldFilePath = rtrim($path, '/') . '/' . ltrim($oldFilename, '/');
+        $newFilePath = rtrim($path, '/') . '/' . ltrim($newFilename, '/');
+
+        if (!Storage::disk('local')->exists($oldFilePath)) {
+            return response()->json(['error' => 'El archivo original no existe.'], 404);
+        }
+
+        if (Storage::disk('local')->exists($newFilePath)) {
+            return response()->json(['error' => 'Ya existe un archivo con el nuevo nombre.'], 400);
+        }
+
+        // Renombrar el archivo
+        Storage::disk('local')->move($oldFilePath, $newFilePath);
+
+        return response()->json(['message' => 'Archivo renombrado exitosamente.', 'path' => $newFilePath]);
+    }
+
+    /**
+     * Descarga una carpeta específica como un archivo ZIP.
+     */
+    public function downloadFolder(Request $request)
+    {
+        $employee = Auth::guard('employee')->user();
+
+        // Verificar permisos
+        if (!$employee->hasPermission('can_download_folders')) {
+            return response()->json(['error' => 'No tienes permiso para descargar carpetas.'], 403);
+        }
+
+        // Validar la solicitud
+        $validator = Validator::make($request->all(), [
+            'folder_name' => 'required|string',
+            'path' => 'required|string',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        $folderName = $request->input('folder_name');
+        $path = $request->input('path');
+
+        // Validar la ruta para prevenir ataques de Path Traversal
+        if (!$this->isValidPath($path)) {
+            return response()->json(['error' => 'Ruta inválida.'], 400);
+        }
+
+        $folderPath = rtrim($path, '/') . '/' . ltrim($folderName, '/');
+
+        if (!Storage::disk('local')->exists($folderPath)) {
+            return response()->json(['error' => 'La carpeta no existe.'], 404);
+        }
+
+        // Ruta completa en el sistema de archivos
+        $fullFolderPath = Storage::disk('local')->path($folderPath);
+
+        // Nombre del archivo ZIP
+        $zipFileName = Str::slug($folderName) . '-' . time() . '.zip';
+
+        // Ruta temporal para almacenar el archivo ZIP
+        $temporaryZipPath = storage_path('app/temp/' . $zipFileName);
+
+        // Asegurarse de que el directorio temporal exista
+        if (!file_exists(storage_path('app/temp'))) {
+            mkdir(storage_path('app/temp'), 0755, true);
+        }
+
+        // Crear el archivo ZIP
+        $zip = new ZipArchive;
+        if ($zip->open($temporaryZipPath, ZipArchive::CREATE) === TRUE) {
+            // Agregar la carpeta al ZIP
+            $files = new \RecursiveIteratorIterator(
+                new \RecursiveDirectoryIterator($fullFolderPath),
+                \RecursiveIteratorIterator::LEAVES_ONLY
+            );
+
+            foreach ($files as $name => $file) {
+                // Saltar directorios
+                if (!$file->isDir()) {
+                    // Obtener la ruta relativa para el ZIP
+                    $filePath = $file->getRealPath();
+                    $relativePath = substr($filePath, strlen($fullFolderPath) + 1);
+
+                    // Añadir archivo al ZIP
+                    $zip->addFile($filePath, $folderName . '/' . $relativePath);
+                }
+            }
+
+            $zip->close();
+
+            // Verificar si el archivo ZIP se creó correctamente
+            if (!file_exists($temporaryZipPath)) {
+                return response()->json(['error' => 'Error al crear el archivo ZIP.'], 500);
+            }
+
+            // Descargar el archivo ZIP
+            return response()->download($temporaryZipPath, $zipFileName)->deleteFileAfterSend(true);
+        } else {
+            return response()->json(['error' => 'No se pudo crear el archivo ZIP.'], 500);
+        }
     }
 
     /**

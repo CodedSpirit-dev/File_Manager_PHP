@@ -5,7 +5,7 @@ import ProgressBar from './ProgressBar';
 import { useAuthStore, useFileStore, useLayoutStore } from '../stores';
 import * as auth from '../utils/auth';
 import { version, signup, disableExternal, disableUsedPercentage, noAuth, loginPage } from '../utils/constants';
-import { files as api, getFiles, uploadFile, deleteFile, createFolder, getUserHierarchy } from '../api.js';
+import { files as api, getFiles, uploadFile, deleteFile, createFolder, getUserHierarchy } from '../fileManagerApi.tsx';
 import prettyBytes from 'pretty-bytes';
 
 const USAGE_DEFAULT = { used: '0 B', total: '0 B', usedPercentage: 0 };
