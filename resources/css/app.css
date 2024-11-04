@@ -264,4 +264,23 @@
     }
 
 
+    .file-viewer {
+        width: 100%;
+        max-width: 100%;
+        height: auto;
+        overflow: hidden;
+    }
+
+    @media (max-width: 768px) {
+        .file-viewer {
+            height: 60vh;
+        }
+    }
+
+    @media (min-width: 1920px) {
+        .file-viewer {
+            height: 90vh;
+        }
+    }
+
 }

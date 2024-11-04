@@ -34,7 +34,7 @@ export const uploadFile = async (file: File, path: string): Promise<any> => {
     try {
         const formData = new FormData();
         formData.append('file', file);
-        formData.append('path', path);
+        formData.append('path', path); // Agregar el campo path
 
         const response = await axios.post(`${FILEMANAGER_PREFIX}/files/upload`, formData, {
             headers: {
@@ -62,7 +62,7 @@ export const uploadDirectory = async (files: FileList, path: string): Promise<an
             // Append each file with its relative path
             formData.append('files[]', file, file.webkitRelativePath);
         });
-        formData.append('path', path);
+        formData.append('path', path); // Agregar el campo path
 
         const response = await axios.post(`${FILEMANAGER_PREFIX}/folders/upload-directory`, formData, {
             headers: {

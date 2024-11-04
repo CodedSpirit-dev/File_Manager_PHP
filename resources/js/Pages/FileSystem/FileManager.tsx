@@ -4,7 +4,61 @@ import React, { useState, useEffect } from 'react';
 import FileManagerToolbar from './Components/Toolbar';
 import Modal from './Components/Modal';
 import FileViewer from './Components/FileViewer';
-import { FaFolder, FaFile } from 'react-icons/fa';
+import {
+    FaFolder,
+    FaFile,
+} from 'react-icons/fa';
+import {
+    BsFiletypeAac,
+    BsFiletypeAi,
+    BsFiletypeBmp,
+    BsFiletypeCs,
+    BsFiletypeCss,
+    BsFiletypeCsv,
+    BsFiletypeDoc,
+    BsFiletypeDocx,
+    BsFiletypeExe,
+    BsFiletypeGif,
+    BsFiletypeHeic,
+    BsFiletypeHtml,
+    BsFiletypeJava,
+    BsFiletypeJpg,
+    BsFiletypeJs,
+    BsFiletypeJson,
+    BsFiletypeJsx,
+    BsFiletypeKey,
+    BsFiletypeM4P,
+    BsFiletypeMd,
+    BsFiletypeMdx,
+    BsFiletypeMov,
+    BsFiletypeMp3,
+    BsFiletypeMp4,
+    BsFiletypeOtf,
+    BsFiletypePdf,
+    BsFiletypePhp,
+    BsFiletypePng,
+    BsFiletypePpt,
+    BsFiletypePptx,
+    BsFiletypePsd,
+    BsFiletypePy,
+    BsFiletypeRaw,
+    BsFiletypeRb,
+    BsFiletypeSass,
+    BsFiletypeScss,
+    BsFiletypeSh,
+    BsFiletypeSql,
+    BsFiletypeSvg,
+    BsFiletypeTiff,
+    BsFiletypeTsx,
+    BsFiletypeTtf,
+    BsFiletypeTxt,
+    BsFiletypeWav,
+    BsFiletypeWoff,
+    BsFiletypeXls,
+    BsFiletypeXlsx,
+    BsFiletypeXml,
+    BsFiletypeYml,
+} from 'react-icons/bs';
 import {
     getFiles,
     uploadFile,
@@ -17,6 +71,7 @@ import {
 import { usePage } from '@inertiajs/react';
 import axios from 'axios';
 import {IoClose} from "react-icons/io5";
+import Breadcrumb from "@/Pages/FileSystem/Components/Breadcrumb";
 
 interface Item {
     id: number;
@@ -57,6 +112,116 @@ const FileManager: React.FC = () => {
         if (paths.length > 1) {
             paths.pop();
             setCurrentPath(paths.join('/'));
+        }
+    };
+
+    const handleNavigateToPath = (path: string) => {
+        setCurrentPath(path); // Actualiza el `currentPath` con la ruta seleccionada en el breadcrumb
+    };
+
+    const getFileIcon = (fileName: string) => {
+        const extension = fileName.split('.').pop()?.toLowerCase();
+        switch (extension) {
+            case 'aac':
+                return <BsFiletypeAac />;
+            case 'ai':
+                return <BsFiletypeAi />;
+            case 'bmp':
+                return <BsFiletypeBmp />;
+            case 'cs':
+                return <BsFiletypeCs />;
+            case 'css':
+                return <BsFiletypeCss />;
+            case 'csv':
+                return <BsFiletypeCsv />;
+            case 'doc':
+                return <BsFiletypeDoc />;
+            case 'docx':
+                return <BsFiletypeDocx />;
+            case 'exe':
+                return <BsFiletypeExe />;
+            case 'gif':
+                return <BsFiletypeGif />;
+            case 'heic':
+                return <BsFiletypeHeic />;
+            case 'html':
+                return <BsFiletypeHtml />;
+            case 'java':
+                return <BsFiletypeJava />;
+            case 'jpg':
+                return <BsFiletypeJpg />;
+            case 'js':
+                return <BsFiletypeJs />;
+            case 'json':
+                return <BsFiletypeJson />;
+            case 'jsx':
+                return <BsFiletypeJsx />;
+            case 'key':
+                return <BsFiletypeKey />;
+            case 'm4p':
+                return <BsFiletypeM4P />;
+            case 'md':
+                return <BsFiletypeMd />;
+            case 'mdx':
+                return <BsFiletypeMdx />;
+            case 'mov':
+                return <BsFiletypeMov />;
+            case 'mp3':
+                return <BsFiletypeMp3 />;
+            case 'mp4':
+                return <BsFiletypeMp4 />;
+            case 'otf':
+                return <BsFiletypeOtf />;
+            case 'pdf':
+                return <BsFiletypePdf />;
+            case 'php':
+                return <BsFiletypePhp />;
+            case 'png':
+                return <BsFiletypePng />;
+            case 'ppt':
+                return <BsFiletypePpt />;
+            case 'pptx':
+                return <BsFiletypePptx />;
+            case 'psd':
+                return <BsFiletypePsd />;
+            case 'py':
+                return <BsFiletypePy />;
+            case 'raw':
+                return <BsFiletypeRaw />;
+            case 'rb':
+                return <BsFiletypeRb />;
+            case 'sass':
+                return <BsFiletypeSass />;
+            case 'scss':
+                return <BsFiletypeScss />;
+            case 'sh':
+                return <BsFiletypeSh />;
+            case 'sql':
+                return <BsFiletypeSql />;
+            case 'svg':
+                return <BsFiletypeSvg />;
+            case 'tiff':
+                return <BsFiletypeTiff />;
+            case 'tsx':
+                return <BsFiletypeTsx />;
+            case 'ttf':
+                return <BsFiletypeTtf />;
+            case 'txt':
+                return <BsFiletypeTxt />;
+            case 'wav':
+                return <BsFiletypeWav />;
+            case 'woff':
+                return <BsFiletypeWoff />;
+            case 'xls':
+                return <BsFiletypeXls />;
+            case 'xlsx':
+                return <BsFiletypeXlsx />;
+            case 'xml':
+                return <BsFiletypeXml />;
+            case 'yml':
+                return <BsFiletypeYml />;
+            default:
+                return <FaFile />;
         }
     };
 
@@ -273,9 +438,12 @@ const FileManager: React.FC = () => {
     };
 
     return (
+        <>
+            <Breadcrumb currentPath={currentPath} onNavigateTo={handleNavigateToPath}/>
         <div className="file-manager bg-white">
+
             {/* Navigation bar */}
-            <div className="flex items-center p-4 bg-gray-100 shadow">
+{/*            <div className="flex items-center p-4 bg-gray-100 shadow">
                 <button
                     className={`btn btn-secondary mr-2 ${currentPath === 'public' ? 'btn-disabled' : ''}`}
                     onClick={handleNavigateBack}
@@ -284,7 +452,7 @@ const FileManager: React.FC = () => {
                     Back
                 </button>
                 <span className="text-lg font-semibold">Path: /{currentPath}</span>
-            </div>
+            </div>*/}
 
             {/* Toolbar */}
             <FileManagerToolbar
@@ -332,13 +500,9 @@ const FileManager: React.FC = () => {
                     onClose={() => setIsFileViewerOpen(false)}
                 >
                     <div className="flex justify-between items-center mb-4">
-                        <h2 className="text-lg font-semibold">{`Visualizando: ${selectedItem}`}</h2>
-                        <button onClick={() => setIsFileViewerOpen(false)} className="text-gray-500 hover:text-gray-700">
-                            <IoClose size={24} />
-                        </button>
                     </div>
                     <div className="h-96 overflow-auto">
-                        <FileViewer fileUrl={fileToView.url} fileType={fileToView.type} />
+                        <FileViewer fileUrl={fileToView.url} fileType={fileToView.type}/>
                     </div>
                 </Modal>
             )}
@@ -358,10 +522,9 @@ const FileManager: React.FC = () => {
                                 onClick={() => handleSelectItem(item.name)}
                                 onDoubleClick={() => handleDoubleClickItem(item)}
                             >
-                                {/* Icon */}
-                                <span className="text-4xl">
-                                    {item.type === 'folder' ? <FaFolder /> : <FaFile />}
-                                </span>
+            <span className="text-4xl">
+                {item.type === 'folder' ? <FaFolder/> : getFileIcon(item.name)}
+            </span>
                                 <span className="mt-2 text-center truncate w-full">{item.name}</span>
                             </li>
                         ))}
@@ -369,6 +532,7 @@ const FileManager: React.FC = () => {
                 )}
             </div>
         </div>
+        </>
     );
 };
 

@@ -92,7 +92,6 @@ class FileManagerController extends Controller
     /**
      * Sube una carpeta como un directorio.
      */
-
     public function uploadDirectory(Request $request)
     {
         $employee = Auth::guard('employee')->user();
@@ -364,6 +363,9 @@ class FileManagerController extends Controller
         return response()->json(['message' => 'Carpeta renombrada exitosamente.', 'path' => $newPath]);
     }
 
+    /**
+     * Muestra el contenido de un archivo.
+     */
     public function view(Request $request)
     {
         $employee = Auth::guard('employee')->user();
@@ -408,31 +410,9 @@ class FileManagerController extends Controller
         ]);
     }
 
-    public function getPublicFileUrl(Request $request)
-    {
-        $validator = Validator::make($request->all(), [
-            'filename' => 'required|string',
-            'path' => 'required|string',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()], 422);
-        }
-
-        $filename = $request->input('filename');
-        $path = $request->input('path');
-        $filePath = rtrim($path, '/') . '/' . ltrim($filename, '/');
-
-        if (!Storage::disk('local')->exists($filePath)) {
-            return response()->json(['error' => 'El archivo no existe.'], 404);
-        }
-
-        // Generar una URL temporal (válida durante una hora) para el archivo
-        $publicUrl = Storage::disk('local')->temporaryUrl($filePath, now()->addHour());
-
-        return response()->json(['url' => $publicUrl]);
-    }
-
+    /**
+     * Sirve el archivo directamente para ser accedido públicamente.
+     */
     public function getPublicFile(Request $request)
     {
         $validator = Validator::make($request->all(), [
@@ -456,34 +436,6 @@ class FileManagerController extends Controller
             'Content-Disposition' => 'inline; filename="' . $filename . '"',
         ]);
     }
-
-
-
-    public function publicView(Request $request)
-    {
-        $validator = Validator::make($request->all(), [
-            'filename' => 'required|string',
-            'path' => 'required|string',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()], 422);
-        }
-
-        $filename = $request->input('filename');
-        $path = $request->input('path');
-        $filePath = rtrim($path, '/') . '/' . ltrim($filename, '/');
-
-        if (!Storage::disk('local')->exists($filePath)) {
-            return response()->json(['error' => 'El archivo no existe.'], 404);
-        }
-
-        return response()->file(Storage::disk('local')->path($filePath), [
-            'Content-Disposition' => 'inline; filename="' . $filename . '"',
-        ]);
-    }
-
-
 
     /**
      * Validar que la ruta proporcionada no contenga patrones de Path Traversal.
