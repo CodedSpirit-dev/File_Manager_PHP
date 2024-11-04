@@ -364,6 +364,53 @@ class FileManagerController extends Controller
         return response()->json(['message' => 'Carpeta renombrada exitosamente.', 'path' => $newPath]);
     }
 
+    public function view(Request $request)
+    {
+        $employee = Auth::guard('employee')->user();
+
+        // Verify permissions
+        if (!$employee->hasPermission('can_read_files')) {
+            return response()->json(['error' => 'No tienes permiso para ver archivos.'], 403);
+        }
+
+        // Validate request
+        $validator = Validator::make($request->all(), [
+            'filename' => 'required|string',
+            'path' => 'required|string',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        $filename = $request->input('filename');
+        $path = $request->input('path');
+
+        // Validate the path to prevent path traversal
+        if (!$this->isValidPath($path)) {
+            return response()->json(['error' => 'Ruta inválida.'], 400);
+        }
+
+        $filePath = rtrim($path, '/') . '/' . ltrim($filename, '/');
+
+        if (!Storage::disk('local')->exists($filePath)) {
+            return response()->json(['error' => 'El archivo no existe.'], 404);
+        }
+
+        // Get the full path to the file
+        $fullPath = Storage::disk('local')->path($filePath);
+
+        // Get the MIME type
+        $mimeType = mime_content_type($fullPath);
+
+        // Return the file content with appropriate headers
+        return response()->file($fullPath, [
+            'Content-Type' => $mimeType,
+            'Content-Disposition' => 'inline; filename="' . $filename . '"'
+        ]);
+    }
+
+
     /**
      * Validar que la ruta proporcionada no contenga patrones de Path Traversal.
      */

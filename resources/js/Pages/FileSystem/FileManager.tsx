@@ -11,10 +11,12 @@ import {
     deleteFile,
     createFolder,
     uploadDirectory,
-    deleteFolder, updateFolder,
+    deleteFolder,
+    updateFolder,
 } from './api';
 import { usePage } from '@inertiajs/react';
-import axios from "axios";
+import axios from 'axios';
+import {IoClose} from "react-icons/io5";
 
 interface Item {
     id: number;
@@ -24,18 +26,18 @@ interface Item {
 }
 
 const FileManager: React.FC = () => {
-    const { auth } = usePage().props;
+    const { auth } = usePage().props as any;
     const userPermissions: string[] = auth.user?.permissions || [];
 
     const [selectedItem, setSelectedItem] = useState<string | null>(null);
     const [items, setItems] = useState<Item[]>([]);
-    const [currentPath, setCurrentPath] = useState<string>('public'); // Ruta inicial
+    const [currentPath, setCurrentPath] = useState<string>('public'); // Initial path
     const [isCreateFolderOpen, setIsCreateFolderOpen] = useState<boolean>(false);
     const [newFolderName, setNewFolderName] = useState<string>('');
     const [isFileViewerOpen, setIsFileViewerOpen] = useState<boolean>(false);
-    const [fileToView, setFileToView] = useState<{ url: string; type: 'pdf' | 'docx' | 'xlsx' | null } | null>(null);
+    const [fileToView, setFileToView] = useState<{ url: string; type: 'pdf' | 'docx' | 'xlsx' } | null>(null);
 
-    // Obtener archivos y carpetas al cargar o cambiar de ruta
+    // Fetch files and directories when the component mounts or currentPath changes
     useEffect(() => {
         fetchFiles();
     }, [currentPath]);
@@ -43,90 +45,81 @@ const FileManager: React.FC = () => {
     const fetchFiles = async () => {
         try {
             const data = await getFiles(currentPath);
-            const formattedItems = formatItems(data.directories, data.files);
-            setItems(formattedItems);
+            setItems(formatItems(data.directories, data.files));
         } catch (error) {
-            console.error('Error al obtener archivos:', error);
-            alert('Error al obtener archivos.');
+            console.error('Error fetching files:', error);
+            alert('Error fetching files.');
         }
     };
 
-    // Mover esta función dentro de FileManager para acceder al estado
     const handleNavigateBack = () => {
         const paths = currentPath.split('/');
         if (paths.length > 1) {
-            paths.pop(); // Elimina el último segmento de la ruta
-            setCurrentPath(paths.join('/')); // Actualiza el estado con la nueva ruta
+            paths.pop();
+            setCurrentPath(paths.join('/'));
         }
     };
 
-    // Formatear los datos recibidos del servidor
+    // Format server data into Item objects
     const formatItems = (directories: string[], files: string[]): Item[] => {
         let idCounter = 1;
-        const formattedDirectories = directories.map(dir => ({
+        const formattedDirectories = directories.map((dir) => ({
             id: idCounter++,
             name: dir.split('/').pop() || dir,
-            type: 'folder' as 'folder',
-            date: new Date(), // Ajusta si tienes la fecha real
+            type: 'folder' as const,
+            date: new Date(),
         }));
-
-        const formattedFiles = files.map(file => ({
+        const formattedFiles = files.map((file) => ({
             id: idCounter++,
             name: file.split('/').pop() || file,
-            type: 'file' as 'file',
-            date: new Date(), // Ajusta si tienes la fecha real
+            type: 'file' as const,
+            date: new Date(),
         }));
-
         return [...formattedDirectories, ...formattedFiles];
     };
 
-    // Función para verificar permisos
+    // Check user permissions
     const hasPermission = (permission: string): boolean => {
         return userPermissions.includes(permission);
     };
 
-    // Manejo de selección de ítems
+    // Handle item selection
     const handleSelectItem = (itemName: string) => {
-        setSelectedItem(prev => (prev === itemName ? null : itemName));
+        setSelectedItem((prev) => (prev === itemName ? null : itemName));
     };
 
-    // Manejo de doble clic para abrir carpeta o archivo
+    // Handle double-click on items (folders or files)
     const handleDoubleClickItem = (item: Item) => {
         if (item.type === 'folder') {
             setCurrentPath(`${currentPath}/${item.name}`);
         } else {
-            // Obtener la extensión del archivo
             const extension = item.name.split('.').pop()?.toLowerCase();
-            let fileType: 'pdf' | 'docx' | 'xlsx' | null = null;
+            let fileType: 'pdf' | 'docx' | 'xlsx';
 
-            if (extension === 'pdf') {
-                fileType = 'pdf';
-            } else if (extension === 'docx') {
-                fileType = 'docx';
-            } else if (extension === 'xlsx') {
-                fileType = 'xlsx';
+            if (extension === 'pdf' || extension === 'docx' || extension === 'xlsx') {
+                fileType = extension as 'pdf' | 'docx' | 'xlsx';
             } else {
-                alert('Tipo de archivo no soportado para visualización.');
+                alert('File type not supported for viewing.');
                 return;
             }
 
-            // Construir la URL del archivo
-            const fileUrl = `/filemanager/files/view?filename=${encodeURIComponent(item.name)}&path=${encodeURIComponent(currentPath)}`;
+            const fileUrl = `/filemanager/files/view?filename=${encodeURIComponent(
+                item.name
+            )}&path=${encodeURIComponent(currentPath)}`;
 
-            // Establecer el estado para mostrar el FileViewer
             setFileToView({ url: fileUrl, type: fileType });
             setIsFileViewerOpen(true);
         }
     };
 
-    // Funciones de manejo de acciones desde la toolbar
+    // Toolbar action handlers
     const handleCreateFolderAction = () => {
         setIsCreateFolderOpen(true);
     };
 
     const handleConfirmCreateFolder = async () => {
         if (newFolderName.trim() === '') {
-            alert('El nombre de la carpeta no puede estar vacío.');
+            alert('Folder name cannot be empty.');
             return;
         }
 
@@ -134,13 +127,13 @@ const FileManager: React.FC = () => {
             const response = await createFolder(newFolderName, currentPath);
             alert(response.message);
 
-            // Actualizar la lista de ítems
+            // Refresh items
             fetchFiles();
 
             setNewFolderName('');
             setIsCreateFolderOpen(false);
         } catch (error) {
-            alert('Error al crear la carpeta.');
+            alert('Error creating folder.');
             console.error(error);
         }
     };
@@ -148,15 +141,15 @@ const FileManager: React.FC = () => {
     const handleUploadFolderAction = async () => {
         const folderInput = document.createElement('input');
         folderInput.type = 'file';
-        folderInput.webkitdirectory = true; // Habilita la selección de directorio
+        (folderInput as any).webkitdirectory = true; // Enable directory selection
         folderInput.onchange = async () => {
             if (folderInput.files && folderInput.files.length > 0) {
                 try {
                     const response = await uploadDirectory(folderInput.files, currentPath);
                     alert(response.message);
-                    fetchFiles(); // Actualizar lista de ítems
+                    fetchFiles(); // Refresh items
                 } catch (error) {
-                    alert('Error al subir la carpeta.');
+                    alert('Error uploading folder.');
                     console.error(error);
                 }
             }
@@ -172,9 +165,9 @@ const FileManager: React.FC = () => {
                 try {
                     const response = await uploadFile(fileInput.files[0], currentPath);
                     alert(response.message);
-                    fetchFiles(); // Actualizar lista de ítems
+                    fetchFiles(); // Refresh items
                 } catch (error) {
-                    alert('Error al subir el archivo.');
+                    alert('Error uploading file.');
                     console.error(error);
                 }
             }
@@ -184,7 +177,7 @@ const FileManager: React.FC = () => {
 
     const handleDownloadFileAction = async () => {
         if (selectedItem) {
-            const item = items.find(i => i.name === selectedItem);
+            const item = items.find((i) => i.name === selectedItem);
             if (item && item.type === 'file') {
                 try {
                     const response = await axios.get(`/filemanager/files/download`, {
@@ -199,21 +192,21 @@ const FileManager: React.FC = () => {
                     link.click();
                     link.parentNode?.removeChild(link);
                 } catch (error) {
-                    alert('Error al descargar el archivo.');
+                    alert('Error downloading file.');
                     console.error(error);
                 }
             } else {
-                alert('Por favor, selecciona un archivo para descargar.');
+                alert('Please select a file to download.');
             }
         }
     };
 
     const handleDeleteAction = async () => {
         if (selectedItem) {
-            const confirmDelete = window.confirm(`¿Estás seguro de eliminar "${selectedItem}"?`);
+            const confirmDelete = window.confirm(`Are you sure you want to delete "${selectedItem}"?`);
             if (confirmDelete) {
                 try {
-                    const item = items.find(i => i.name === selectedItem);
+                    const item = items.find((i) => i.name === selectedItem);
                     if (item) {
                         let response;
                         if (item.type === 'file') {
@@ -222,11 +215,11 @@ const FileManager: React.FC = () => {
                             response = await deleteFolder(selectedItem, currentPath);
                         }
                         alert(response.message);
-                        fetchFiles(); // Actualizar lista de ítems
+                        fetchFiles(); // Refresh items
                         setSelectedItem(null);
                     }
                 } catch (error) {
-                    alert('Error al eliminar el elemento.');
+                    alert('Error deleting item.');
                     console.error(error);
                 }
             }
@@ -235,38 +228,38 @@ const FileManager: React.FC = () => {
 
     const handleCopy = async () => {
         if (selectedItem) {
-            alert('Funcionalidad de copiar aún no implementada.');
-            // Aquí podrías implementar la lógica para copiar el archivo
+            alert('Copy functionality not implemented yet.');
+            // Implement copy logic here
         }
     };
 
     const handleMove = async () => {
         if (selectedItem) {
-            alert('Funcionalidad de mover aún no implementada.');
-            // Aquí podrías implementar la lógica para mover el archivo
+            alert('Move functionality not implemented yet.');
+            // Implement move logic here
         }
     };
 
     const handleRename = async () => {
         if (selectedItem) {
-            const newName = prompt(`Ingresa el nuevo nombre para "${selectedItem}":`);
+            const newName = prompt(`Enter the new name for "${selectedItem}":`);
             if (newName && newName.trim() !== '') {
                 try {
-                    const item = items.find(i => i.name === selectedItem);
+                    const item = items.find((i) => i.name === selectedItem);
                     if (item) {
                         let response;
                         if (item.type === 'folder') {
                             response = await updateFolder(item.name, newName, currentPath);
                         } else {
-                            alert('Renombrar archivos aún no está implementado.');
+                            alert('Renaming files is not implemented yet.');
                             return;
                         }
                         alert(response.message);
-                        fetchFiles(); // Actualizar lista de ítems
+                        fetchFiles(); // Refresh items
                         setSelectedItem(null);
                     }
                 } catch (error) {
-                    alert('Error al renombrar el elemento.');
+                    alert('Error renaming item.');
                     console.error(error);
                 }
             }
@@ -286,19 +279,19 @@ const FileManager: React.FC = () => {
 
     return (
         <div className="file-manager bg-white">
-            {/* Barra de navegación para volver */}
+            {/* Navigation bar */}
             <div className="flex items-center p-4 bg-gray-100 shadow">
                 <button
                     className={`btn btn-secondary mr-2 ${currentPath === 'public' ? 'btn-disabled' : ''}`}
                     onClick={handleNavigateBack}
                     disabled={currentPath === 'public'}
                 >
-                    Volver
+                    Back
                 </button>
-                <span className="text-lg font-semibold">Ruta: /{currentPath}</span>
+                <span className="text-lg font-semibold">Path: /{currentPath}</span>
             </div>
 
-            {/* Cinta de opciones */}
+            {/* Toolbar */}
             <FileManagerToolbar
                 onCreateFolder={handleCreateFolderAction}
                 onUploadFolder={handleUploadFolderAction}
@@ -313,49 +306,55 @@ const FileManager: React.FC = () => {
                 onRename={handleRename}
             />
 
-            {/* Modal para Crear Nueva Carpeta */}
+            {/* Modal for Creating New Folder */}
             <Modal
                 isOpen={isCreateFolderOpen}
-                title="Crear Nueva Carpeta"
+                title="Create New Folder"
                 onClose={() => setIsCreateFolderOpen(false)}
             >
                 <input
                     type="text"
                     value={newFolderName}
                     onChange={(e) => setNewFolderName(e.target.value)}
-                    placeholder="Nombre de la carpeta"
+                    placeholder="Folder name"
                     className="input input-bordered w-full"
                 />
                 <div className="flex justify-end mt-4 space-x-2">
                     <button className="btn btn-secondary" onClick={() => setIsCreateFolderOpen(false)}>
-                        Cancelar
+                        Cancel
                     </button>
                     <button className="btn btn-primary" onClick={handleConfirmCreateFolder}>
-                        Crear
+                        Create
                     </button>
                 </div>
             </Modal>
 
-            {/* Modal para Visualizar Archivos */}
+            {/* Modal for Viewing Files */}
             {isFileViewerOpen && fileToView && fileToView.type && (
                 <Modal
                     isOpen={isFileViewerOpen}
                     title={`Visualizando: ${selectedItem}`}
                     onClose={() => setIsFileViewerOpen(false)}
                 >
+                    <div className="flex justify-between items-center mb-4">
+                        <h2 className="text-lg font-semibold">{`Visualizando: ${selectedItem}`}</h2>
+                        <button onClick={() => setIsFileViewerOpen(false)} className="text-gray-500 hover:text-gray-700">
+                            <IoClose size={24} />
+                        </button>
+                    </div>
                     <div className="h-96 overflow-auto">
                         <FileViewer fileUrl={fileToView.url} fileType={fileToView.type} />
                     </div>
                 </Modal>
             )}
 
-            {/* Lista de ítems */}
+            {/* Items List */}
             <div className="p-4">
                 {items.length === 0 ? (
-                    <p>No hay archivos o carpetas disponibles.</p>
+                    <p>No files or folders available.</p>
                 ) : (
                     <ul className="grid grid-cols-4 gap-4">
-                        {items.map(item => (
+                        {items.map((item) => (
                             <li
                                 key={item.id}
                                 className={`p-4 border rounded-lg cursor-pointer flex flex-col items-center ${
@@ -364,7 +363,7 @@ const FileManager: React.FC = () => {
                                 onClick={() => handleSelectItem(item.name)}
                                 onDoubleClick={() => handleDoubleClickItem(item)}
                             >
-                                {/* Ícono representativo */}
+                                {/* Icon */}
                                 <span className="text-4xl">
                                     {item.type === 'folder' ? <FaFolder /> : <FaFile />}
                                 </span>

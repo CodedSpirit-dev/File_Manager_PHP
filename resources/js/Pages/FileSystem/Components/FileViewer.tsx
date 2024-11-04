@@ -15,15 +15,19 @@ const FileViewer: React.FC<FileViewerProps> = ({ fileUrl, fileType }) => {
     const [docContent, setDocContent] = useState<string | null>(null);
     const [excelContent, setExcelContent] = useState<any[][] | null>(null);
 
-    // Cargar y mostrar el contenido del archivo DOCX
     useEffect(() => {
+        setDocContent(null); // Reset previous state
+        setExcelContent(null);
+        setNumPages(0);
+
         if (fileType === 'docx') {
             fetch(fileUrl)
                 .then((response) => response.arrayBuffer())
                 .then((arrayBuffer) => {
-                    mammoth.convertToHtml({ arrayBuffer })
+                    mammoth
+                        .convertToHtml({ arrayBuffer })
                         .then((result) => setDocContent(result.value))
-                        .catch((err) => console.error("Error al leer el archivo DOCX:", err));
+                        .catch((err) => console.error('Error reading DOCX file:', err));
                 });
         } else if (fileType === 'xlsx') {
             fetch(fileUrl)
@@ -35,24 +39,19 @@ const FileViewer: React.FC<FileViewerProps> = ({ fileUrl, fileType }) => {
                     const data = XLSX.utils.sheet_to_json(sheet, { header: 1 });
                     setExcelContent(data as any[][]);
                 })
-                .catch((err) => console.error("Error al leer el archivo XLSX:", err));
+                .catch((err) => console.error('Error reading XLSX file:', err));
         }
     }, [fileUrl, fileType]);
 
-    // Manejar el evento de carga de PDF
     const onDocumentLoadSuccess = ({ numPages }: { numPages: number }) => {
         setNumPages(numPages);
     };
 
-    // Renderizar el contenido del archivo PDF
     if (fileType === 'pdf') {
         return (
             <div className="file-viewer">
-                <Document
-                    file={fileUrl}
-                    onLoadSuccess={onDocumentLoadSuccess}
-                >
-                    {Array.from(new Array(numPages), (el, index) => (
+                <Document file={fileUrl} onLoadSuccess={onDocumentLoadSuccess}>
+                    {Array.from({ length: numPages }, (_, index) => (
                         <Page key={`page_${index + 1}`} pageNumber={index + 1} />
                     ))}
                 </Document>
@@ -60,7 +59,6 @@ const FileViewer: React.FC<FileViewerProps> = ({ fileUrl, fileType }) => {
         );
     }
 
-    // Renderizar el contenido del archivo DOCX
     if (fileType === 'docx') {
         return (
             <div className="file-viewer">
@@ -69,7 +67,6 @@ const FileViewer: React.FC<FileViewerProps> = ({ fileUrl, fileType }) => {
         );
     }
 
-    // Renderizar el contenido del archivo XLSX
     if (fileType === 'xlsx') {
         return (
             <div className="file-viewer overflow-auto">
@@ -90,7 +87,7 @@ const FileViewer: React.FC<FileViewerProps> = ({ fileUrl, fileType }) => {
         );
     }
 
-    return <div>No se puede visualizar este tipo de archivo.</div>;
+    return <div>Cannot display this file type.</div>;
 };
 
 export default FileViewer;

@@ -38,4 +38,8 @@ Route::prefix('filemanager')->name('filemanager.')->middleware('auth:employee')-
 
     // Ruta para eliminar carpetas
     Route::delete('/folders/delete', [FileManagerController::class, 'deleteFolder'])->name('folders.delete');
+
+    // Ruta para ver archivos
+    Route::get('/filemanager/files/view', [FileManagerController::class, 'view']);
+
 });
