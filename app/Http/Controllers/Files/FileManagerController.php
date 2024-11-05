@@ -35,8 +35,8 @@ class FileManagerController extends Controller
 
         // Verificar permisos
         if (
-            !$employee->hasPermission('can_read_folders') ||
-            !$employee->hasPermission('can_read_files')
+            !$employee->hasPermission('can_view_file_explorer') ||
+            !$employee->hasPermission('can_open_files')
         ) {
             return response()->json(['error' => 'No tienes permiso para ver los archivos o carpetas.'], 403);
         }
@@ -60,7 +60,7 @@ class FileManagerController extends Controller
         $employee = Auth::guard('employee')->user();
 
         // Verificar permisos
-        if (!$employee->hasPermission('can_create_files')) {
+        if (!$employee->hasPermission('can_upload_files_and_folders')) {
             return response()->json(['error' => 'No tienes permiso para subir archivos.'], 403);
         }
 
@@ -101,8 +101,8 @@ class FileManagerController extends Controller
 
         // Verificar permisos correctamente
         if (
-            !$employee->hasPermission('can_create_folders') ||
-            !$employee->hasPermission('can_create_files')
+            !$employee->hasPermission('can_upload_files_and_folders') ||
+            !$employee->hasPermission('can_create_folders')
         ) {
             return response()->json(['error' => 'No tienes permiso para crear archivos o carpetas.'], 403);
         }
@@ -145,7 +145,10 @@ class FileManagerController extends Controller
         $employee = Auth::guard('employee')->user();
 
         // Verificar permisos
-        if (!$employee->hasPermission('can_create_folders')) {
+        if (
+            !$employee->hasPermission('can_upload_files_and_folders') ||
+            !$employee->hasPermission('can_create_folders')
+        ) {
             return response()->json(['error' => 'No tienes permiso para subir carpetas.'], 403);
         }
 
@@ -201,7 +204,7 @@ class FileManagerController extends Controller
         $employee = Auth::guard('employee')->user();
 
         // Verificar permisos
-        if (!$employee->hasPermission('can_delete_files')) {
+        if (!$employee->hasPermission('can_delete_files_and_folders')) {
             return response()->json(['error' => 'No tienes permiso para eliminar archivos.'], 403);
         }
 
@@ -242,7 +245,7 @@ class FileManagerController extends Controller
         $employee = Auth::guard('employee')->user();
 
         // Verificar permisos
-        if (!$employee->hasPermission('can_delete_folders')) {
+        if (!$employee->hasPermission('can_delete_files_and_folders')) {
             return response()->json(['error' => 'No tienes permiso para eliminar carpetas.'], 403);
         }
 
@@ -326,7 +329,7 @@ class FileManagerController extends Controller
         $employee = Auth::guard('employee')->user();
 
         // Verificar permisos
-        if (!$employee->hasPermission('can_update_folders')) {
+        if (!$employee->hasPermission('can_rename_files_and_folders')) {
             return response()->json(['error' => 'No tienes permiso para editar carpetas.'], 403);
         }
 
@@ -398,7 +401,10 @@ class FileManagerController extends Controller
         $employee = Auth::guard('employee')->user();
 
         // Verificar permisos
-        if (!$employee->hasPermission('can_read_files')) {
+        if (
+            !$employee->hasPermission('can_view_file_explorer') ||
+            !$employee->hasPermission('can_open_files')
+        ) {
             return response()->json(['error' => 'No tienes permiso para ver archivos.'], 403);
         }
 
@@ -472,7 +478,7 @@ class FileManagerController extends Controller
         $employee = Auth::guard('employee')->user();
 
         // Verificar permisos
-        if (!$employee->hasPermission('can_download_files')) {
+        if (!$employee->hasPermission('can_download_files_and_folders')) {
             return response()->json(['error' => 'No tienes permiso para descargar archivos.'], 403);
         }
 
@@ -609,7 +615,7 @@ class FileManagerController extends Controller
         $employee = Auth::guard('employee')->user();
 
         // Verificar permisos
-        if (!$employee->hasPermission('can_rename_files')) {
+        if (!$employee->hasPermission('can_rename_files_and_folders')) {
             return response()->json(['error' => 'No tienes permiso para renombrar archivos.'], 403);
         }
 
@@ -658,7 +664,7 @@ class FileManagerController extends Controller
         $employee = Auth::guard('employee')->user();
 
         // Verificar permisos
-        if (!$employee->hasPermission('can_download_folders')) {
+        if (!$employee->hasPermission('can_download_files_and_folders')) {
             return response()->json(['error' => 'No tienes permiso para descargar carpetas.'], 403);
         }
 
@@ -743,7 +749,7 @@ class FileManagerController extends Controller
         $employee = Auth::guard('employee')->user();
 
         // Verificar permisos
-        if (!$employee->hasPermission('can_download_folders')) {
+        if (!$employee->hasPermission('can_view_file_explorer')) {
             return response()->json(['error' => 'No tienes permiso para ver archivos.'], 403);
         }
 
@@ -763,8 +769,8 @@ class FileManagerController extends Controller
     {
         $items = [];
 
-        $directories = Storage::directories($path);
-        $files = Storage::files($path);
+        $directories = Storage::disk('local')->directories($path);
+        $files = Storage::disk('local')->files($path);
 
         foreach ($directories as $directory) {
             $items[] = [

@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
 
 class PermissionSeeder extends Seeder
 {
@@ -13,35 +14,39 @@ class PermissionSeeder extends Seeder
     public function run(): void
     {
         $permissions = [
-            ['name' => 'can_create_users', 'description' => 'Crear usuarios'],
-            ['name' => 'can_read_users', 'description' => 'Leer usuarios'],
-            ['name' => 'can_update_users', 'description' => 'Editar usuarios'],
-            ['name' => 'can_delete_users', 'description' => 'Eliminar usuarios'],
-            ['name' => 'can_create_employees', 'description' => 'Crear empleados'],
-            ['name' => 'can_read_employees', 'description' => 'Leer empleados'],
-            ['name' => 'can_update_employees', 'description' => 'Editar a otros empleados'],
-            ['name' => 'can_delete_employees', 'description' => 'Eliminar empleados'],
+            // Permisos para Empresas
             ['name' => 'can_create_companies', 'description' => 'Crear empresas'],
-            ['name' => 'can_read_companies', 'description' => 'Leer empresas'],
-            ['name' => 'can_update_companies', 'description' => 'Editar empresas'],
             ['name' => 'can_delete_companies', 'description' => 'Eliminar empresas'],
-            ['name' => 'can_create_positions', 'description' => 'Crear puestos'],
-            ['name' => 'can_read_positions', 'description' => 'Leer puestos'],
+            ['name' => 'can_update_companies', 'description' => 'Modificar empresas'],
+
+            // Permisos para Puestos
+            ['name' => 'can_create_positions', 'description' => 'Crear nuevos puestos'],
             ['name' => 'can_update_positions', 'description' => 'Editar puestos'],
             ['name' => 'can_delete_positions', 'description' => 'Eliminar puestos'],
-            ['name' => 'can_create_files', 'description' => 'Crear archivos'],
-            ['name' => 'can_read_files', 'description' => 'Leer archivos'],
-            ['name' => 'can_update_files', 'description' => 'Editar archivos'],
-            ['name' => 'can_delete_files', 'description' => 'Eliminar archivos'],
+
+            // Permisos para Empleados
+            ['name' => 'can_create_employees', 'description' => 'Crear empleados'],
+            ['name' => 'can_delete_employees', 'description' => 'Eliminar empleados'],
+            ['name' => 'can_update_employees', 'description' => 'Modificar empleados'],
+            ['name' => 'can_view_company_employees', 'description' => 'Ver compañeros de la empresa'],
+            ['name' => 'can_view_all_employees', 'description' => 'Ver a todos los empleados'],
+
+            // Permisos para Gestión de Archivos y Carpetas
+            ['name' => 'can_view_file_explorer', 'description' => 'Ver explorador de archivos'],
+            ['name' => 'can_open_files', 'description' => 'Abrir archivos'],
+            ['name' => 'can_upload_files_and_folders', 'description' => 'Subir archivos y carpetas'],
             ['name' => 'can_create_folders', 'description' => 'Crear carpetas'],
-            ['name' => 'can_read_folders', 'description' => 'Leer carpetas'],
-            ['name' => 'can_update_folders', 'description' => 'Editar carpetas'],
-            ['name' => 'can_delete_folders', 'description' => 'Eliminar carpetas'],
+            ['name' => 'can_download_files_and_folders', 'description' => 'Descargar archivos y carpetas'],
+            ['name' => 'can_copy_files', 'description' => 'Copiar archivos'],
+            ['name' => 'can_move_files', 'description' => 'Mover archivos'],
+            ['name' => 'can_rename_files_and_folders', 'description' => 'Cambiar nombre de archivos y carpetas'],
+            ['name' => 'can_delete_files_and_folders', 'description' => 'Eliminar archivos y carpetas'],
         ];
+
 
         // Insert permissions into the database
         foreach ($permissions as $permission) {
-            \DB::table('permissions')->insert($permission);
+            DB::table('permissions')->insert($permission);
         }
     }
 }
