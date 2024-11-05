@@ -1,21 +1,17 @@
+// src/components/FileManager/Components/Toolbar.tsx
+
 import React, { useState } from 'react';
 import {
-    FcFolder,
-    FcDownload,
-    FcDeleteRow,
     FcPlus,
-    FcFile,
-    FcOpenedFolder,
-    FcList,
     FcSettings,
-} from 'react-icons/fc';
+} from "react-icons/fc";
 import { TbCopy, TbCursorText, TbFolderPlus, TbFolderUp } from "react-icons/tb";
-import { BsFileEarmarkArrowDown, BsFileEarmarkArrowUp, BsSortAlphaDown, BsSortAlphaDownAlt, BsSortNumericUp, BsSortNumericDownAlt } from "react-icons/bs";
+import { BsFileEarmarkArrowDown, BsFileEarmarkArrowUp, BsSortAlphaDown, BsSortAlphaDownAlt } from "react-icons/bs";
 import { MdOutlineDeleteOutline, MdOutlineDriveFileMove } from "react-icons/md";
-import { IoClose } from "react-icons/io5";
+import { IoClose, IoArrowBack } from "react-icons/io5";
 
 interface SortPayload {
-    criteria: 'date' | 'name';
+    criteria: 'name';
     order: 'asc' | 'desc';
 }
 
@@ -23,7 +19,7 @@ interface FileManagerToolbarProps {
     onCreateFolder: () => void;
     onUploadFolder: () => void;
     onUploadFile: () => void;
-    onDownloadFile: () => void; // Consolidada en lugar de onDownload
+    onDownloadFile: () => void;
     onDelete: () => void;
     onCopy: () => void;
     onRename: () => void;
@@ -37,6 +33,8 @@ interface FileManagerToolbarProps {
     onMoveHere: () => void;
     onCancelMove: () => void;
     isMoving: boolean;
+    onBack: () => void; // Added onBack prop
+    canGoBack: boolean; // Added canGoBack prop
 }
 
 const FileManagerToolbar: React.FC<FileManagerToolbarProps> = ({
@@ -57,37 +55,48 @@ const FileManagerToolbar: React.FC<FileManagerToolbarProps> = ({
                                                                    onMoveHere,
                                                                    onCancelMove,
                                                                    isMoving,
+                                                                   onBack, // Added onBack
+                                                                   canGoBack, // Added canGoBack
                                                                }) => {
-    const [currentSortCriteria, setCurrentSortCriteria] = useState<'date' | 'name' | null>(null);
     const [currentSortOrder, setCurrentSortOrder] = useState<'asc' | 'desc'>('asc');
 
-    const handleSortClick = (criteria: 'date' | 'name') => {
-        let newOrder: 'asc' | 'desc' = 'asc';
-
-        if (currentSortCriteria === criteria) {
-            newOrder = currentSortOrder === 'asc' ? 'desc' : 'asc';
-        }
-
-        setCurrentSortCriteria(criteria);
+    const handleSortToggle = () => {
+        const newOrder = currentSortOrder === 'asc' ? 'desc' : 'asc';
         setCurrentSortOrder(newOrder);
-
-        onSort({ criteria, order: newOrder });
+        onSort({ criteria: 'name', order: newOrder });
     };
 
     return (
-        <div className="flex items-center justify-end p-4 bg-white flex-wrap">
-            <div className="hidden sm:flex items-center space-x-4">
+        <div className="flex flex-col sm:flex-row items-center justify-end p-4 bg-base-100 shadow-sm rounded-lg">
+            {/* Botones Principales */}
+            <div className="flex flex-wrap items-center space-x-2">
+                {/* Volver Button */}
+                {canGoBack && (
+                    <button
+                        onClick={onBack}
+                        className="btn btn-outline flex items-center space-x-2"
+                        aria-label="Volver"
+                    >
+                        <IoArrowBack className="w-5 h-5" />
+                        <span className="hidden sm:inline">Volver</span>
+                    </button>
+                )}
+
+                {/* Crear Dropdown */}
                 <div className="dropdown dropdown-bottom">
                     <button
                         tabIndex={0}
-                        className="btn flex items-center space-x-2"
+                        className="btn btn-outline flex items-center space-x-2 hover:text-primary-content"
+                        aria-haspopup="true"
+                        aria-expanded="false"
                     >
                         <FcPlus className="w-5 h-5" />
-                        <span>Crear</span>
+                        <span className="hidden sm:inline">Crear</span>
                     </button>
                     <ul
                         tabIndex={0}
                         className="dropdown-content menu p-2 shadow bg-base-100 rounded-box w-52"
+                        aria-label="Opciones de Crear"
                     >
                         <li>
                             <button onClick={onCreateFolder} className="flex items-center space-x-2 w-full text-left">
@@ -110,26 +119,30 @@ const FileManagerToolbar: React.FC<FileManagerToolbarProps> = ({
                     </ul>
                 </div>
 
-                <div className="dropdown">
+                {/* Acciones Dropdown */}
+                <div className="dropdown dropdown-end">
                     <button
                         tabIndex={0}
-                        className={`btn flex items-center space-x-2 ${!isItemSelected ? 'btn-disabled' : ''}`}
+                        className={`btn btn-outline flex items-center space-x-2 hover:text-primary-content ${!isItemSelected ? 'btn-disabled' : ''}`}
                         disabled={!isItemSelected}
+                        aria-haspopup="true"
+                        aria-expanded="false"
+                        aria-label="Acciones"
                     >
-                        <FcSettings  className="w-5 h-5" />
-                        <span>Acciones</span>
+                        <FcSettings className="w-5 h-5" />
+                        <span className="hidden sm:inline">Acciones</span>
                     </button>
                     <ul
                         tabIndex={0}
                         className="dropdown-content menu p-2 shadow bg-base-100 rounded-box w-52"
+                        aria-label="Opciones de Acciones"
                     >
-                        {isItemSelected && (
+                        {isItemSelected ? (
                             <>
                                 <li>
-                                    <button onClick={onDownloadFile}
-                                            className="flex items-center space-x-2 w-full text-left">
+                                    <button onClick={onDownloadFile} className="flex items-center space-x-2 w-full text-left">
                                         <BsFileEarmarkArrowDown className="w-5 h-5" />
-                                        <span>Descargar archivo</span>
+                                        <span>Descargar</span>
                                     </button>
                                 </li>
                                 <li>
@@ -157,8 +170,7 @@ const FileManagerToolbar: React.FC<FileManagerToolbarProps> = ({
                                     </button>
                                 </li>
                             </>
-                        )}
-                        {!isItemSelected && (
+                        ) : (
                             <li className="px-4 py-2 text-gray-500">
                                 Selecciona un elemento para ver las acciones disponibles.
                             </li>
@@ -166,102 +178,73 @@ const FileManagerToolbar: React.FC<FileManagerToolbarProps> = ({
                     </ul>
                 </div>
 
-                {(isCopying || isMoving) && (
-                    <>
-                        {isCopying && (
-                            <>
-                                <button
-                                    className="btn btn-primary flex items-center space-x-2 mr-2"
-                                    onClick={onCopyHere}
-                                >
-                                    <BsFileEarmarkArrowDown className="w-5 h-5" />
-                                    <span>Copiar aquí</span>
-                                </button>
-                                <button
-                                    className="btn btn-secondary flex items-center space-x-2"
-                                    onClick={onCancelCopy}
-                                >
-                                    <IoClose className="w-5 h-5" />
-                                    <span>Cancelar</span>
-                                </button>
-                            </>
-                        )}
-                        {isMoving && (
-                            <>
-                                <button
-                                    className="btn btn-primary flex items-center space-x-2 mr-2"
-                                    onClick={onMoveHere}
-                                >
-                                    <BsFileEarmarkArrowDown className="w-5 h-5" />
-                                    <span>Mover aquí</span>
-                                </button>
-                                <button
-                                    className="btn btn-secondary flex items-center space-x-2"
-                                    onClick={onCancelMove}
-                                >
-                                    <IoClose className="w-5 h-5" />
-                                    <span>Cancelar</span>
-                                </button>
-                            </>
-                        )}
-                    </>
-                )}
+                {/* Ordenar Botón */}
+                <button
+                    onClick={handleSortToggle}
+                    className="btn btn-outline flex items-center space-x-2 hover:text-primary-content"
+                    aria-label="Ordenar por nombre"
+                >
+                    {currentSortOrder === 'asc' ? (
+                        <>
+                            <BsSortAlphaDown className="w-5 h-5" />
+                            <span className="hidden sm:inline">Ordenar A-Z</span>
+                        </>
+                    ) : (
+                        <>
+                            <BsSortAlphaDownAlt className="w-5 h-5" />
+                            <span className="hidden sm:inline">Ordenar Z-A</span>
+                        </>
+                    )}
+                </button>
             </div>
 
-            <div className="dropdown dropdown-bottom dropdown-end ml-2">
-                <button
-                    tabIndex={0}
-                    className="btn flex items-center space-x-2"
-                >
-                    <FcList className="w-5 h-5" />
-                    <span>Ordenar</span>
-                </button>
-                <ul
-                    tabIndex={0}
-                    className="dropdown-content menu p-2 shadow bg-base-100 rounded-box w-52"
-                >
-                    <li>
-                        <button
-                            onClick={() => handleSortClick('date')}
-                            className={`flex items-center space-x-2 w-full text-left ${
-                                currentSortCriteria === 'date' ? 'bg-primary text-white' : ''
-                            }`}
-                        >
-                            {currentSortCriteria === 'date' ? (
-                                currentSortOrder === 'asc' ? (
-                                    <BsSortNumericUp className="w-5 h-5" />
-                                ) : (
-                                    <BsSortNumericDownAlt className="w-5 h-5" />
-                                )
-                            ) : (
-                                <BsSortNumericUp className="w-5 h-5" />
-                            )}
-                            <span>Por fecha</span>
-                        </button>
-                    </li>
-                    <li>
-                        <button
-                            onClick={() => handleSortClick('name')}
-                            className={`flex items-center space-x-2 w-full text-left ${
-                                currentSortCriteria === 'name' ? 'bg-primary text-white' : ''
-                            }`}
-                        >
-                            {currentSortCriteria === 'name' ? (
-                                currentSortOrder === 'asc' ? (
-                                    <BsSortAlphaDown className="w-5 h-5" />
-                                ) : (
-                                    <BsSortAlphaDownAlt className="w-5 h-5" />
-                                )
-                            ) : (
-                                <BsSortAlphaDown className="w-5 h-5" />
-                            )}
-                            <span>Por nombre</span>
-                        </button>
-                    </li>
-                </ul>
-            </div>
+            {/* Acciones de Copiar/Mover Aquí */}
+            {(isCopying || isMoving) && (
+                <div className="flex items-center space-x-2 mt-4 sm:mt-0">
+                    {isCopying && (
+                        <>
+                            <button
+                                className="btn btn-primary flex items-center space-x-2 mr-2"
+                                onClick={onCopyHere}
+                                aria-label="Copiar aquí"
+                            >
+                                <BsFileEarmarkArrowDown className="w-5 h-5" />
+                                <span>Copiar aquí</span>
+                            </button>
+                            <button
+                                className="btn btn-secondary flex items-center space-x-2"
+                                onClick={onCancelCopy}
+                                aria-label="Cancelar copia"
+                            >
+                                <IoClose className="w-5 h-5" />
+                                <span>Cancelar</span>
+                            </button>
+                        </>
+                    )}
+                    {isMoving && (
+                        <>
+                            <button
+                                className="btn btn-primary flex items-center space-x-2 mr-2"
+                                onClick={onMoveHere}
+                                aria-label="Mover aquí"
+                            >
+                                <BsFileEarmarkArrowDown className="w-5 h-5" />
+                                <span>Mover aquí</span>
+                            </button>
+                            <button
+                                className="btn btn-secondary flex items-center space-x-2"
+                                onClick={onCancelMove}
+                                aria-label="Cancelar movimiento"
+                            >
+                                <IoClose className="w-5 h-5" />
+                                <span>Cancelar</span>
+                            </button>
+                        </>
+                    )}
+                </div>
+            )}
         </div>
     );
-};
+}
 
 export default FileManagerToolbar;

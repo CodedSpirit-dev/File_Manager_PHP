@@ -6,36 +6,49 @@
 /* Definir clases personalizadas dentro de @layer components */
 @layer components {
     /* Estilos Generales */
-    html{
-        @apply antialiased;
-        @apply scroll-smooth bg-gray-100;
+    html {
+        @apply antialiased scroll-smooth bg-gray-100;
     }
+
     body {
         @apply min-h-screen bg-gray-100 text-gray-800;
     }
 
-    .btn{
-        @apply rounded-md hover:ring-2;
+    /* Botones Generales */
+    .btn {
+        @apply rounded-md hover:ring-2 transition duration-200;
     }
 
-    .btn-primary{
-        @apply text-base-100;
+    .btn-primary {
+        @apply bg-blue-500 text-white hover:bg-blue-600;
     }
 
-    /* Contenedor Principal */
+    .btn-secondary {
+        @apply bg-gray-500 text-white hover:bg-gray-600;
+    }
+
+    /* Botones de Outline */
+    .btn-outline {
+        @apply border border-gray-300 bg-transparent text-gray-700 hover:bg-gray-100;
+    }
+
+    /* Contenedores Principales */
+    .container__25,
+    .container__75 {
+        @apply mx-auto bg-white p-6 shadow-md rounded-lg w-full;
+    }
+
     .container__25 {
-        @apply mx-auto max-w-7xl bg-white p-6 shadow-md rounded-lg w-full;
+        @apply max-w-3xl;
     }
 
-    .container__25__table {
-        @apply flex flex-col items-center pt-6 px-6 py-4 shadow-md mx-auto mt-28 bg-white;
+    .container__75 {
+        @apply max-w-screen-2xl; /* Ampliado para pantallas muy grandes */
     }
 
-    /* Contenedor Responsivo para Componentes al 75% */
-    .container__75,
+    .container__25__table,
     .container__75__table {
-        @apply mx-auto bg-white p-6 shadow-md rounded-lg w-full flex flex-col items-center overflow-hidden;
-        @apply max-w-full sm:max-w-3xl md:max-w-5xl lg:max-w-7xl;
+        @apply flex flex-col items-center pt-6 px-6 py-4 shadow-md mx-auto mt-28 bg-white;
     }
 
     /* Tabla Responsiva */
@@ -61,7 +74,7 @@
     }
 
     .nav__bar__button {
-        @apply btn accent-base-300 text-base-content;
+        @apply btn;
     }
 
     .nav__bar__logo {
@@ -90,14 +103,16 @@
     }
 
     /* Estilos Específicos para FileManager */
+
     /* Contenedor Principal */
     .file-manager-container {
-        @apply mx-auto bg-white p-4 sm:p-6 lg:p-8 shadow-md rounded-lg w-full max-w-7xl;
+        @apply mx-auto bg-white p-4 sm:p-6 lg:p-8 shadow-md rounded-lg w-full max-w-full;
+        @apply max-w-screen-2xl; /* Aumentar para pantallas hasta 4K */
     }
 
     /* Título Principal */
     .file-manager-title {
-        @apply text-3xl font-bold mb-6 text-center;
+        @apply text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-6 text-center;
     }
 
     /* Contenedor de Formularios */
@@ -115,14 +130,18 @@
         @apply input input-bordered w-full sm:w-auto flex-1 mb-4 sm:mb-0;
     }
 
-    /* Botón para Crear Carpeta */
-    .file-manager-create-button {
-        @apply btn btn-primary ml-0 sm:ml-4 flex items-center justify-center;
+    /* Botones del FileManager */
+    .file-manager-create-button,
+    .file-manager-upload-button {
+        @apply btn flex items-center justify-center;
     }
 
-    /* Botón para Subir Archivo */
+    .file-manager-create-button {
+        @apply btn-primary ml-0 sm:ml-4;
+    }
+
     .file-manager-upload-button {
-        @apply btn btn-secondary ml-0 sm:ml-4 flex items-center justify-center;
+        @apply btn-secondary ml-0 sm:ml-4;
     }
 
     /* Mensajes de Estado (Éxito y Error) */
@@ -146,27 +165,33 @@
 
     /* Grid para Listar Carpetas y Archivos */
     .file-manager-grid {
-        @apply grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6;
+        @apply grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-12 gap-4;
     }
 
     /* Tarjeta de Carpeta o Archivo */
     .file-manager-card {
         @apply flex flex-col items-center p-4 bg-base-100 shadow-md rounded-lg hover:bg-gray-50 transition duration-200;
+        @apply w-full max-w-xs;
     }
 
-    /* Ícono de Carpeta */
-    .file-manager-folder-icon {
-        @apply text-5xl mb-2;
-    }
-
-    /* Ícono de Archivo */
+    /* Ícono de Carpeta y Archivo */
+    .file-manager-folder-icon,
     .file-manager-file-icon {
-        @apply text-5xl mb-2;
+        /* Tamaños Responsivos */
+        @apply text-3xl sm:text-4xl md:text-5xl lg:text-6xl mb-2;
+    }
+
+    .file-manager-folder-icon {
+        @apply text-yellow-500; /* Color para carpeta */
+    }
+
+    .file-manager-file-icon {
+        @apply text-blue-500; /* Color para archivo */
     }
 
     /* Nombre del Archivo o Carpeta */
     .file-manager-name {
-        @apply text-center text-sm font-medium text-gray-900 truncate w-24;
+        @apply text-center text-sm sm:text-base md:text-lg font-medium text-gray-900 truncate w-24;
     }
 
     /* Botón Eliminar */
@@ -174,113 +199,31 @@
         @apply btn btn-error btn-sm mt-2;
     }
 
-    /* Estilo general del contenedor de la tarjeta */
-    /* Estilo general del contenedor de la tarjeta */
-    .file-manager-card {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        width: 100px;
-        padding: 10px;
-        margin: 10px;
-        background-color: #f5f5f5;
-        border-radius: 8px;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-        transition: transform 0.2s ease;
-        text-align: center;
-        cursor: pointer;
-    }
-
-    /* Animación de hover para darle efecto de clic */
-    .file-manager-card:hover {
-        transform: scale(1.05);
-    }
-
-    /* Estilo para el enlace */
-    .file-manager-card-link {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        color: #333;
-        text-decoration: none;
-    }
-
-    /* Estilo del ícono de archivo - aumentado de tamaño */
-    .file-manager-file-icon {
-        font-size: 64px; /* Tamaño aumentado para hacer el ícono más grande */
-        margin-bottom: 8px;
-    }
-
-    /* Estilo del nombre del archivo */
-    .file-manager-name {
-        font-size: 24px;
-        color: #555;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        max-width: 80px;
-        display: inline-block;
-    }
-
-    /* Limitar el texto a 10 caracteres */
-    .file-manager-name::after {
-        content: attr(title);
-        display: block;
-        width: 100%;
-        max-width: 10ch; /* Limita el texto a 10 caracteres */
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-    }
-
-    /* Botón de eliminar */
-    .file-manager-delete-button {
-        margin-top: 8px;
-        background-color: #e74c3c;
-        border: none;
-        border-radius: 4px;
-        color: #fff;
-        padding: 4px 8px;
-        font-size: 12px;
-        cursor: pointer;
-        transition: background-color 0.2s ease;
-    }
-
-    /* Animación de hover para el botón de eliminar */
-    .file-manager-delete-button:hover {
-        background-color: #c0392b;
-    }
-    /* src/index.css */
-
+    /* Loader */
     .loader {
-        border-top-color: #3490dc; /* Color principal del loader */
-        animation: spin 1s infinite linear;
+        @apply border-t-4 border-blue-500 animate-spin;
     }
 
-    @keyframes spin {
-        to {
-            transform: rotate(360deg);
-        }
-    }
-
-
+    /* FileViewer */
     .file-viewer {
-        width: 100%;
-        max-width: 100%;
-        height: auto;
-        overflow: hidden;
+        @apply w-full max-w-full h-auto overflow-hidden;
     }
 
     @media (max-width: 768px) {
         .file-viewer {
-            height: 60vh;
+            @apply h-60;
         }
     }
 
     @media (min-width: 1920px) {
         .file-viewer {
-            height: 90vh;
+            @apply h-96;
         }
     }
 
+    /* Estilos Adicionales para el FileViewerModal */
+    /* Asegurar que el iframe ocupe el 100% del contenedor */
+    .file-viewer iframe {
+        @apply w-full h-full border rounded-lg shadow-md;
+    }
 }

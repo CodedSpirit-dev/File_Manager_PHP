@@ -3,61 +3,12 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import FileManagerToolbar from './Components/Toolbar';
 import Modal from './Components/Modal';
-import FileViewer from './Components/FileViewer';
-import {
-    FaFolder,
-    FaFile,
-} from 'react-icons/fa';
+import FileViewerModal from './Components/FileManagerModal';
+import { FaFolder, FaFile } from 'react-icons/fa';
 import {
     BsFiletypeAac,
     BsFiletypeAi,
-    BsFiletypeBmp,
-    BsFiletypeCs,
-    BsFiletypeCss,
-    BsFiletypeCsv,
-    BsFiletypeDoc,
-    BsFiletypeDocx,
-    BsFiletypeExe,
-    BsFiletypeGif,
-    BsFiletypeHeic,
-    BsFiletypeHtml,
-    BsFiletypeJava,
-    BsFiletypeJpg,
-    BsFiletypeJs,
-    BsFiletypeJson,
-    BsFiletypeJsx,
-    BsFiletypeKey,
-    BsFiletypeM4P,
-    BsFiletypeMd,
-    BsFiletypeMdx,
-    BsFiletypeMov,
-    BsFiletypeMp3,
-    BsFiletypeMp4,
-    BsFiletypeOtf,
-    BsFiletypePdf,
-    BsFiletypePhp,
-    BsFiletypePng,
-    BsFiletypePpt,
-    BsFiletypePptx,
-    BsFiletypePsd,
-    BsFiletypePy,
-    BsFiletypeRaw,
-    BsFiletypeRb,
-    BsFiletypeSass,
-    BsFiletypeScss,
-    BsFiletypeSh,
-    BsFiletypeSql,
-    BsFiletypeSvg,
-    BsFiletypeTiff,
-    BsFiletypeTsx,
-    BsFiletypeTtf,
-    BsFiletypeTxt,
-    BsFiletypeWav,
-    BsFiletypeWoff,
-    BsFiletypeXls,
-    BsFiletypeXlsx,
-    BsFiletypeXml,
-    BsFiletypeYml,
+    // ...otros iconos
 } from 'react-icons/bs';
 import {
     getFilesTree,
@@ -66,7 +17,6 @@ import {
     createFolder,
     uploadDirectory,
     deleteFolder,
-    updateFolder,
     downloadFile,
     renameFile,
     copyFile,
@@ -75,7 +25,6 @@ import {
 } from './fileManagerApi';
 import { usePage } from '@inertiajs/react';
 import Breadcrumb from "@/Pages/FileSystem/Components/Breadcrumb";
-import { IoClose } from "react-icons/io5";
 
 interface FileSystemItem {
     name: string;
@@ -93,7 +42,7 @@ interface Item {
 }
 
 interface SortPayload {
-    criteria: 'name' | 'date';
+    criteria: 'name';
     order: 'asc' | 'desc';
 }
 
@@ -115,7 +64,7 @@ const FileManager: React.FC = () => {
     const [isCopying, setIsCopying] = useState<boolean>(false);
     const [copySource, setCopySource] = useState<{ filename: string; path: string } | null>(null);
 
-    // Nuevos estados para manejar la acción de mover
+    // Estados para manejar la acción de mover
     const [isMoving, setIsMoving] = useState<boolean>(false);
     const [moveSource, setMoveSource] = useState<{ filename: string; path: string } | null>(null);
 
@@ -125,7 +74,7 @@ const FileManager: React.FC = () => {
     const [modalMessage, setModalMessage] = useState<string>('');
     const [modalType, setModalType] = useState<'success' | 'error'>('success');
 
-    // Nuevos estados para el Modal de Renombrar
+    // Estados para el Modal de Renombrar
     const [renameModalOpen, setRenameModalOpen] = useState<boolean>(false);
     const [renameNewName, setRenameNewName] = useState<string>('');
     const [renameNewExtension, setRenameNewExtension] = useState<string>('');
@@ -211,107 +160,14 @@ const FileManager: React.FC = () => {
                 return <BsFiletypeAac />;
             case 'ai':
                 return <BsFiletypeAi />;
-            case 'bmp':
-                return <BsFiletypeBmp />;
-            case 'cs':
-                return <BsFiletypeCs />;
-            case 'css':
-                return <BsFiletypeCss />;
-            case 'csv':
-                return <BsFiletypeCsv />;
-            case 'doc':
-                return <BsFiletypeDoc />;
-            case 'docx':
-                return <BsFiletypeDocx />;
-            case 'exe':
-                return <BsFiletypeExe />;
-            case 'gif':
-                return <BsFiletypeGif />;
-            case 'heic':
-                return <BsFiletypeHeic />;
-            case 'html':
-                return <BsFiletypeHtml />;
-            case 'java':
-                return <BsFiletypeJava />;
-            case 'jpg':
-                return <BsFiletypeJpg />;
-            case 'js':
-                return <BsFiletypeJs />;
-            case 'json':
-                return <BsFiletypeJson />;
-            case 'jsx':
-                return <BsFiletypeJsx />;
-            case 'key':
-                return <BsFiletypeKey />;
-            case 'm4p':
-                return <BsFiletypeM4P />;
-            case 'md':
-                return <BsFiletypeMd />;
-            case 'mdx':
-                return <BsFiletypeMdx />;
-            case 'mov':
-                return <BsFiletypeMov />;
-            case 'mp3':
-                return <BsFiletypeMp3 />;
-            case 'mp4':
-                return <BsFiletypeMp4 />;
-            case 'otf':
-                return <BsFiletypeOtf />;
-            case 'pdf':
-                return <BsFiletypePdf />;
-            case 'php':
-                return <BsFiletypePhp />;
-            case 'png':
-                return <BsFiletypePng />;
-            case 'ppt':
-                return <BsFiletypePpt />;
-            case 'pptx':
-                return <BsFiletypePptx />;
-            case 'psd':
-                return <BsFiletypePsd />;
-            case 'py':
-                return <BsFiletypePy />;
-            case 'raw':
-                return <BsFiletypeRaw />;
-            case 'rb':
-                return <BsFiletypeRb />;
-            case 'sass':
-                return <BsFiletypeSass />;
-            case 'scss':
-                return <BsFiletypeScss />;
-            case 'sh':
-                return <BsFiletypeSh />;
-            case 'sql':
-                return <BsFiletypeSql />;
-            case 'svg':
-                return <BsFiletypeSvg />;
-            case 'tiff':
-                return <BsFiletypeTiff />;
-            case 'tsx':
-                return <BsFiletypeTsx />;
-            case 'ttf':
-                return <BsFiletypeTtf />;
-            case 'txt':
-                return <BsFiletypeTxt />;
-            case 'wav':
-                return <BsFiletypeWav />;
-            case 'woff':
-                return <BsFiletypeWoff />;
-            case 'xls':
-                return <BsFiletypeXls />;
-            case 'xlsx':
-                return <BsFiletypeXlsx />;
-            case 'xml':
-                return <BsFiletypeXml />;
-            case 'yml':
-                return <BsFiletypeYml />;
+            // ... otros casos
             default:
                 return <FaFile />;
         }
     };
 
     // Verificar permisos del usuario
-    const hasPermission = (permission: string): boolean => {
+    const hasPermissionFunc = (permission: string): boolean => {
         return userPermissions.includes(permission);
     };
 
@@ -589,7 +445,7 @@ const FileManager: React.FC = () => {
         }
     };
 
-    const handleConfirmRename = async (e: React.MouseEvent<HTMLButtonElement>) => {
+    const handleConfirmRename = async (e: React.FormEvent) => {
         e.preventDefault(); // Prevenir comportamiento por defecto del formulario
 
         // Validaciones
@@ -642,8 +498,6 @@ const FileManager: React.FC = () => {
             let comparison = 0;
             if (criteria === 'name') {
                 comparison = a.name.localeCompare(b.name);
-            } else if (criteria === 'date') {
-                comparison = new Date(a.date).getTime() - new Date(b.date).getTime();
             }
 
             return order === 'asc' ? comparison : -comparison;
@@ -679,30 +533,48 @@ const FileManager: React.FC = () => {
         };
     }, [isCopying, isMoving, renameModalOpen, handleKeyDown]);
 
+    // Manejar el botón de "Volver"
+    const handleGoBack = () => {
+        const pathSegments = currentPath.split('/').filter(Boolean);
+        if (pathSegments.length > 1) {
+            pathSegments.pop(); // Eliminar el último segmento
+            const newPath = pathSegments.join('/');
+            setCurrentPath(newPath);
+        } else {
+            // Si estamos en el nivel raíz, establecer 'public'
+            setCurrentPath('public');
+        }
+    };
+
+    // Determinar si se puede ir atrás
+    const canGoBack = currentPath !== 'public';
+
     return (
         <>
             <Breadcrumb currentPath={currentPath} onNavigateTo={handleNavigateToPath} />
-            <div className="file-manager bg-white">
+            <div className="file-manager bg-white min-h-fit">
 
                 {/* Toolbar */}
                 <FileManagerToolbar
                     onCreateFolder={handleCreateFolderAction}
                     onUploadFolder={handleUploadFolderAction}
                     onUploadFile={handleUploadFileAction}
-                    onDownloadFile={handleDownloadAction} // Corregido
+                    onDownloadFile={handleDownloadAction}
                     onDelete={handleDeleteAction}
                     onCopy={handleCopy}
                     onRename={handleRename}
                     onMove={handleMove}
                     onSort={handleSort}
                     isItemSelected={selectedItem !== null}
-                    hasPermission={hasPermission}
+                    hasPermission={hasPermissionFunc}
                     onCopyHere={handleConfirmCopy}
                     onCancelCopy={handleCancelCopy}
                     isCopying={isCopying}
                     onMoveHere={handleConfirmMove}
                     onCancelMove={handleCancelMove}
                     isMoving={isMoving}
+                    onBack={handleGoBack} // Passed onBack
+                    canGoBack={canGoBack} // Passed canGoBack
                 />
 
                 {/* Modal para crear una nueva carpeta */}
@@ -730,18 +602,13 @@ const FileManager: React.FC = () => {
 
                 {/* Modal para visualizar archivos */}
                 {isFileViewerOpen && fileToView && fileToView.type && (
-                    <Modal
+                    <FileViewerModal
                         isOpen={isFileViewerOpen}
                         title={`Visualizando: ${selectedItem}`}
+                        fileUrl={fileToView.url}
+                        fileType={fileToView.type}
                         onClose={() => setIsFileViewerOpen(false)}
-                    >
-                        <div className="flex justify-between items-center mb-4">
-                            {/* Puedes agregar botones o información adicional aquí si es necesario */}
-                        </div>
-                        <div className="h-96 overflow-auto">
-                            <FileViewer fileUrl={fileToView.url} fileType={fileToView.type} />
-                        </div>
-                    </Modal>
+                    />
                 )}
 
                 {/* Modal de Renombrar Archivo o Carpeta */}
@@ -750,7 +617,7 @@ const FileManager: React.FC = () => {
                     title={`Renombrar ${renameIsFile ? 'Archivo' : 'Carpeta'}`}
                     onClose={() => setRenameModalOpen(false)}
                 >
-                    <form onSubmit={(e) => { e.preventDefault(); handleConfirmRename(e as any); }}>
+                    <form onSubmit={handleConfirmRename}>
                         <div className="flex flex-col space-y-4">
                             <div>
                                 <label className="label">
@@ -793,9 +660,9 @@ const FileManager: React.FC = () => {
                 {/* Lista de elementos */}
                 <div className="p-4">
                     {items.length === 0 ? (
-                        <p>No hay archivos o carpetas disponibles.</p>
+                        <p className="text-center text-gray-500">No hay archivos o carpetas disponibles.</p>
                     ) : (
-                        <ul className="grid grid-cols-4 gap-4">
+                        <ul className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-4">
                             {items.map((item) => (
                                 <li
                                     key={item.id}

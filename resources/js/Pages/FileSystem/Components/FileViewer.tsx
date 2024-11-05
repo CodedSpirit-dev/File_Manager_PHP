@@ -1,3 +1,5 @@
+// src/components/FileManager/Components/FileViewer.tsx
+
 import React, { useEffect, useState } from 'react';
 import * as XLSX from 'xlsx';
 import mammoth from 'mammoth';
@@ -91,12 +93,11 @@ const FileViewer: React.FC<FileViewerProps> = ({ fileUrl, fileType }) => {
 
     if (fileType === 'pdf') {
         return (
-            <div className="file-viewer">
+            <div className="file-viewer w-full h-full flex justify-center items-center">
                 <iframe
                     src={`${fileUrl}#toolbar=0`}
                     title="PDF Viewer"
-                    className="w-full border rounded-lg"
-                    style={{ minHeight: '300px', height: '80vh', maxHeight: '90vh' }}
+                    className="w-full h-full md:w-11/12 md:h-4/5 lg:w-3/4 lg:h-4/5 border rounded-lg shadow-md"
                 ></iframe>
             </div>
         );
@@ -104,33 +105,38 @@ const FileViewer: React.FC<FileViewerProps> = ({ fileUrl, fileType }) => {
 
     if (fileType === 'docx') {
         return (
-            <div className="file-viewer px-2 md:px-4 lg:px-6 xl:px-8">
-                <div dangerouslySetInnerHTML={{ __html: docContent || '' }} />
+            <div className="file-viewer w-full h-full overflow-auto p-4 sm:p-6 md:p-8 lg:p-10 xl:p-12">
+                <div
+                    className="prose max-w-none"
+                    dangerouslySetInnerHTML={{ __html: docContent || '' }}
+                />
             </div>
         );
     }
 
     if (fileType === 'xlsx') {
         return (
-            <div className="file-viewer overflow-auto p-2 md:p-4 lg:p-6 xl:p-8">
-                <table className="table-auto border-collapse border border-gray-300 w-full text-xs sm:text-sm md:text-base lg:text-lg">
-                    <tbody>
-                    {excelContent?.map((row, rowIndex) => (
-                        <tr key={rowIndex}>
-                            {row.map((cell, cellIndex) => (
-                                <td key={cellIndex} className="border border-gray-300 p-1 md:p-2 lg:p-3">
-                                    {cell}
-                                </td>
-                            ))}
-                        </tr>
-                    ))}
-                    </tbody>
-                </table>
+            <div className="file-viewer w-full h-full overflow-auto p-2 sm:p-4 md:p-6 lg:p-8 xl:p-10">
+                <div className="overflow-x-auto">
+                    <table className="min-w-full border border-gray-300 text-sm sm:text-base">
+                        <tbody>
+                        {excelContent?.map((row, rowIndex) => (
+                            <tr key={rowIndex} className={rowIndex % 2 === 0 ? 'bg-white' : 'bg-gray-100'}>
+                                {row.map((cell, cellIndex) => (
+                                    <td key={cellIndex} className="border border-gray-300 px-2 py-1 sm:px-4 sm:py-2">
+                                        {cell}
+                                    </td>
+                                ))}
+                            </tr>
+                        ))}
+                        </tbody>
+                    </table>
+                </div>
             </div>
         );
     }
 
-    return <div>No se puede mostrar este tipo de archivo.</div>;
+    return <div className="text-center text-red-500">No se puede mostrar este tipo de archivo.</div>;
 };
 
 export default FileViewer;
