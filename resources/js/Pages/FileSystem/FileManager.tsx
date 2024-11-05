@@ -71,17 +71,26 @@ import {
     renameFile,
     copyFile,
     moveFile,
-    downloadFolder, // Asegúrate de importar downloadFolder
+    downloadFolder, // Asegúrate de importar el nuevo endpoint
+    getFilesTree, // Asumiendo que este endpoint también está implementado
 } from './fileManagerApi'; // Asegúrate de que la ruta sea correcta
 import { usePage } from '@inertiajs/react';
 import Breadcrumb from "@/Pages/FileSystem/Components/Breadcrumb";
 import { IoClose } from "react-icons/io5";
+
+interface FileSystemItem {
+    name: string;
+    path: string;
+    type: 'file' | 'folder';
+    children?: FileSystemItem[];
+}
 
 interface Item {
     id: number;
     name: string;
     type: 'file' | 'folder';
     date: Date;
+    path: string;
 }
 
 interface SortPayload {
@@ -96,6 +105,8 @@ const FileManager: React.FC = () => {
     const [selectedItem, setSelectedItem] = useState<string | null>(null);
     const [items, setItems] = useState<Item[]>([]);
     const [currentPath, setCurrentPath] = useState<string>('public'); // Ruta inicial
+    const [fileTree, setFileTree] = useState<FileSystemItem[]>([]); // Árbol completo
+
     const [isCreateFolderOpen, setIsCreateFolderOpen] = useState<boolean>(false);
     const [newFolderName, setNewFolderName] = useState<string>('');
     const [isFileViewerOpen, setIsFileViewerOpen] = useState<boolean>(false);
@@ -119,22 +130,54 @@ const FileManager: React.FC = () => {
     const [renameModalOpen, setRenameModalOpen] = useState<boolean>(false);
     const [renameNewName, setRenameNewName] = useState<string>('');
     const [renameNewExtension, setRenameNewExtension] = useState<string>('');
-    const [renameItemType, setRenameItemType] = useState<'file' | 'folder' | null>(null);
+    const [renameIsFile, setRenameIsFile] = useState<boolean>(true); // Indica si el elemento es un archivo
 
-    // Fetch files and directories cuando el componente se monta o currentPath cambia
+    // Cargar el árbol completo al montar el componente
     useEffect(() => {
-        fetchFiles();
+        fetchFilesTree();
         setSelectedItem(null); // Deseleccionar cualquier elemento seleccionado al cambiar de carpeta
-    }, [currentPath]);
+    }, []);
 
-    const fetchFiles = async () => {
+    const fetchFilesTree = async () => {
         try {
-            const data = await getFiles(currentPath);
-            setItems(formatItems(data.directories, data.files));
+            const data = await getFilesTree();
+            setFileTree(data);
+            // Actualizar los items del directorio actual
+            updateCurrentItems(data, currentPath);
         } catch (error) {
-            console.error('Error fetching files:', error);
-            showModal('Error', 'Error al obtener los archivos.', 'error');
+            console.error('Error fetching files tree:', error);
+            showModal('Error', 'Error al obtener el árbol de archivos.', 'error');
         }
+    };
+
+    const updateCurrentItems = (tree: FileSystemItem[], path: string) => {
+        // Navegar hasta la ruta actual en el árbol
+        const pathSegments = path.split('/').filter(Boolean);
+        let currentNode = { children: tree } as FileSystemItem;
+
+        for (const segment of pathSegments) {
+            const found = currentNode.children?.find(item => item.name === segment && item.type === 'folder');
+            if (found) {
+                currentNode = found;
+            } else {
+                // Ruta no encontrada en el árbol, manejar según sea necesario
+                console.error('Ruta no encontrada en el árbol:', path);
+                setItems([]);
+                return;
+            }
+        }
+
+        // Actualizar los items del directorio actual
+        let idCounter = 1;
+        const formattedItems = currentNode.children?.map((item) => ({
+            id: idCounter++,
+            name: item.name,
+            type: item.type,
+            date: new Date(), // Asumiendo fecha actual, modificar si es necesario
+            path: item.path,
+        })) || [];
+
+        setItems(formattedItems);
     };
 
     const handleNavigateToPath = (path: string) => {
@@ -255,12 +298,14 @@ const FileManager: React.FC = () => {
             name: dir.split('/').pop() || dir,
             type: 'folder' as const,
             date: new Date(),
+            path: dir, // Asumiendo que 'dir' es la ruta
         }));
         const formattedFiles = files.map((file) => ({
             id: idCounter++,
             name: file.split('/').pop() || file,
             type: 'file' as const,
             date: new Date(),
+            path: file, // Asumiendo que 'file' es la ruta
         }));
         return [...formattedDirectories, ...formattedFiles];
     };
@@ -278,7 +323,7 @@ const FileManager: React.FC = () => {
     // Manejar doble clic en elementos (carpetas o archivos)
     const handleDoubleClickItem = (item: Item) => {
         if (item.type === 'folder') {
-            setCurrentPath(`${currentPath}/${item.name}`);
+            setCurrentPath(item.path);
         } else {
             const extension = item.name.split('.').pop()?.toLowerCase();
             if (extension === 'pdf' || extension === 'docx' || extension === 'xlsx') {
@@ -316,8 +361,8 @@ const FileManager: React.FC = () => {
             const response = await createFolder(newFolderName, currentPath);
             showModal('Éxito', 'Carpeta creada exitosamente.', 'success');
 
-            // Refrescar elementos
-            fetchFiles();
+            // Refrescar el árbol completo
+            fetchFilesTree();
 
             setNewFolderName('');
             setIsCreateFolderOpen(false);
@@ -340,7 +385,7 @@ const FileManager: React.FC = () => {
                 try {
                     const response = await uploadDirectory(folderInput.files, currentPath);
                     showModal('Éxito', 'Carpeta subida exitosamente.', 'success');
-                    fetchFiles(); // Refrescar elementos
+                    fetchFilesTree(); // Refrescar el árbol
                 } catch (error: any) {
                     if (error.response && error.response.status === 403) {
                         showModal('Error', 'No tienes permiso para subir carpetas.', 'error');
@@ -362,7 +407,7 @@ const FileManager: React.FC = () => {
                 try {
                     const response = await uploadFile(fileInput.files[0], currentPath);
                     showModal('Éxito', 'Archivo subido exitosamente.', 'success');
-                    fetchFiles(); // Refrescar elementos
+                    fetchFilesTree(); // Refrescar el árbol
                 } catch (error: any) {
                     if (error.response && error.response.status === 403) {
                         showModal('Error', 'No tienes permiso para subir archivos.', 'error');
@@ -376,42 +421,49 @@ const FileManager: React.FC = () => {
         fileInput.click();
     };
 
-    const handleDownloadFileAction = async () => {
+    const handleDownloadAction = async () => {
         if (selectedItem) {
             const item = items.find((i) => i.name === selectedItem);
             if (item) {
-                try {
-                    if (item.type === 'file') {
-                        const blob = await downloadFile(selectedItem, currentPath);
+                if (item.type === 'file') {
+                    try {
+                        const blob = await downloadFile(item.name, currentPath);
                         const url = window.URL.createObjectURL(new Blob([blob]));
                         const link = document.createElement('a');
                         link.href = url;
-                        link.setAttribute('download', selectedItem);
+                        link.setAttribute('download', item.name);
                         document.body.appendChild(link);
                         link.click();
                         link.parentNode?.removeChild(link);
                         showModal('Éxito', 'Archivo descargado exitosamente.', 'success');
-                    } else if (item.type === 'folder') {
-                        const blob = await downloadFolder(selectedItem, currentPath);
+                    } catch (error: any) {
+                        if (error.response && error.response.status === 403) {
+                            showModal('Error', 'No tienes permiso para descargar archivos.', 'error');
+                        } else {
+                            showModal('Error', 'Error al descargar el archivo.', 'error');
+                        }
+                        console.error(error);
+                    }
+                } else if (item.type === 'folder') {
+                    try {
+                        const blob = await downloadFolder(item.name, currentPath);
                         const url = window.URL.createObjectURL(new Blob([blob]));
                         const link = document.createElement('a');
                         link.href = url;
-                        link.setAttribute('download', `${selectedItem}.zip`);
+                        link.setAttribute('download', `${item.name}.zip`);
                         document.body.appendChild(link);
                         link.click();
                         link.parentNode?.removeChild(link);
                         showModal('Éxito', 'Carpeta descargada exitosamente.', 'success');
+                    } catch (error: any) {
+                        if (error.response && error.response.status === 403) {
+                            showModal('Error', 'No tienes permiso para descargar carpetas.', 'error');
+                        } else {
+                            showModal('Error', 'Error al descargar la carpeta.', 'error');
+                        }
+                        console.error(error);
                     }
-                } catch (error: any) {
-                    if (error.response && error.response.status === 403) {
-                        showModal('Error', `No tienes permiso para descargar ${item.type}.`, 'error');
-                    } else {
-                        showModal('Error', `Error al descargar el ${item.type}.`, 'error');
-                    }
-                    console.error(error);
                 }
-            } else {
-                showModal('Error', 'El elemento seleccionado no existe.', 'error');
             }
         } else {
             showModal('Error', 'Por favor, selecciona un elemento para descargar.', 'error');
@@ -427,12 +479,12 @@ const FileManager: React.FC = () => {
                     if (item) {
                         let response;
                         if (item.type === 'file') {
-                            response = await deleteFile(selectedItem, currentPath);
+                            response = await deleteFile(item.name, currentPath);
                         } else if (item.type === 'folder') {
-                            response = await deleteFolder(selectedItem, currentPath);
+                            response = await deleteFolder(item.name, currentPath);
                         }
-                        showModal('Éxito', response.message, 'success');
-                        fetchFiles(); // Refrescar elementos
+                        showModal('Éxito', response.message || 'Elemento eliminado exitosamente.', 'success');
+                        fetchFilesTree(); // Refrescar el árbol
                         setSelectedItem(null);
                     }
                 } catch (error: any) {
@@ -451,7 +503,7 @@ const FileManager: React.FC = () => {
         if (selectedItem) {
             const item = items.find((i) => i.name === selectedItem);
             if (item && item.type === 'file') {
-                setCopySource({ filename: selectedItem, path: currentPath });
+                setCopySource({ filename: item.name, path: currentPath });
                 setIsCopying(true);
             } else {
                 showModal('Error', 'Solo se pueden copiar archivos.', 'error');
@@ -464,7 +516,7 @@ const FileManager: React.FC = () => {
             try {
                 const response = await copyFile(copySource.filename, copySource.path, currentPath);
                 showModal('Éxito', 'Archivo copiado exitosamente.', 'success');
-                fetchFiles(); // Refrescar la lista de archivos
+                fetchFilesTree(); // Refrescar el árbol
                 setIsCopying(false);
                 setCopySource(null);
             } catch (error: any) {
@@ -487,7 +539,7 @@ const FileManager: React.FC = () => {
         if (selectedItem) {
             const item = items.find((i) => i.name === selectedItem);
             if (item && item.type === 'file') {
-                setMoveSource({ filename: selectedItem, path: currentPath });
+                setMoveSource({ filename: item.name, path: currentPath });
                 setIsMoving(true);
             } else {
                 showModal('Error', 'Solo se pueden mover archivos.', 'error');
@@ -500,7 +552,7 @@ const FileManager: React.FC = () => {
             try {
                 const response = await moveFile(moveSource.filename, moveSource.path, currentPath);
                 showModal('Éxito', 'Archivo movido exitosamente.', 'success');
-                fetchFiles(); // Refrescar la lista de archivos
+                fetchFilesTree(); // Refrescar el árbol
                 setIsMoving(false);
                 setMoveSource(null);
                 setSelectedItem(null); // Deseleccionar el elemento movido
@@ -524,12 +576,13 @@ const FileManager: React.FC = () => {
         if (selectedItem) {
             const item = items.find((i) => i.name === selectedItem);
             if (item) {
-                const [currentName, currentExtension] = selectedItem.split('.').length > 1
-                    ? [selectedItem.slice(0, selectedItem.lastIndexOf('.')), selectedItem.slice(selectedItem.lastIndexOf('.') + 1)]
-                    : [selectedItem, ''];
+                const [currentName, currentExtension] = item.type === 'file'
+                    ? [selectedItem.slice(0, selectedItem.lastIndexOf('.')) || selectedItem, selectedItem.slice(selectedItem.lastIndexOf('.') + 1)]
+                    : [selectedItem, '']; // Para carpetas, extensión vacía
+
                 setRenameNewName(currentName);
                 setRenameNewExtension(currentExtension);
-                setRenameItemType(item.type); // Establecer el tipo de elemento
+                setRenameIsFile(item.type === 'file');
                 setRenameModalOpen(true);
             }
         }
@@ -540,35 +593,37 @@ const FileManager: React.FC = () => {
 
         // Validaciones
         if (renameNewName.trim() === '') {
-            showModal('Error', 'El nombre de archivo no puede estar vacío.', 'error');
+            showModal('Error', 'El nombre del elemento no puede estar vacío.', 'error');
             return;
         }
 
-        // Si es un archivo, la extensión no puede estar vacía
-        if (renameItemType === 'file' && renameNewExtension.trim() === '') {
-            showModal('Error', 'La extensión del archivo no puede estar vacía.', 'error');
-            return;
+        if (renameIsFile) {
+            // Validar la extensión
+            if (renameNewExtension.trim() === '') {
+                showModal('Error', 'La extensión del archivo no puede estar vacía.', 'error');
+                return;
+            }
         }
 
-        let newFilename = renameNewName;
-        if (renameItemType === 'file') {
-            newFilename = `${renameNewName}.${renameNewExtension}`;
-        }
+        // Combinar nombre y extensión si es un archivo
+        const newFilename = renameIsFile ? `${renameNewName}.${renameNewExtension}` : renameNewName;
 
         try {
-            const response = await renameFile(selectedItem!, newFilename, currentPath);
-            showModal('Éxito', 'Archivo renombrado exitosamente.', 'success');
-            fetchFiles(); // Refrescar elementos
+            if (selectedItem != null) {
+                const response = await renameFile(selectedItem, newFilename, currentPath);
+            }
+            showModal('Éxito', 'Elemento renombrado exitosamente.', 'success');
+            fetchFilesTree(); // Refrescar el árbol
             setSelectedItem(null);
             setRenameModalOpen(false);
             setRenameNewName('');
             setRenameNewExtension('');
-            setRenameItemType(null);
+            setRenameIsFile(true);
         } catch (error: any) {
             if (error.response && error.response.status === 403) {
-                showModal('Error', 'No tienes permiso para renombrar este archivo.', 'error');
+                showModal('Error', 'No tienes permiso para renombrar este elemento.', 'error');
             } else {
-                showModal('Error', 'Error al renombrar el archivo.', 'error');
+                showModal('Error', 'Error al renombrar el elemento.', 'error');
             }
             console.error(error);
         }
@@ -578,7 +633,7 @@ const FileManager: React.FC = () => {
         setRenameModalOpen(false);
         setRenameNewName('');
         setRenameNewExtension('');
-        setRenameItemType(null);
+        setRenameIsFile(true);
     };
 
     const handleSort = ({ criteria, order }: SortPayload) => {
@@ -633,7 +688,7 @@ const FileManager: React.FC = () => {
                     onCreateFolder={handleCreateFolderAction}
                     onUploadFolder={handleUploadFolderAction}
                     onUploadFile={handleUploadFileAction}
-                    onDownloadFile={handleDownloadFileAction} // Corregido
+                    onDownloadFile={handleDownloadAction} // Corregido
                     onDelete={handleDeleteAction}
                     onCopy={handleCopy}
                     onRename={handleRename}
@@ -689,19 +744,16 @@ const FileManager: React.FC = () => {
                 )}
 
                 {/* Modal de Renombrar Archivo o Carpeta */}
-                <dialog id="rename-modal" className={`modal ${renameModalOpen ? 'modal-open' : ''}`} open={renameModalOpen}>
-                    <div className="modal-box">
-                        <form method="dialog">
-                            <button className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2" onClick={() => setRenameModalOpen(false)}>✕</button>
-                        </form>
-                        <h3 className="text-lg font-bold">Cambiar Nombre</h3>
-                        {renameItemType === 'file' && (
-                            <p className="py-2 text-red-500">Cuidado con cambiar la extensión del archivo ya que podría dejar de funcionar.</p>
-                        )}
+                <Modal
+                    isOpen={renameModalOpen}
+                    title={`Renombrar ${renameIsFile ? 'Archivo' : 'Carpeta'}`}
+                    onClose={() => setRenameModalOpen(false)}
+                >
+                    <form onSubmit={(e) => { e.preventDefault(); handleConfirmRename(e as any); }}>
                         <div className="flex flex-col space-y-4">
                             <div>
                                 <label className="label">
-                                    <span className="label-text">Nombre</span>
+                                    <span className="label-text">Nombre {renameIsFile ? 'de archivo' : 'de carpeta'}</span>
                                 </label>
                                 <input
                                     type="text"
@@ -711,7 +763,7 @@ const FileManager: React.FC = () => {
                                     placeholder="Nombre"
                                 />
                             </div>
-                            {renameItemType === 'file' && (
+                            {renameIsFile && (
                                 <div>
                                     <label className="label">
                                         <span className="label-text">Extensión del archivo</span>
@@ -721,17 +773,21 @@ const FileManager: React.FC = () => {
                                         value={renameNewExtension}
                                         onChange={(e) => setRenameNewExtension(e.target.value)}
                                         className="input input-bordered w-full"
-                                        placeholder="Extensión del archivo"
+                                        placeholder="Extensión (ej: txt, pdf)"
                                     />
                                 </div>
                             )}
                         </div>
-                        <div className="modal-action">
-                            <button className="btn btn-secondary" onClick={() => setRenameModalOpen(false)}>Cancelar</button>
-                            <button className="btn btn-primary" onClick={handleConfirmRename}>Renombrar</button>
+                        <div className="flex justify-end mt-4 space-x-2">
+                            <button type="button" className="btn btn-secondary" onClick={handleCancelRename}>
+                                Cancelar
+                            </button>
+                            <button type="submit" className="btn btn-primary">
+                                Renombrar
+                            </button>
                         </div>
-                    </div>
-                </dialog>
+                    </form>
+                </Modal>
 
                 {/* Lista de elementos */}
                 <div className="p-4">
@@ -760,18 +816,16 @@ const FileManager: React.FC = () => {
             </div>
 
             {/* Modal de Estado (Éxito/Error) */}
-            <dialog id="status-modal" className={`modal ${modalOpen ? 'modal-open' : ''}`} open={modalOpen}>
-                <div className="modal-box">
-                    <form method="dialog">
-                        <button className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2" onClick={() => setModalOpen(false)}>✕</button>
-                    </form>
-                    <h3 className="text-lg font-bold">{modalTitle}</h3>
-                    <p className="py-4">{modalMessage}</p>
-                    <div className="modal-action">
-                        <button className="btn" onClick={() => setModalOpen(false)}>Aceptar</button>
-                    </div>
+            <Modal
+                isOpen={modalOpen}
+                title={modalTitle}
+                onClose={() => setModalOpen(false)}
+            >
+                <p>{modalMessage}</p>
+                <div className="flex justify-end mt-4">
+                    <button className="btn" onClick={() => setModalOpen(false)}>Aceptar</button>
                 </div>
-            </dialog>
+            </Modal>
         </>
     );
 

@@ -59,4 +59,8 @@ Route::prefix('filemanager')->name('filemanager.')->middleware('auth:employee')-
 
     // Ruta para descargar carpetas como ZIP
     Route::get('/folders/download', [FileManagerController::class, 'downloadFolder'])->name('folders.download');
+
+    // Ruta para obtener toda la estructura de archivos y carpetas
+    Route::get('/files-tree', [FileManagerController::class, 'getFilesTree'])->name('files.tree');
+
 });

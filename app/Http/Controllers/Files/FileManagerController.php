@@ -736,6 +736,58 @@ class FileManagerController extends Controller
     }
 
     /**
+     * Obtener toda la estructura de archivos y carpetas.
+     */
+    public function getFilesTree(Request $request)
+    {
+        $employee = Auth::guard('employee')->user();
+
+        // Verificar permisos
+        if (!$employee->hasPermission('can_download_folders')) {
+            return response()->json(['error' => 'No tienes permiso para ver archivos.'], 403);
+        }
+
+        // Directorio raíz (puede ser 'public' u otro según tu estructura)
+        $rootPath = 'public';
+
+        // Obtener el árbol de archivos y carpetas
+        $tree = $this->getDirectoryTree($rootPath);
+
+        return response()->json($tree);
+    }
+
+    /**
+     * Función recursiva para obtener el árbol de directorios y archivos.
+     */
+    private function getDirectoryTree($path)
+    {
+        $items = [];
+
+        $directories = Storage::directories($path);
+        $files = Storage::files($path);
+
+        foreach ($directories as $directory) {
+            $items[] = [
+                'name' => basename($directory),
+                'path' => $directory,
+                'type' => 'folder',
+                'children' => $this->getDirectoryTree($directory),
+            ];
+        }
+
+        foreach ($files as $file) {
+            $items[] = [
+                'name' => basename($file),
+                'path' => $file,
+                'type' => 'file',
+            ];
+        }
+
+        return $items;
+    }
+
+
+    /**
      * Validar que la ruta proporcionada no contenga patrones de Path Traversal.
      */
     private function isValidPath($path)

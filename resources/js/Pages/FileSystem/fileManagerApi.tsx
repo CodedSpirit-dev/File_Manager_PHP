@@ -309,3 +309,17 @@ export const downloadFolder = async (folderName: string, path: string): Promise<
         throw error;
     }
 }
+
+/**
+ * Obtener toda la estructura de archivos y carpetas.
+ * @returns {Promise<Object>} - Estructura de archivos y carpetas.
+ */
+export const getFilesTree = async (): Promise<any> => {
+    try {
+        const response = await axios.get(`${FILEMANAGER_PREFIX}/files-tree`);
+        return response.data;
+    } catch (error) {
+        console.error('Error al obtener el árbol de archivos:', error);
+        throw error;
+    }
+};
