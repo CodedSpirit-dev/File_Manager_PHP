@@ -60,7 +60,7 @@ import {
     BsFiletypeYml,
 } from 'react-icons/bs';
 import {
-    getFiles,
+    getFilesTree,
     uploadFile,
     deleteFile,
     createFolder,
@@ -71,9 +71,8 @@ import {
     renameFile,
     copyFile,
     moveFile,
-    downloadFolder, // Asegúrate de importar el nuevo endpoint
-    getFilesTree, // Asumiendo que este endpoint también está implementado
-} from './fileManagerApi'; // Asegúrate de que la ruta sea correcta
+    downloadFolder,
+} from './fileManagerApi';
 import { usePage } from '@inertiajs/react';
 import Breadcrumb from "@/Pages/FileSystem/Components/Breadcrumb";
 import { IoClose } from "react-icons/io5";
@@ -138,22 +137,43 @@ const FileManager: React.FC = () => {
         setSelectedItem(null); // Deseleccionar cualquier elemento seleccionado al cambiar de carpeta
     }, []);
 
+    // Actualizar los items del directorio actual cuando cambia currentPath o fileTree
+    useEffect(() => {
+        updateCurrentItems(fileTree, currentPath);
+        setSelectedItem(null); // Deseleccionar cualquier elemento seleccionado al cambiar de carpeta
+    }, [currentPath, fileTree]);
+
+    /**
+     * Función para obtener el árbol completo de archivos y carpetas.
+     */
     const fetchFilesTree = async () => {
         try {
             const data = await getFilesTree();
-            setFileTree(data);
-            // Actualizar los items del directorio actual
-            updateCurrentItems(data, currentPath);
+            // Añadir un nodo raíz virtual si es necesario
+            const virtualRoot: FileSystemItem = {
+                name: 'public',
+                path: 'public',
+                type: 'folder',
+                children: data,
+            };
+            setFileTree([virtualRoot]);
+            // Los items se actualizarán automáticamente mediante el useEffect
         } catch (error) {
             console.error('Error fetching files tree:', error);
             showModal('Error', 'Error al obtener el árbol de archivos.', 'error');
         }
     };
 
+    /**
+     * Función para actualizar los items del directorio actual basado en el árbol completo.
+     * @param tree Árbol completo de archivos y carpetas.
+     * @param path Ruta actual.
+     */
     const updateCurrentItems = (tree: FileSystemItem[], path: string) => {
         // Navegar hasta la ruta actual en el árbol
         const pathSegments = path.split('/').filter(Boolean);
-        let currentNode = { children: tree } as FileSystemItem;
+        // @ts-ignore
+        let currentNode: FileSystemItem = { children: tree };
 
         for (const segment of pathSegments) {
             const found = currentNode.children?.find(item => item.name === segment && item.type === 'folder');
@@ -167,13 +187,13 @@ const FileManager: React.FC = () => {
             }
         }
 
-        // Actualizar los items del directorio actual
+        // Formatear los items del directorio actual para el estado 'items'
         let idCounter = 1;
         const formattedItems = currentNode.children?.map((item) => ({
             id: idCounter++,
             name: item.name,
             type: item.type,
-            date: new Date(), // Asumiendo fecha actual, modificar si es necesario
+            date: new Date(),
             path: item.path,
         })) || [];
 
@@ -290,26 +310,6 @@ const FileManager: React.FC = () => {
         }
     };
 
-    // Formatear los datos del servidor en objetos Item
-    const formatItems = (directories: string[], files: string[]): Item[] => {
-        let idCounter = 1;
-        const formattedDirectories = directories.map((dir) => ({
-            id: idCounter++,
-            name: dir.split('/').pop() || dir,
-            type: 'folder' as const,
-            date: new Date(),
-            path: dir, // Asumiendo que 'dir' es la ruta
-        }));
-        const formattedFiles = files.map((file) => ({
-            id: idCounter++,
-            name: file.split('/').pop() || file,
-            type: 'file' as const,
-            date: new Date(),
-            path: file, // Asumiendo que 'file' es la ruta
-        }));
-        return [...formattedDirectories, ...formattedFiles];
-    };
-
     // Verificar permisos del usuario
     const hasPermission = (permission: string): boolean => {
         return userPermissions.includes(permission);
@@ -347,6 +347,7 @@ const FileManager: React.FC = () => {
     };
 
     // Acciones del Toolbar
+
     const handleCreateFolderAction = () => {
         setIsCreateFolderOpen(true);
     };
