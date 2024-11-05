@@ -1,0 +1,1 @@
+import{b as n}from"./render-3RRfcVT9.js";import{r as t}from"./app-C0SJH87f.js";function c(e){return n.isServer?null:e instanceof Node?e.ownerDocument:e!=null&&e.hasOwnProperty("current")&&e.current instanceof Node?e.current.ownerDocument:document}let o=t.createContext(void 0);function s(){return t.useContext(o)}export{s as a,c as u};

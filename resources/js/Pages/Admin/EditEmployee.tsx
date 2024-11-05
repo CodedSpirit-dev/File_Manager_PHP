@@ -1,3 +1,5 @@
+// src/components/EditEmployee.tsx
+
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useForm, Controller } from 'react-hook-form';
@@ -41,6 +43,30 @@ const EditEmployee: React.FC<EditEmployeeProps> = ({ employee, positions, compan
     const watchEnablePermissions = watch('enable_permissions');
     const watchCompany = watch('company_id');
 
+    // Definición de categorías de permisos
+    const permissionCategories: { [key: string]: string[] } = {
+        'Empresas': ['can_create_companies', 'can_delete_companies', 'can_update_companies'],
+        'Puestos': ['can_create_positions', 'can_update_positions', 'can_delete_positions'],
+        'Empleados': ['can_create_employees', 'can_delete_employees', 'can_update_employees', 'can_view_company_employees', 'can_view_all_employees'],
+        'Gestión de Archivos y Carpetas': [
+            'can_view_file_explorer',
+            'can_open_files',
+            'can_upload_files_and_folders',
+            'can_create_folders',
+            'can_download_files_and_folders',
+            'can_copy_files',
+            'can_move_files',
+            'can_rename_files_and_folders',
+            'can_delete_files_and_folders'
+        ]
+    };
+
+    // Agrupación de permisos por categoría
+    const groupedPermissions = Object.keys(permissionCategories).map(category => ({
+        category,
+        permissions: permissions.filter(permission => permissionCategories[category].includes(permission.name))
+    }));
+
     useEffect(() => {
         // Obtener todos los permisos disponibles
         axios.get('/api/permissions')
@@ -56,7 +82,7 @@ const EditEmployee: React.FC<EditEmployeeProps> = ({ employee, positions, compan
                     last_name_1: employee.last_name_1,
                     last_name_2: employee.last_name_2 || '',
                     username: employee.username,
-                    position_id: employee.position_id.toString(),
+                    position_id: employee.position_id ? employee.position_id.toString() : '',
                     company_id: employee.company_id ? employee.company_id.toString() : '',
                     password: '',
                     password_confirmation: '',
@@ -65,19 +91,31 @@ const EditEmployee: React.FC<EditEmployeeProps> = ({ employee, positions, compan
                 };
                 reset(defaultVals);
 
-                // Filtrar posiciones basadas en la empresa seleccionada
+                // Filtrar posiciones basadas en la empresa seleccionada y establecer la posición del empleado
                 const filteredPosition = positions.filter(position => position.company_id === Number(defaultVals.company_id));
                 setFilteredPositions(filteredPosition);
+
+                // Verificar si la posición actual del empleado está dentro de las posiciones filtradas
+                if (defaultVals.position_id && filteredPosition.some(pos => pos.id.toString() === defaultVals.position_id)) {
+                    setValue('position_id', defaultVals.position_id);
+                } else {
+                    setValue('position_id', '');
+                }
             })
             .catch(error => console.error('Error al cargar los permisos del empleado', error));
-    }, []);
+    }, [employee.id, employee.first_name, employee.last_name_1, employee.last_name_2, employee.username, employee.position_id, employee.company_id, positions, reset, setValue]);
 
     useEffect(() => {
         // Actualizar las posiciones filtradas cuando cambia la empresa
         const filteredPosition = positions.filter(position => position.company_id === Number(watchCompany));
         setFilteredPositions(filteredPosition);
-        setValue('position_id', ''); // Reiniciar el puesto cuando cambia la empresa
-    }, [watchCompany, positions]);
+
+        // Si la posición actual no está en las posiciones filtradas, reiniciar el campo position_id
+        const currentPositionId = getValues('position_id');
+        if (currentPositionId && !filteredPosition.some(pos => pos.id.toString() === currentPositionId)) {
+            setValue('position_id', '');
+        }
+    }, [watchCompany, positions, setValue, getValues]);
 
     const handlePermissionChange = (permissionId: number) => {
         const currentPermissions = getValues('selected_permissions') as number[];
@@ -97,6 +135,8 @@ const EditEmployee: React.FC<EditEmployeeProps> = ({ employee, positions, compan
                 ...data,
                 position_id: data.position_id,
                 company_id: data.company_id,
+                // Opcional: Incluye la contraseña solo si se ha ingresado
+                ...(data.password ? { password: data.password, password_confirmation: data.password_confirmation } : {})
             };
 
             axios.patch(`/admin/employees/${employee.id}`, payload)
@@ -118,9 +158,17 @@ const EditEmployee: React.FC<EditEmployeeProps> = ({ employee, positions, compan
                                 setModalError(true);
                             });
                     } else {
-                        setModalSuccess(true);
-                        reset();
-                        setStep(1);
+                        // Si se deshabilitan los permisos, se pueden eliminar los permisos existentes
+                        axios.delete(`/api/userpermissions/${employeeId}`)
+                            .then(() => {
+                                setModalSuccess(true);
+                                reset();
+                                setStep(1);
+                            })
+                            .catch(error => {
+                                console.error('Error al eliminar permisos', error);
+                                setModalError(true);
+                            });
                     }
                 })
                 .catch(error => {
@@ -144,6 +192,7 @@ const EditEmployee: React.FC<EditEmployeeProps> = ({ employee, positions, compan
                 <form onSubmit={handleSubmit(onSubmit)}>
                     {step === 1 && (
                         <>
+                            {/* Paso 1: Datos del Empleado */}
                             {/* Nombre(s) */}
                             <div className="mt-4">
                                 <label>Nombre(s)</label>
@@ -351,7 +400,7 @@ const EditEmployee: React.FC<EditEmployeeProps> = ({ employee, positions, compan
                             {watchAllFields.company_id === '' && <p className="text-red-600">Antes debes seleccionar una empresa</p>}
                             {watchAllFields.position_id === '' && <p className="text-red-600">El puesto es obligatorio</p>}
 
-                            {/* Contraseña */}
+                            {/* Contraseña (opcional) */}
                             <div className="mt-4">
                                 <label>Contraseña (opcional)</label>
                                 <Controller
@@ -372,6 +421,7 @@ const EditEmployee: React.FC<EditEmployeeProps> = ({ employee, positions, compan
                             </div>
                             {errors.password && <p className="text-red-600">{errors.password.message}</p>}
 
+                            {/* Confirmar contraseña */}
                             <div className="mt-4">
                                 <label>Confirmar contraseña</label>
                                 <Controller
@@ -396,7 +446,7 @@ const EditEmployee: React.FC<EditEmployeeProps> = ({ employee, positions, compan
                                 <p className="text-red-600">Las contraseñas no coinciden</p>
                             )}
 
-                            {/* Botones de navegación */}
+                            {/* Botón para avanzar al siguiente paso */}
                             <div className="mt-4 flex justify-end">
                                 <button type="button" className="btn btn-block" onClick={() => setStep(step + 1)} disabled={!isValid}>
                                     Siguiente
@@ -408,44 +458,53 @@ const EditEmployee: React.FC<EditEmployeeProps> = ({ employee, positions, compan
 
                     {step === 2 && (
                         <>
+                            {/* Paso 2: Permisos */}
                             {/* Habilitar permisos */}
                             <div className="mt-4">
-                                <label htmlFor="enable_permissions">Habilitar permisos</label>
-                                <Controller
-                                    name="enable_permissions"
-                                    control={control}
-                                    render={({ field }) => (
-                                        <input
-                                            type="checkbox"
-                                            className="ml-2 checkbox checkbox-primary"
-                                            checked={field.value}
-                                            onChange={(e) => field.onChange(e.target.checked)}
-                                        />
-                                    )}
-                                />
+                                <label htmlFor="enable_permissions" className="flex items-center">
+                                    <Controller
+                                        name="enable_permissions"
+                                        control={control}
+                                        render={({ field }) => (
+                                            <input
+                                                type="checkbox"
+                                                className="checkbox checkbox-primary"
+                                                checked={field.value}
+                                                onChange={(e) => field.onChange(e.target.checked)}
+                                                id="enable_permissions"
+                                            />
+                                        )}
+                                    />
+                                    <span className="ml-2">Habilitar permisos</span>
+                                </label>
                             </div>
 
-                            {/* Selección de permisos */}
+                            {/* Selección de permisos agrupados por categoría */}
                             {watchEnablePermissions && (
                                 <div className="mt-6">
-                                    <label className="mb-3 text-xl text-center font-black block">Permisos</label>
-                                    <div className="grid grid-cols-2 gap-4">
-                                        {permissions.map(permission => (
-                                            <label key={permission.id} className="flex items-center my-2">
-                                                <input
-                                                    type="checkbox"
-                                                    checked={getValues('selected_permissions').includes(permission.id)}
-                                                    onChange={() => handlePermissionChange(permission.id)}
-                                                    className="checkbox checkbox-primary mr-2"
-                                                />
-                                                <span>{permission.description}</span>
-                                            </label>
-                                        ))}
-                                    </div>
+                                    <h2 className="mb-3 text-xl text-center font-bold">Permisos</h2>
+                                    {groupedPermissions.map(({ category, permissions }) => (
+                                        <div key={category} className="mb-4">
+                                            <h3 className="text-lg font-semibold mb-2">{category}</h3>
+                                            <div className="grid grid-cols-2 gap-4">
+                                                {permissions.map(permission => (
+                                                    <label key={permission.id} className="flex items-center my-2">
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={getValues('selected_permissions').includes(permission.id)}
+                                                            onChange={() => handlePermissionChange(permission.id)}
+                                                            className="checkbox checkbox-primary mr-2"
+                                                        />
+                                                        <span>{permission.description}</span>
+                                                    </label>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    ))}
                                 </div>
                             )}
 
-                            {/* Botones de navegación */}
+                            {/* Botones para navegar entre pasos */}
                             <div className="mt-4 flex justify-center">
                                 <button type="button" className="btn size-2/4 mr-1" onClick={() => setStep(step - 1)}>
                                     Anterior

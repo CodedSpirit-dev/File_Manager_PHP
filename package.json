@@ -27,6 +27,7 @@
     },
     "dependencies": {
         "@heroicons/react": "^2.1.5",
+        "@inertiajs/progress": "^0.2.7",
         "@simplepdf/react-embed-pdf": "^1.8.1",
         "@thednp/dommatrix": "^2.0.8",
         "mammoth": "^1.8.0",

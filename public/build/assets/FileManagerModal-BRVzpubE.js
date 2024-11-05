@@ -1,1 +1,0 @@
-import{j as r}from"./app-mKk56eB_.js";import t from"./Modal-B9-73j_u.js";import m from"./FileViewer-DLSlUt1l.js";import"./index-Ckl-Sx3k.js";const x=({isOpen:e,title:i,fileUrl:l,fileType:o,onClose:s})=>r.jsx(t,{isOpen:e,title:i,onClose:s,children:r.jsx("div",{className:"w-full h-full",children:r.jsx(m,{fileUrl:l,fileType:o})})});export{x as default};

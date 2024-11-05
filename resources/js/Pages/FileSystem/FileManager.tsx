@@ -566,7 +566,6 @@ const FileManager: React.FC = () => {
                     onMove={handleMove}
                     onSort={handleSort}
                     isItemSelected={selectedItem !== null}
-                    hasPermission={hasPermissionFunc}
                     onCopyHere={handleConfirmCopy}
                     onCancelCopy={handleCancelCopy}
                     isCopying={isCopying}

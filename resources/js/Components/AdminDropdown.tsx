@@ -1,5 +1,3 @@
-// src/components/AdminDropdown.tsx
-
 import React from 'react';
 import { Button } from '@headlessui/react';
 import { usePermissions } from '@/contexts/PermissionsContext';
@@ -16,7 +14,7 @@ const AdminDropdown: React.FC<AdminDropdownProps> = ({ renderComponent }) => {
         'can_create_companies',
         'can_create_employees',
         'can_create_positions',
-        'can_read_employees',
+        'can_view_all_employees',
     ];
 
     const hasAdminAccess = adminPermissions.some((perm) => hasPermission(perm));
@@ -38,7 +36,7 @@ const AdminDropdown: React.FC<AdminDropdownProps> = ({ renderComponent }) => {
                 tabIndex={0}
                 className="menu dropdown-content rounded-box z-[10] mt-4 w-52 p-2 shadow bg-white"
             >
-                {hasPermission('can_read_users') && (
+                {hasPermission('can_view_company_employees') && (
                     <li>
                         <Button
                             className="hover:text-black"
@@ -78,7 +76,7 @@ const AdminDropdown: React.FC<AdminDropdownProps> = ({ renderComponent }) => {
                         </Button>
                     </li>
                 )}
-                {hasPermission('can_read_employees') && (
+                {hasPermission('can_view_all_employees') && (
                     <li>
                         <Button
                             className="hover:text-black"

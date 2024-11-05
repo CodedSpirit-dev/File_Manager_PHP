@@ -1,8 +1,9 @@
+// src/components/CreateEmployee.tsx
+
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useForm, Controller } from 'react-hook-form';
 import { Position, Permission, Company } from '@/types';
-
 
 export default function CreateEmployee() {
     const { control, handleSubmit, setValue, watch, getValues, formState: { errors, isValid }, reset } = useForm({
@@ -20,8 +21,6 @@ export default function CreateEmployee() {
             selected_permissions: [] as number[]
         }
     });
-
-
 
     const [positions, setPositions] = useState<Position[]>([]);
     const [companies, setCompanies] = useState<Company[]>([]);
@@ -51,19 +50,16 @@ export default function CreateEmployee() {
             .catch(error => console.error('Error al cargar las empresas', error));
     }, []);
 
-
-
-
     const watchCompany = watch('company_id');
 
     useEffect(() => {
         const filteredPosition = positions.filter(position => position.company_id === Number(watchCompany));
         setFilteredPositions(filteredPosition);
         setValue('position_id', '');
-    }, [watchCompany, positions]);
+    }, [watchCompany, positions, setValue]);
 
     const handlePermissionChange = (permissionId: number) => {
-        const currentPermissions = getValues('selected_permissions') as number[]; // Asegúrate de que sea un array de números
+        const currentPermissions = getValues('selected_permissions') as number[];
 
         if (currentPermissions.includes(permissionId)) {
             setValue('selected_permissions', currentPermissions.filter(id => id !== permissionId));
@@ -71,8 +67,6 @@ export default function CreateEmployee() {
             setValue('selected_permissions', [...currentPermissions, permissionId]);
         }
     };
-
-
 
     const onSubmit = (data: any) => {
         if (step < totalSteps) {
@@ -108,6 +102,30 @@ export default function CreateEmployee() {
         }
     };
 
+    // Define las categorías y los permisos asociados
+    const permissionCategories: { [key: string]: string[] } = {
+        'Empresas': ['can_create_companies', 'can_delete_companies', 'can_update_companies'],
+        'Puestos': ['can_create_positions', 'can_update_positions', 'can_delete_positions'],
+        'Empleados': ['can_create_employees', 'can_delete_employees', 'can_update_employees', 'can_view_company_employees', 'can_view_all_employees'],
+        'Gestión de Archivos y Carpetas': [
+            'can_view_file_explorer',
+            'can_open_files',
+            'can_upload_files_and_folders',
+            'can_create_folders',
+            'can_download_files_and_folders',
+            'can_copy_files',
+            'can_move_files',
+            'can_rename_files_and_folders',
+            'can_delete_files_and_folders'
+        ]
+    };
+
+    // Agrupa los permisos por categoría
+    const groupedPermissions = Object.keys(permissionCategories).map(category => ({
+        category,
+        permissions: permissions.filter(permission => permissionCategories[category].includes(permission.name))
+    }));
+
     return (
         <div className="container__25">
             <h1 className="text-2xl text-center font-bold my-4">Registro de nuevos empleados</h1>
@@ -121,6 +139,7 @@ export default function CreateEmployee() {
             <form onSubmit={handleSubmit(onSubmit)}>
                 {step === 1 && (
                     <>
+                        {/* Paso 1: Datos del Empleado */}
                         <div className="mt-4">
                             <label>Nombre(s)</label>
                             <Controller
@@ -135,8 +154,7 @@ export default function CreateEmployee() {
                                         value: /^[a-zA-ZÀ-ÿ\s]+$/,
                                         message: 'El nombre solo puede contener letras'
                                     }
-                                }
-                                }
+                                }}
                                 render={({ field }) => (
                                     <input
                                         {...field}
@@ -159,8 +177,6 @@ export default function CreateEmployee() {
                                 )}
                             </>
                         )}
-
-
 
                         <div className="mt-4">
                             <label>Primer apellido</label>
@@ -225,7 +241,6 @@ export default function CreateEmployee() {
                             </>
                         )}
 
-
                         <div className="mt-4">
                             <label>Nombre de usuario (CURP)</label>
                             <Controller
@@ -249,16 +264,16 @@ export default function CreateEmployee() {
                         {watchAllFields.username && (
                             <>
                                 {watchAllFields.username.length < 3 && (
-                                    <p className="text-red-600">El primer apellido no debe tener menos de 3 caracteres</p>
+                                    <p className="text-red-600">El nombre de usuario no debe tener menos de 3 caracteres</p>
                                 )}
                                 {watchAllFields.username.includes(' ') && (
-                                    <p className="text-red-600">El primer apellido no debe tener espacios</p>
+                                    <p className="text-red-600">El nombre de usuario no debe tener espacios</p>
                                 )}
-                                {watchAllFields.username.length > 50 && (
-                                    <p className="text-red-600">El primer apellido no debe exceder los 50 caracteres</p>
+                                {watchAllFields.username.length > 18 && (
+                                    <p className="text-red-600">El nombre de usuario no debe exceder los 18 caracteres</p>
                                 )}
                                 {watchAllFields.username.match(/[^a-zA-Z0-9]/) && (
-                                    <p className="text-red-600">El nombre de usuario apellido solo puede contener letras y numeros</p>
+                                    <p className="text-red-600">El nombre de usuario solo puede contener letras y números</p>
                                 )}
                             </>
                         )}
@@ -278,10 +293,11 @@ export default function CreateEmployee() {
                                     </select>
                                 )}
                             />
+                            {errors.company_id && <p className="text-red-600">{errors.company_id.message}</p>}
                         </div>
                         {watchAllFields.company_id && (
                             <>
-                                {watchAllFields.company_id === '' && <p className="text-red-600">El puesto es obligatorio</p>}
+                                {watchAllFields.company_id === '' && <p className="text-red-600">La empresa es obligatoria</p>}
                             </>
                         )}
 
@@ -300,14 +316,9 @@ export default function CreateEmployee() {
                                     </select>
                                 )}
                             />
+                            {errors.position_id && <p className="text-red-600">{errors.position_id.message}</p>}
                         </div>
                         {watchAllFields.company_id === '' && <p className="text-red-600">Antes debes seleccionar una empresa</p>}
-
-                        {watchAllFields.position_id && (
-                            <>
-                                {watchAllFields.position_id === '' && <p className="text-red-600">El puesto es obligatorio</p>}
-                            </>
-                        )}
 
                         <div className="mt-4">
                             <label>Contraseña</label>
@@ -353,60 +364,64 @@ export default function CreateEmployee() {
                             <p className="text-red-600">Las contraseñas no coinciden</p>
                         )}
 
+                        {/* Botón para avanzar al siguiente paso */}
                         <div className="mt-4 flex justify-end">
                             <button type="button" className="btn btn-block" onClick={() => setStep(step + 1)} disabled={!isValid}>
                                 Siguiente
                             </button>
-
                         </div>
                         {!isValid && <p className="text-red-600">Todos los campos son obligatorios</p>}
                     </>
                 )}
 
                 {step === 2 && (
-                                                <>
-                    <div className="mt-4">
-                        <label htmlFor="enable_permissions">Habilitar permisos</label>
-                        <Controller
-                            name="enable_permissions"
-                            control={control}
-                            defaultValue={false} // Establece un valor inicial (booleano)
-                            render={({ field }) => (
-                                <input
-                                    type="checkbox"
-                                    className="ml-2 checkbox checkbox-primary"
-                                    checked={field.value} // Controla el estado del checkbox
-                                    onChange={(e) => field.onChange(e.target.checked)} // Actualiza el valor como booleano
-                                    name={field.name}
-                                    ref={field.ref}
-                                    onBlur={field.onBlur}
+                    <>
+                        {/* Paso 2: Permisos */}
+                        <div className="mt-4">
+                            <label htmlFor="enable_permissions" className="flex items-center">
+                                <Controller
+                                    name="enable_permissions"
+                                    control={control}
+                                    defaultValue={false}
+                                    render={({ field }) => (
+                                        <input
+                                            type="checkbox"
+                                            className="checkbox checkbox-primary"
+                                            checked={field.value}
+                                            onChange={(e) => field.onChange(e.target.checked)}
+                                            id="enable_permissions"
+                                        />
+                                    )}
                                 />
-                            )}
-                        />
-                    </div>
+                                <span className="ml-2">Habilitar permisos</span>
+                            </label>
+                        </div>
 
-
-
-                    {watchEnablePermissions && (
-                                <div className="mt-6">
-                                    <label className="mb-3 text-xl text-center font-black block">Permisos</label>
-                                    <div className="grid grid-cols-2 gap-4">
-                                        {permissions.map(permission => (
-                                            <label key={permission.id} className="flex items-center my-2">
-                                                <input
-                                                    type="checkbox"
-                                                    checked={getValues('selected_permissions').includes(permission.id)}
-                                                    onChange={() => handlePermissionChange(permission.id)} // Cambia aquí
-                                                    className="checkbox checkbox-primary mr-2"
-                                                />
-                                                <span>{permission.description}</span>
-                                            </label>
-                                        ))}
+                        {watchEnablePermissions && (
+                            <div className="mt-6">
+                                <h2 className="mb-3 text-xl text-center font-bold">Permisos</h2>
+                                {groupedPermissions.map(({ category, permissions }) => (
+                                    <div key={category} className="mb-4">
+                                        <h3 className="text-lg font-semibold mb-2">{category}</h3>
+                                        <div className="grid grid-cols-2 gap-4">
+                                            {permissions.map(permission => (
+                                                <label key={permission.id} className="flex items-center my-2">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={getValues('selected_permissions').includes(permission.id)}
+                                                        onChange={() => handlePermissionChange(permission.id)}
+                                                        className="checkbox checkbox-primary mr-2"
+                                                    />
+                                                    <span>{permission.description}</span>
+                                                </label>
+                                            ))}
+                                        </div>
                                     </div>
-                                </div>
-                            )}
+                                ))}
+                            </div>
+                        )}
 
-
+                        {/* Botones para navegar entre pasos */}
                         <div className="mt-4 flex justify-center">
                             <button type="button" className="btn size-2/4 mr-1" onClick={() => setStep(step - 1)}>
                                 Anterior
@@ -425,7 +440,7 @@ export default function CreateEmployee() {
                     <div className="modal-box">
                         <h3 className="font-bold text-lg">¡Empleado registrado con éxito!</h3>
                         <div className="modal-action">
-                            <button className="btn btn-primary" onClick={() => {setModalSuccess(false), setStep(1)}} >Cerrar</button>
+                            <button className="btn btn-primary" onClick={() => { setModalSuccess(false); setStep(1); }}>Cerrar</button>
                         </div>
                     </div>
                 </div>

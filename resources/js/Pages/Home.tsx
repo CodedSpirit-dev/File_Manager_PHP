@@ -16,7 +16,7 @@ import Loading from "@/Components/Loading";
 const HomeContent: React.FC = () => {
     const { hasPermission } = usePermissions();
     const { auth } = usePage<EmployeePageProps>().props;
-    const employee = auth.user;
+    const employee = auth.user; // Manteniendo el acceso a `auth.user`
 
     const [component, setComponent] = useState<JSX.Element | null>(null);
 
@@ -65,7 +65,7 @@ const HomeContent: React.FC = () => {
                             tabIndex={0}
                             className="menu dropdown-content rounded-box z-[10] mt-4 w-52 p-2 shadow bg-white"
                         >
-                            {hasPermission('can_read_users') && (
+                            {hasPermission('can_view_company_employees') && (
                                 <li>
                                     <Button
                                         className="hover:text-black"
@@ -105,7 +105,7 @@ const HomeContent: React.FC = () => {
                                     </Button>
                                 </li>
                             )}
-                            {hasPermission('can_read_employees') && (
+                            {hasPermission('can_view_all_employees') && (
                                 <li>
                                     <Button
                                         className="hover:text-black"
@@ -115,7 +115,7 @@ const HomeContent: React.FC = () => {
                                     </Button>
                                 </li>
                             )}
-                            {hasPermission('can_read_files') && (
+                            {hasPermission('can_view_file_explorer') && (
                                 <li>
                                     <Button
                                         className="hover:text-black"
@@ -130,7 +130,7 @@ const HomeContent: React.FC = () => {
 
                     {/* Navbar para pantallas grandes */}
                     <div className="hidden lg:flex space-x-4">
-                        {hasPermission('can_read_files') && (
+                        {hasPermission('can_view_file_explorer') && (
                             <Button
                                 className="btn btn-ghost nav__bar__button hover:text-black"
                                 onClick={() => renderComponent('FileManager')}
