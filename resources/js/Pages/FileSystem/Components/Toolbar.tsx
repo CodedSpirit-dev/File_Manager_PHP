@@ -8,7 +8,7 @@ import {
 import { TbCopy, TbCursorText, TbFolderPlus, TbFolderUp } from "react-icons/tb";
 import { BsFileEarmarkArrowDown, BsFileEarmarkArrowUp, BsSortAlphaDown, BsSortAlphaDownAlt } from "react-icons/bs";
 import { MdOutlineDeleteOutline, MdOutlineDriveFileMove } from "react-icons/md";
-import { IoClose, IoArrowBack } from "react-icons/io5";
+import {IoClose, IoArrowBack, IoChevronBackOutline} from "react-icons/io5";
 
 interface SortPayload {
     criteria: 'name';
@@ -74,10 +74,10 @@ const FileManagerToolbar: React.FC<FileManagerToolbarProps> = ({
                 {canGoBack && (
                     <button
                         onClick={onBack}
-                        className="btn btn-outline flex items-center space-x-2"
+                        className="btn btn-outline flex items-center space-x-2 hover:text-primary-content"
                         aria-label="Volver"
                     >
-                        <IoArrowBack className="w-5 h-5" />
+                        <IoChevronBackOutline className="w-5 h-5" />
                         <span className="hidden sm:inline">Volver</span>
                     </button>
                 )}
