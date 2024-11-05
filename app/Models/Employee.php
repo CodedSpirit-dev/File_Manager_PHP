@@ -46,6 +46,14 @@ class Employee extends Authenticatable
     }
 
     /**
+     * Acceso directo al nivel de jerarquía.
+     */
+    public function getHierarchyAttribute()
+    {
+        return $this->position->hierarchy_level_detail->level;
+    }
+
+    /**
      * Verifica si el empleado tiene un permiso específico.
      *
      * @param string $permissionName
