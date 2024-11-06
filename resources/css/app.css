@@ -211,19 +211,22 @@
 
     @media (max-width: 768px) {
         .file-viewer {
-            @apply h-60;
+            min-height: 100vh;
         }
     }
 
     @media (min-width: 1920px) {
         .file-viewer {
-            @apply h-96;
+            width: 100%;
+            height: 100%;
         }
     }
 
     /* Estilos Adicionales para el FileViewerModal */
     /* Asegurar que el iframe ocupe el 100% del contenedor */
     .file-viewer iframe {
-        @apply w-full h-full border rounded-lg shadow-md;
+        width: 100%;
+        height: 100%;
+        border: none;
     }
 }

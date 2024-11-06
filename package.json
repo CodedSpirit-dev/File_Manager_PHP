@@ -27,16 +27,14 @@
     },
     "dependencies": {
         "@heroicons/react": "^2.1.5",
-        "@inertiajs/progress": "^0.2.7",
-        "@simplepdf/react-embed-pdf": "^1.8.1",
+        "@inertiajs/progress": "^0.1.2",
         "@thednp/dommatrix": "^2.0.8",
+        "@types/react-table": "^7.7.20",
+        "lodash.debounce": "^4.0.8",
         "mammoth": "^1.8.0",
-        "pdf-viewer-reactjs": "^1.0.5",
-        "pdfjs-dist": "^4.8.69",
         "react-hook-form": "^7.53.1",
         "react-icons": "^5.3.0",
-        "react-pdf": "^9.1.1",
-        "react-pdf-viewer": "^0.1.0",
+        "react-table": "^7.8.0",
         "xlsx": "^0.18.5"
     }
 }

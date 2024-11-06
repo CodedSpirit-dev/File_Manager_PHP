@@ -1,5 +1,3 @@
-// src/components/FileManager/Components/FileViewer.tsx
-
 import React, { useEffect, useState } from 'react';
 import * as XLSX from 'xlsx';
 import mammoth from 'mammoth';
@@ -13,11 +11,13 @@ interface FileViewerProps {
 const FileViewer: React.FC<FileViewerProps> = ({ fileUrl, fileType }) => {
     const [docContent, setDocContent] = useState<string | null>(null);
     const [excelContent, setExcelContent] = useState<any[][] | null>(null);
+    const [loading, setLoading] = useState<boolean>(true);
 
     useEffect(() => {
-        // Reset content
+        // Reset content and loading state
         setDocContent(null);
         setExcelContent(null);
+        setLoading(true);
 
         // Fetch file content for docx and xlsx files
         const fetchFile = async () => {
@@ -29,30 +29,43 @@ const FileViewer: React.FC<FileViewerProps> = ({ fileUrl, fileType }) => {
 
                 if (fileType === 'docx') {
                     mammoth.convertToHtml({ arrayBuffer })
-                        .then(result => setDocContent(result.value))
-                        .catch(err => console.error('Error al leer el archivo DOCX:', err));
+                        .then(result => {
+                            setDocContent(result.value);
+                            setLoading(false);
+                        })
+                        .catch(err => {
+                            console.error('Error al leer el archivo DOCX:', err);
+                            setLoading(false);
+                        });
                 } else if (fileType === 'xlsx') {
                     const workbook = XLSX.read(arrayBuffer, { type: 'array' });
                     const sheetName = workbook.SheetNames[0];
                     const sheet = workbook.Sheets[sheetName];
                     const data = XLSX.utils.sheet_to_json(sheet, { header: 1 });
                     setExcelContent(data as any[][]);
+                    setLoading(false);
                 }
             } catch (error) {
                 console.error(`Error al cargar el archivo ${fileType}:`, error);
+                setLoading(false);
             }
         };
 
         if (fileType === 'docx' || fileType === 'xlsx') {
             fetchFile();
+        } else if (fileType === 'pdf') {
+            setLoading(false);
+        } else {
+            console.error(`Unsupported file type: ${fileType}`);
+            setLoading(false);
         }
 
         // Restricciones adicionales de seguridad
         const handleKeyDown = (event: KeyboardEvent) => {
             if (
                 event.key === 'F12' ||
-                (event.ctrlKey && (event.key === 'c' || event.key === 'u' || event.key === 's')) || // Ctrl+C, Ctrl+U, Ctrl+S
-                (event.ctrlKey && event.shiftKey && (event.key === 'I' || event.key === 'J' || event.key === 'C')) || // Ctrl+Shift+I, Ctrl+Shift+J, Ctrl+Shift+C
+                (event.ctrlKey && (event.key === 'c' || event.key === 'u' || event.key === 's')) ||
+                (event.ctrlKey && event.shiftKey && (event.key === 'I' || event.key === 'J' || event.key === 'C')) ||
                 event.key === 'PrintScreen'
             ) {
                 event.preventDefault();
@@ -90,6 +103,10 @@ const FileViewer: React.FC<FileViewerProps> = ({ fileUrl, fileType }) => {
             enableSelection();
         };
     }, [fileUrl, fileType]);
+
+    if (loading) {
+        return <div className="text-center text-gray-500">Cargando...</div>;
+    }
 
     if (fileType === 'pdf') {
         return (

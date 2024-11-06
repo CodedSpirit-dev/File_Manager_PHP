@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import FileManagerToolbar from './Components/Toolbar';
 import Modal from './Components/Modal';
-import FileViewerModal from './Components/FileManagerModal';
+import FileViewerModal from "@/Pages/FileSystem/Components/FileViewerModal";
 import { FaFolder, FaFile } from 'react-icons/fa';
 import {
     BsFiletypeAac,
@@ -782,7 +782,6 @@ const FileManager: React.FC = () => {
                 {isFileViewerOpen && fileToView && fileToView.type && (
                     <FileViewerModal
                         isOpen={isFileViewerOpen}
-                        title={`Visualizando: ${selectedItem}`}
                         fileUrl={fileToView.url}
                         fileType={fileToView.type}
                         onClose={() => setIsFileViewerOpen(false)}
