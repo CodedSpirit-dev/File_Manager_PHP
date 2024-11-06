@@ -11,16 +11,17 @@ import CreatePosition from './Admin/CreatePosition';
 import FileManager from './FileSystem/FileManager';
 import AdminDropdown from '@/Components/AdminDropdown';
 import { PermissionsProvider, usePermissions } from '@/contexts/PermissionsContext';
-import Loading from "@/Components/Loading";
+import { Menu } from '@headlessui/react'; // Importar Menu
 
 const HomeContent: React.FC = () => {
     const { hasPermission } = usePermissions();
     const { auth } = usePage<EmployeePageProps>().props;
-    const employee = auth.user; // Manteniendo el acceso a `auth.user`
+    const employee = auth.user;
 
     const [component, setComponent] = useState<JSX.Element | null>(null);
 
     const renderComponent = (componentName: string) => {
+        // Renderizar el componente según el nombre recibido
         switch (componentName) {
             case 'Profile':
                 setComponent(<ProfileComponent />);
@@ -57,75 +58,103 @@ const HomeContent: React.FC = () => {
             <section className="container mx-auto">
                 <nav className="nav__bar rounded-lg flex items-center justify-between p-4">
                     {/* Menú desplegable para pantallas pequeñas */}
-                    <div className="lg:hidden dropdown dropdown-bottom">
-                        <button tabIndex={0} className="nav__bar__button transition-opacity hover:text-black">
-                            Menu
-                        </button>
-                        <ul
-                            tabIndex={0}
-                            className="menu dropdown-content rounded-box z-[10] mt-4 w-52 p-2 shadow bg-white"
-                        >
-                            {hasPermission('can_view_company_employees') && (
-                                <li>
-                                    <Button
-                                        className="hover:text-black"
-                                        onClick={() => renderComponent('Profile')}
-                                    >
-                                        Perfil
-                                    </Button>
-                                </li>
-                            )}
-                            {hasPermission('can_create_companies') && (
-                                <li>
-                                    <Button
-                                        className="hover:text-black"
-                                        onClick={() => renderComponent('CreateCompany')}
-                                    >
-                                        Registrar nueva empresa
-                                    </Button>
-                                </li>
-                            )}
-                            {hasPermission('can_create_positions') && (
-                                <li>
-                                    <Button
-                                        className="hover:text-black"
-                                        onClick={() => renderComponent('CreatePosition')}
-                                    >
-                                        Agregar nuevo puesto
-                                    </Button>
-                                </li>
-                            )}
-                            {hasPermission('can_create_employees') && (
-                                <li>
-                                    <Button
-                                        className="hover:text-black"
-                                        onClick={() => renderComponent('CreateEmployee')}
-                                    >
-                                        Agregar nuevo empleado
-                                    </Button>
-                                </li>
-                            )}
-                            {hasPermission('can_view_all_employees') && (
-                                <li>
-                                    <Button
-                                        className="hover:text-black"
-                                        onClick={() => renderComponent('EmployeeList')}
-                                    >
-                                        Lista de Empleados
-                                    </Button>
-                                </li>
-                            )}
-                            {hasPermission('can_view_file_explorer') && (
-                                <li>
-                                    <Button
-                                        className="hover:text-black"
-                                        onClick={() => renderComponent('FileManager')}
-                                    >
-                                        Explorador de archivos
-                                    </Button>
-                                </li>
-                            )}
-                        </ul>
+                    <div className="lg:hidden">
+                        <Menu as="div" className="relative inline-block text-left">
+                            <div>
+                                <Menu.Button className="nav__bar__button transition-opacity hover:text-black">
+                                    Menú
+                                </Menu.Button>
+                            </div>
+
+                            <Menu.Items className="absolute left-0 mt-2 w-56 origin-top-left bg-white border border-gray-200 divide-y divide-gray-100 rounded-md shadow-lg focus:outline-none z-20">
+                                <div className="px-1 py-1 ">
+                                    {hasPermission('can_view_company_employees') && (
+                                        <Menu.Item>
+                                            {({ active }) => (
+                                                <button
+                                                    className={`${
+                                                        active ? 'bg-blue-500 text-white' : 'text-gray-900'
+                                                    } group flex rounded-md items-center w-full px-2 py-2 text-sm`}
+                                                    onClick={() => renderComponent('Profile')}
+                                                >
+                                                    Perfil
+                                                </button>
+                                            )}
+                                        </Menu.Item>
+                                    )}
+                                    {hasPermission('can_create_companies') && (
+                                        <Menu.Item>
+                                            {({ active }) => (
+                                                <button
+                                                    className={`${
+                                                        active ? 'bg-blue-500 text-white' : 'text-gray-900'
+                                                    } group flex rounded-md items-center w-full px-2 py-2 text-sm`}
+                                                    onClick={() => renderComponent('CreateCompany')}
+                                                >
+                                                    Registrar nueva empresa
+                                                </button>
+                                            )}
+                                        </Menu.Item>
+                                    )}
+                                    {hasPermission('can_create_positions') && (
+                                        <Menu.Item>
+                                            {({ active }) => (
+                                                <button
+                                                    className={`${
+                                                        active ? 'bg-blue-500 text-white' : 'text-gray-900'
+                                                    } group flex rounded-md items-center w-full px-2 py-2 text-sm`}
+                                                    onClick={() => renderComponent('CreatePosition')}
+                                                >
+                                                    Agregar nuevo puesto
+                                                </button>
+                                            )}
+                                        </Menu.Item>
+                                    )}
+                                    {hasPermission('can_create_employees') && (
+                                        <Menu.Item>
+                                            {({ active }) => (
+                                                <button
+                                                    className={`${
+                                                        active ? 'bg-blue-500 text-white' : 'text-gray-900'
+                                                    } group flex rounded-md items-center w-full px-2 py-2 text-sm`}
+                                                    onClick={() => renderComponent('CreateEmployee')}
+                                                >
+                                                    Agregar nuevo empleado
+                                                </button>
+                                            )}
+                                        </Menu.Item>
+                                    )}
+                                    {hasPermission('can_view_all_employees') && (
+                                        <Menu.Item>
+                                            {({ active }) => (
+                                                <button
+                                                    className={`${
+                                                        active ? 'bg-blue-500 text-white' : 'text-gray-900'
+                                                    } group flex rounded-md items-center w-full px-2 py-2 text-sm`}
+                                                    onClick={() => renderComponent('EmployeeList')}
+                                                >
+                                                    Lista de Empleados
+                                                </button>
+                                            )}
+                                        </Menu.Item>
+                                    )}
+                                    {hasPermission('can_view_file_explorer') && (
+                                        <Menu.Item>
+                                            {({ active }) => (
+                                                <button
+                                                    className={`${
+                                                        active ? 'bg-blue-500 text-white' : 'text-gray-900'
+                                                    } group flex rounded-md items-center w-full px-2 py-2 text-sm`}
+                                                    onClick={() => renderComponent('FileManager')}
+                                                >
+                                                    Explorador de archivos
+                                                </button>
+                                            )}
+                                        </Menu.Item>
+                                    )}
+                                </div>
+                            </Menu.Items>
+                        </Menu>
                     </div>
 
                     {/* Navbar para pantallas grandes */}
@@ -160,10 +189,10 @@ const HomeContent: React.FC = () => {
                                 </h3>
                                 <div className="modal-action justify-center">
                                     <form method="dialog">
-                                        <button className="btn m-3 btn-info">No cerrar sesión</button>
+                                        <button className="btn btn-active btn-secondary bg-warning text-base-content hover:text-base-100 m-3">No cerrar sesión</button>
                                         <button
                                             type="button"
-                                            className="btn m-3 btn-warning"
+                                            className="btn btn-active btn-primary m-3"
                                             onClick={closeSession}
                                         >
                                             Sí, cerrar sesión
@@ -176,7 +205,7 @@ const HomeContent: React.FC = () => {
                 </nav>
 
                 <div className="mt-4">
-                    {component ? component : <Profile mustVerifyEmail={false} status="" auth={auth} />}
+                    {component ? component : <FileManager/>}
                 </div>
             </section>
         </>

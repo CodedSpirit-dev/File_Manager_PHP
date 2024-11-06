@@ -15,7 +15,6 @@ const EmployeeList: React.FC = (): React.ReactNode => {
     const handleEditClick = (employee: Employee) => {
         const position = positions.find(position => position.id === employee.position_id);
         const companyId = position ? position.company_id : null;
-        // @ts-ignore
         setEditingEmployee({ ...employee, company_id: companyId });
         setModalOpen(true);
     };
@@ -46,30 +45,34 @@ const EmployeeList: React.FC = (): React.ReactNode => {
             .catch(error => console.error('Error al actualizar la lista de empleados', error));
     };
 
+    const handleDeleteClick = (employee: Employee) => {
+        alert(`Funcionalidad de eliminación para ${employee.first_name} ${employee.last_name_1} está pendiente.`);
+    };
+
     if (loading) {
         return (
-            <div className="flex justify-center items-center h-screen">
+            <div className="flex justify-center items-center h-screen bg-base-100">
                 <span className="loading loading-dots loading-lg text-primary"></span>
             </div>
         );
     }
 
     if (error) {
-        console.log(error);
-        return <div className="text-center text-red-500">{error}</div>;
+        return <div className="text-center text-error">{error}</div>;
     }
 
     return (
-        <div className="container__75__table">
-            <h2 className="text-2xl font-bold mb-4 text-center">Lista de Empleados</h2>
-            <div className="overFlow"> {/* Contenedor desplazable */}
-                <table className="employee__table w-full table-auto">
+        <div className="container mx-auto px-4 py-8 bg-base-100">
+            <h2 className="text-3xl font-bold mb-6 text-center text-primary">Lista de Empleados</h2>
+            <div className="overflow-x-auto">
+                <table className="table w-full">
                     <thead>
-                    <tr className="bg-gray-100">
-                        <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Nombre</th>
-                        <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Fecha de Registro</th>
-                        <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Puesto</th>
-                        <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Acciones</th>
+                    <tr className="text-primary-content">
+                        <th className="px-4 py-2 text-left">Nombre</th>
+                        <th className="px-4 py-2 text-left">Fecha de Registro</th>
+                        <th className="px-4 py-2 text-left">Último Inicio de Sesión</th>
+                        <th className="px-4 py-2 text-left">Puesto</th>
+                        <th className="px-4 py-2 text-left">Acciones</th>
                     </tr>
                     </thead>
                     <tbody>
@@ -77,33 +80,50 @@ const EmployeeList: React.FC = (): React.ReactNode => {
                         const position = positions.find(position => position.id === employee.position_id);
                         const company = position ? companies.find(company => company.id === position.company_id) : null;
                         return (
-                            <tr key={employee.id} className="hover:bg-gray-50">
-                                <td className="border px-4 py-2 text-sm text-gray-900 truncate">
+                            <tr key={employee.id} className="hover:bg-base-200">
+                                <td className="border px-4 py-2 text-sm text-base-content truncate">
                                     {employee.first_name} {employee.last_name_1}
                                 </td>
-                                <td className="border px-4 py-2 text-sm text-gray-900">
+                                <td className="border px-4 py-2 text-sm text-base-content">
                                     {new Date(employee.registered_at).toLocaleDateString('es-ES', {
                                         day: 'numeric',
                                         month: 'long',
                                         year: 'numeric'
                                     })}
                                 </td>
-                                <td className="border px-4 py-2 text-sm text-gray-900">
+                                <td className="border px-4 py-2 text-sm text-base-content">
+                                    {employee.last_login_at ? new Date(employee.last_login_at).toLocaleDateString('es-ES', {
+                                        day: 'numeric',
+                                        month: 'long',
+                                        year: 'numeric',
+                                        hour: '2-digit',
+                                        minute: '2-digit'
+                                    }) : 'No registrado'}
+                                </td>
+                                <td className="border px-4 py-2 text-sm text-base-content">
                                     {position?.name}
-                                    <br></br>
+                                    <br />
                                     {company && (
-                                        <span className="ml-2 inline-block bg-blue-500 text-white text-xs px-2 py-1 rounded">
-                                                {company.name}
-                                            </span>
+                                        <span className="mt-1 inline-block bg-secondary text-secondary-content text-xs px-2 py-1 rounded">
+                                            {company.name}
+                                        </span>
                                     )}
                                 </td>
-                                <td className="border px-4 py-2 text-sm text-gray-900">
-                                    <button
-                                        onClick={() => handleEditClick(employee)}
-                                        className="btn btn-primary"
-                                    >
-                                        Editar
-                                    </button>
+                                <td className="border px-4 py-2 text-sm text-base-content">
+                                    <div className="flex justify-center space-x-2">
+                                        <button
+                                            onClick={() => handleEditClick(employee)}
+                                            className="btn btn-primary btn-sm"
+                                        >
+                                            Editar
+                                        </button>
+                                        <button
+                                            onClick={() => handleDeleteClick(employee)}
+                                            className="btn btn-error btn-sm text-base-100"
+                                        >
+                                            Eliminar
+                                        </button>
+                                    </div>
                                 </td>
                             </tr>
                         );
@@ -118,7 +138,7 @@ const EmployeeList: React.FC = (): React.ReactNode => {
                         companies={companies}
                         onClose={() => {
                             setModalOpen(false);
-                            refreshEmployees(); // Recargar la lista de empleados al cerrar el modal
+                            refreshEmployees();
                         }}
                     />
                 )}

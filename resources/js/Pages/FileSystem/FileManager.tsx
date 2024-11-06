@@ -108,6 +108,8 @@ const FileManager: React.FC = () => {
     const [isFileViewerOpen, setIsFileViewerOpen] = useState<boolean>(false);
     const [fileToView, setFileToView] = useState<{ url: string; type: 'pdf' | 'docx' | 'xlsx' } | null>(null);
 
+    const [loading, setLoading] = useState<boolean>(true); // Estado de carga
+
     // Estados para manejar la acción de copiar
     const [isCopying, setIsCopying] = useState<boolean>(false);
     const [copySource, setCopySource] = useState<{ filename: string; path: string } | null>(null);
@@ -130,29 +132,32 @@ const FileManager: React.FC = () => {
 
     useEffect(() => {
         const initializeData = async () => {
-            // Cargar jerarquía y compañía antes de cargar el árbol de archivos
             try {
-                await fetchHierarchyAndCompany(); // Esperar a que la jerarquía y la compañía se carguen
-                await fetchFilesTree(); // Cargar el árbol de archivos solo después de obtener la jerarquía y compañía
+                // Ejecutar ambas funciones en paralelo
+                await Promise.all([
+                    fetchHierarchyAndCompany(),
+                    fetchFilesTree()
+                ]);
 
-                // Inicializar items para la ruta inicial
+                // Actualiza los items actuales después de haber obtenido el árbol y la ruta
                 updateCurrentItems(fileTree, currentPath);
-                setSelectedItem(null); // Limpiar selección al cargar
+                setSelectedItem(null);
             } catch (error) {
                 console.error("Error al inicializar datos:", error);
+            } finally {
+                setLoading(false); // Finalizar el estado de carga
             }
         };
 
         initializeData();
     }, []);
 
-// Este useEffect se encargará de actualizar los elementos cuando cambien `fileTree` o `currentPath`
+    // Este useEffect se encargará de actualizar los elementos cuando cambien `fileTree` o `currentPath`
     useEffect(() => {
         if (fileTree.length > 0) {
             updateCurrentItems(fileTree, currentPath);
         }
     }, [fileTree, currentPath]);
-
 
     const fetchHierarchyAndCompany = async () => {
         try {
@@ -177,13 +182,7 @@ const FileManager: React.FC = () => {
     const fetchFilesTree = async () => {
         try {
             const data = await getFilesTree();
-            const virtualRoot: FileSystemItem = {
-                name: 'public',
-                path: 'public',
-                type: 'folder',
-                children: data,
-            };
-            setFileTree([virtualRoot]);
+            setFileTree([{ name: 'public', path: 'public', type: 'folder', children: data }]);
         } catch (error) {
             console.error('Error fetching files tree:', error);
             showModal('Error', 'Error al obtener el árbol de archivos.', 'error');
@@ -722,7 +721,7 @@ const FileManager: React.FC = () => {
 
     return (
         <>
-            {hierarchyLevel !== null && companyName && (
+            {hierarchyLevel !== null && companyName && !loading && (
                 <Breadcrumb
                     currentPath={currentPath}
                     onNavigateTo={setCurrentPath}
@@ -836,7 +835,11 @@ const FileManager: React.FC = () => {
 
                 {/* Lista de elementos */}
                 <div className="p-4">
-                    {items.length === 0 ? (
+                    {loading ? (
+                        <div className="flex justify-center items-center">
+                            <span className="loading loading-dots loading-lg text-primary"></span>
+                        </div>
+                    ) : items.length === 0 ? (
                         <p className="text-center text-gray-500">No hay archivos o carpetas disponibles.</p>
                     ) : (
                         <ul className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-4">
