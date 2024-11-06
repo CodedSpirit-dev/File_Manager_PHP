@@ -1,5 +1,3 @@
-// src/components/FileManager/FileManager.tsx
-
 import React, { useState, useEffect, useCallback } from 'react';
 import FileManagerToolbar from './Components/Toolbar';
 import Modal from './Components/Modal';
@@ -8,7 +6,53 @@ import { FaFolder, FaFile } from 'react-icons/fa';
 import {
     BsFiletypeAac,
     BsFiletypeAi,
-    // ...otros iconos
+    BsFiletypeBmp,
+    BsFiletypeCs,
+    BsFiletypeCss,
+    BsFiletypeCsv,
+    BsFiletypeDoc,
+    BsFiletypeDocx,
+    BsFiletypeExe,
+    BsFiletypeGif,
+    BsFiletypeHeic,
+    BsFiletypeHtml,
+    BsFiletypeJava,
+    BsFiletypeJpg,
+    BsFiletypeJs,
+    BsFiletypeJson,
+    BsFiletypeJsx,
+    BsFiletypeKey,
+    BsFiletypeM4P,
+    BsFiletypeMd,
+    BsFiletypeMdx,
+    BsFiletypeMov,
+    BsFiletypeMp3,
+    BsFiletypeMp4,
+    BsFiletypeOtf,
+    BsFiletypePdf,
+    BsFiletypePhp,
+    BsFiletypePng,
+    BsFiletypePpt,
+    BsFiletypePptx,
+    BsFiletypePsd,
+    BsFiletypePy,
+    BsFiletypeRaw,
+    BsFiletypeRb,
+    BsFiletypeSass,
+    BsFiletypeScss,
+    BsFiletypeSh,
+    BsFiletypeSql,
+    BsFiletypeSvg,
+    BsFiletypeTiff,
+    BsFiletypeTsx,
+    BsFiletypeTtf,
+    BsFiletypeTxt,
+    BsFiletypeWav,
+    BsFiletypeWoff,
+    BsFiletypeXls,
+    BsFiletypeXlsx,
+    BsFiletypeXml,
+    BsFiletypeYml,
 } from 'react-icons/bs';
 import {
     getFilesTree,
@@ -110,8 +154,6 @@ const FileManager: React.FC = () => {
     }, [fileTree, currentPath]);
 
 
-
-
     const fetchHierarchyAndCompany = async () => {
         try {
             const response = await axios.get('/filemanager/hierarchy-company', { withCredentials: true });
@@ -195,7 +237,101 @@ const FileManager: React.FC = () => {
                 return <BsFiletypeAac />;
             case 'ai':
                 return <BsFiletypeAi />;
-            // ... otros casos
+            case 'bmp':
+                return <BsFiletypeBmp />;
+            case 'cs':
+                return <BsFiletypeCs />;
+            case 'css':
+                return <BsFiletypeCss />;
+            case 'csv':
+                return <BsFiletypeCsv />;
+            case 'doc':
+                return <BsFiletypeDoc />;
+            case 'docx':
+                return <BsFiletypeDocx />;
+            case 'exe':
+                return <BsFiletypeExe />;
+            case 'gif':
+                return <BsFiletypeGif />;
+            case 'heic':
+                return <BsFiletypeHeic />;
+            case 'html':
+                return <BsFiletypeHtml />;
+            case 'java':
+                return <BsFiletypeJava />;
+            case 'jpg':
+            case 'jpeg':
+                return <BsFiletypeJpg />;
+            case 'js':
+                return <BsFiletypeJs />;
+            case 'json':
+                return <BsFiletypeJson />;
+            case 'jsx':
+                return <BsFiletypeJsx />;
+            case 'key':
+                return <BsFiletypeKey />;
+            case 'm4p':
+                return <BsFiletypeM4P />;
+            case 'md':
+                return <BsFiletypeMd />;
+            case 'mdx':
+                return <BsFiletypeMdx />;
+            case 'mov':
+                return <BsFiletypeMov />;
+            case 'mp3':
+                return <BsFiletypeMp3 />;
+            case 'mp4':
+                return <BsFiletypeMp4 />;
+            case 'otf':
+                return <BsFiletypeOtf />;
+            case 'pdf':
+                return <BsFiletypePdf />;
+            case 'php':
+                return <BsFiletypePhp />;
+            case 'png':
+                return <BsFiletypePng />;
+            case 'ppt':
+                return <BsFiletypePpt />;
+            case 'pptx':
+                return <BsFiletypePptx />;
+            case 'psd':
+                return <BsFiletypePsd />;
+            case 'py':
+                return <BsFiletypePy />;
+            case 'raw':
+                return <BsFiletypeRaw />;
+            case 'rb':
+                return <BsFiletypeRb />;
+            case 'sass':
+                return <BsFiletypeSass />;
+            case 'scss':
+                return <BsFiletypeScss />;
+            case 'sh':
+                return <BsFiletypeSh />;
+            case 'sql':
+                return <BsFiletypeSql />;
+            case 'svg':
+                return <BsFiletypeSvg />;
+            case 'tiff':
+                return <BsFiletypeTiff />;
+            case 'tsx':
+                return <BsFiletypeTsx />;
+            case 'ttf':
+                return <BsFiletypeTtf />;
+            case 'txt':
+                return <BsFiletypeTxt />;
+            case 'wav':
+                return <BsFiletypeWav />;
+            case 'woff':
+                return <BsFiletypeWoff />;
+            case 'xls':
+                return <BsFiletypeXls />;
+            case 'xlsx':
+                return <BsFiletypeXlsx />;
+            case 'xml':
+                return <BsFiletypeXml />;
+            case 'yml':
+                return <BsFiletypeYml />;
             default:
                 return <FaFile />;
         }
