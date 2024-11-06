@@ -7,35 +7,35 @@ use Illuminate\Support\Facades\Schema;
 /**
  * Class CreateAllStarterTables
  *
- * This migration creates the initial tables for the application, including hierarchy levels,
- * companies, positions, employees, and permissions.
+ * Esta migración crea las tablas iniciales para la aplicación, incluyendo niveles jerárquicos,
+ * empresas, posiciones, empleados y permisos.
  */
 class CreateAllStarterTables extends Migration
 {
     /**
-     * Run the migrations.
+     * Ejecutar las migraciones.
      *
-     * This method creates the necessary tables for the application.
+     * Este método crea las tablas necesarias para la aplicación.
      *
      * @return void
      */
     public function up()
     {
-        // Table for hierarchy levels
+        // Tabla para niveles jerárquicos
         Schema::create('hierarchy_levels', function (Blueprint $table) {
             $table->unsignedInteger('level')->primary();
             $table->string('name');
             $table->timestamps();
         });
 
-        // Table for companies
+        // Tabla para empresas
         Schema::create('companies', function (Blueprint $table) {
             $table->increments('id');
             $table->string('name');
             $table->timestamps();
         });
 
-        // Table for positions
+        // Tabla para posiciones
         Schema::create('positions', function (Blueprint $table) {
             $table->increments('id');
             $table->string('name');
@@ -43,11 +43,11 @@ class CreateAllStarterTables extends Migration
             $table->unsignedInteger('hierarchy_level');
             $table->timestamps();
 
-            $table->foreign('company_id')->references('id')->on('companies');
-            $table->foreign('hierarchy_level')->references('level')->on('hierarchy_levels');
+            $table->foreign('company_id')->references('id')->on('companies')->onDelete('cascade');
+            $table->foreign('hierarchy_level')->references('level')->on('hierarchy_levels')->onDelete('cascade');
         });
 
-        // Table for employees
+        // Tabla para empleados
         Schema::create('employees', function (Blueprint $table) {
             $table->increments('id');
             $table->string('first_name');
@@ -56,14 +56,15 @@ class CreateAllStarterTables extends Migration
             $table->unsignedInteger('position_id')->nullable();
             $table->string('username')->unique();
             $table->string('password');
+            $table->rememberToken();
             $table->date('registered_at')->nullable();
             $table->timestamp('last_login_at')->nullable();
             $table->timestamps();
 
-            $table->foreign('position_id')->references('id')->on('positions');
+            $table->foreign('position_id')->references('id')->on('positions')->onDelete('set null');
         });
 
-        // Table for permissions
+        // Tabla para permisos
         Schema::create('permissions', function (Blueprint $table) {
             $table->increments('id');
             $table->string('name');
@@ -71,20 +72,22 @@ class CreateAllStarterTables extends Migration
             $table->timestamps();
         });
 
-        // Pivot table for employee permissions
+        // Tabla pivote para permisos de empleados
         Schema::create('employee_permissions', function (Blueprint $table) {
-            $table->unsignedInteger('employee_id'); // Employee ID
-            $table->unsignedInteger('permission_id'); // Permission ID
+            $table->unsignedInteger('employee_id'); // ID del empleado
+            $table->unsignedInteger('permission_id'); // ID del permiso
 
-            $table->foreign('employee_id')->references('id')->on('employees');
-            $table->foreign('permission_id')->references('id')->on('permissions');
+            $table->foreign('employee_id')->references('id')->on('employees')->onDelete('cascade');
+            $table->foreign('permission_id')->references('id')->on('permissions')->onDelete('cascade');
+
+            $table->primary(['employee_id', 'permission_id']);
         });
     }
 
     /**
-     * Reverse the migrations.
+     * Revertir las migraciones.
      *
-     * This method drops the tables created by the up() method.
+     * Este método elimina las tablas creadas por el método up().
      *
      * @return void
      */

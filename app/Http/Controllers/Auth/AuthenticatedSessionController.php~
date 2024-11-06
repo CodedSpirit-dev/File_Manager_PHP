@@ -13,7 +13,7 @@ use Inertia\Response;
 class AuthenticatedSessionController extends Controller
 {
     /**
-     * Muestra la vista de inicio de sesión.
+     * Display the login view.
      */
     public function create(): Response
     {
@@ -24,7 +24,7 @@ class AuthenticatedSessionController extends Controller
     }
 
     /**
-     * Maneja una solicitud de autenticación entrante.
+     * Handle an incoming authentication request.
      */
     public function store(Request $request)
     {
@@ -33,7 +33,7 @@ class AuthenticatedSessionController extends Controller
             'password' => ['required', 'string'],
         ]);
 
-        if (!Auth::guard('employee')->attempt($credentials, $request->boolean('remember'))) {
+        if (!Auth::attempt($credentials, $request->boolean('remember'))) {
             if ($request->expectsJson()) {
                 return response()->json([
                     'errors' => [
@@ -50,15 +50,16 @@ class AuthenticatedSessionController extends Controller
         $request->session()->regenerate();
 
         // Actualizar la columna last_login_at
-        $user = Auth::guard('employee')->user();
+        $user = Auth::guard('web')->user();
         $user->last_login_at = now();
         $user->save();
 
         return redirect()->intended('/');
     }
 
+
     /**
-     * Destruye una sesión autenticada.
+     * Destroy an authenticated session.
      */
     public function destroy(Request $request): RedirectResponse
     {

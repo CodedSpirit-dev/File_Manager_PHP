@@ -47,7 +47,7 @@ const Breadcrumb: React.FC<BreadcrumbProps> = ({ currentPath, onNavigateTo, hier
                     <li key={index}>
                         <button
                             onClick={() => handleNavigate(index)}
-                            className="text-primary-content font-medium hover:underline text-primary"
+                            className="text-primary-content font-medium hover:underline"
                         >
                             {segment}
                         </button>
