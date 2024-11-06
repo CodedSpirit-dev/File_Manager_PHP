@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Files;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
@@ -15,10 +16,49 @@ class FileManagerController extends Controller
     /**
      * Constructor para aplicar middleware de autenticación.
      */
+    /**
+     * Constructor para aplicar middleware de autenticación.
+     */
     public function __construct()
     {
         $this->middleware('auth:employee'); // Usar el guard 'employee'
     }
+
+    /**
+     * Normaliza una ruta eliminando redundancias y asegurando que no suba a directorios superiores.
+     */
+    private function normalizePath($path)
+    {
+        $path = rtrim(preg_replace('#/+#', '/', $path), '/'); // Eliminar barras redundantes
+        return Str::startsWith($path, 'public') ? $path : "public/$path"; // Asegurar prefijo 'public'
+    }
+
+    /**
+     * Obtiene la jerarquía y empresa del usuario autenticado.
+     */
+    public function fetchHierarchyAndCompany()
+    {
+        $employee = Auth::guard('employee')->user();
+
+        $companyName = $employee->company->name ?? null;
+        $hierarchyLevel = $employee->hierarchy ?? null;
+
+        if (is_null($companyName) || is_null($hierarchyLevel)) {
+            Log::warning('No se pudo obtener la empresa o nivel de jerarquía del usuario: ' . $employee->id);
+            return response()->json(['error' => 'No se pudo obtener la empresa o nivel de jerarquía del usuario.'], 500);
+        }
+
+        // Ajustar la ruta: Cualquier jerarquía mayor o igual a 1 redirige a la carpeta de la empresa
+        $path = $this->normalizePath("public/$companyName"); // Ruta directa a la carpeta de la empresa
+
+        return response()->json([
+            'hierarchy_level' => $hierarchyLevel,
+            'company_name' => $companyName,
+            'redirect_path' => $path,
+        ]);
+    }
+
+
 
     /**
      * Muestra la lista de carpetas y archivos en una ruta específica.
@@ -26,30 +66,40 @@ class FileManagerController extends Controller
     public function index(Request $request)
     {
         $employee = Auth::guard('employee')->user();
-        $path = $request->input('path', 'public');
+        $requestedPath = $this->normalizePath($request->input('path', 'public'));
 
-        // Validar la ruta para prevenir ataques de Path Traversal
-        if (!$this->isValidPath($path)) {
-            return response()->json(['error' => 'Ruta inválida.'], 400);
+        $companyName = $employee->company->name ?? null;
+        $hierarchyLevel = $employee->hierarchy ?? null;
+
+        if (is_null($companyName) || is_null($hierarchyLevel)) {
+            return response()->json(['error' => 'No se pudo obtener la empresa o nivel de jerarquía del usuario.'], 500);
         }
 
-        // Verificar permisos
-        if (
-            !$employee->hasPermission('can_view_file_explorer') ||
-            !$employee->hasPermission('can_open_files')
-        ) {
-            return response()->json(['error' => 'No tienes permiso para ver los archivos o carpetas.'], 403);
+        $basePath = $this->normalizePath($hierarchyLevel <= 1 ? "public/$companyName" : "public/$companyName/{$employee->username}");
+
+        if (!$this->isWithinBasePath($requestedPath, $basePath)) {
+            return response()->json(['error' => 'No tienes permiso para acceder a esta ruta.'], 403);
         }
 
-        // Obtener las carpetas y archivos en la ruta actual
-        $directories = Storage::disk('local')->directories($path);
-        $files = Storage::disk('local')->files($path);
+        $directories = Storage::disk('local')->directories($requestedPath);
+        $files = Storage::disk('local')->files($requestedPath);
 
         return response()->json([
             'directories' => $directories,
             'files' => $files,
-            'path' => $path
+            'path' => $requestedPath
         ]);
+    }
+
+    /**
+     * Verificar si el camino solicitado está dentro de la ruta base permitida para el usuario.
+     */
+    private function isWithinBasePath($requestedPath, $basePath)
+    {
+        $requestedRealPath = realpath(Storage::disk('local')->path($this->normalizePath($requestedPath)));
+        $baseRealPath = realpath(Storage::disk('local')->path($this->normalizePath($basePath)));
+
+        return str_starts_with($requestedRealPath, $baseRealPath);
     }
 
     /**
@@ -59,14 +109,12 @@ class FileManagerController extends Controller
     {
         $employee = Auth::guard('employee')->user();
 
-        // Verificar permisos
         if (!$employee->hasPermission('can_upload_files_and_folders')) {
             return response()->json(['error' => 'No tienes permiso para subir archivos.'], 403);
         }
 
-        // Validar la solicitud
         $validator = Validator::make($request->all(), [
-            'file' => 'required|file|max:10240', // Máximo 10MB
+            'file' => 'required|file|max:10240',
             'path' => 'required|string',
         ]);
 
@@ -74,18 +122,16 @@ class FileManagerController extends Controller
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
-        $path = $request->input('path');
+        $path = $this->normalizePath($request->input('path'));
 
-        // Validar la ruta para prevenir ataques de Path Traversal
         if (!$this->isValidPath($path)) {
             return response()->json(['error' => 'Ruta inválida.'], 400);
         }
 
-        // Subir el archivo a la ruta especificada sin cambiar el nombre
         if ($request->hasFile('file')) {
             $file = $request->file('file');
             $originalName = $file->getClientOriginalName();
-            $filePath = $file->storeAs($path, $originalName, 'local'); // Usar storeAs para mantener el nombre original
+            $filePath = $file->storeAs($path, $originalName, 'local');
             return response()->json(['message' => 'Archivo subido exitosamente.', 'path' => $filePath]);
         }
 
@@ -99,7 +145,6 @@ class FileManagerController extends Controller
     {
         $employee = Auth::guard('employee')->user();
 
-        // Verificar permisos correctamente
         if (
             !$employee->hasPermission('can_upload_files_and_folders') ||
             !$employee->hasPermission('can_create_folders')
@@ -107,10 +152,9 @@ class FileManagerController extends Controller
             return response()->json(['error' => 'No tienes permiso para crear archivos o carpetas.'], 403);
         }
 
-        // Validar la solicitud
         $validator = Validator::make($request->all(), [
             'files' => 'required|array',
-            'files.*' => 'required|file|max:10240', // Máximo 10MB por archivo
+            'files.*' => 'required|file|max:10240',
             'path' => 'required|string',
         ]);
 
@@ -118,19 +162,14 @@ class FileManagerController extends Controller
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
-        $path = $request->input('path');
+        $path = $this->normalizePath($request->input('path'));
 
-        // Validar la ruta para prevenir ataques de Path Traversal
         if (!$this->isValidPath($path)) {
             return response()->json(['error' => 'Ruta inválida.'], 400);
         }
 
-        // Manejar cada archivo
         foreach ($request->file('files') as $file) {
-            // Obtener la ruta relativa desde el nombre original del archivo
             $relativePath = $file->getClientOriginalName();
-
-            // Subir el archivo a la ruta completa sin cambiar el nombre
             $file->storeAs($path, $relativePath, 'local');
         }
 
@@ -144,7 +183,6 @@ class FileManagerController extends Controller
     {
         $employee = Auth::guard('employee')->user();
 
-        // Verificar permisos
         if (
             !$employee->hasPermission('can_upload_files_and_folders') ||
             !$employee->hasPermission('can_create_folders')
@@ -152,9 +190,8 @@ class FileManagerController extends Controller
             return response()->json(['error' => 'No tienes permiso para subir carpetas.'], 403);
         }
 
-        // Validar la solicitud
         $validator = Validator::make($request->all(), [
-            'file' => 'required|file|mimes:zip|max:10240', // Solo archivos zip, máximo 10MB
+            'file' => 'required|file|mimes:zip|max:10240',
             'path' => 'required|string',
         ]);
 
@@ -162,28 +199,23 @@ class FileManagerController extends Controller
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
-        $path = $request->input('path');
+        $path = $this->normalizePath($request->input('path'));
 
-        // Validar la ruta para prevenir ataques de Path Traversal
         if (!$this->isValidPath($path)) {
             return response()->json(['error' => 'Ruta inválida.'], 400);
         }
 
         if ($request->hasFile('file')) {
             $file = $request->file('file');
-            $zipPath = $file->store($path, 'local'); // Almacenar el archivo zip
+            $zipPath = $file->store($path, 'local');
             $fullPath = Storage::disk('local')->path($zipPath);
 
-            // Extraer el archivo zip
             try {
                 $zip = new ZipArchive;
                 if ($zip->open($fullPath) === TRUE) {
                     $zip->extractTo(Storage::disk('local')->path($path));
                     $zip->close();
-
-                    // Eliminar el archivo zip después de extraerlo
                     Storage::disk('local')->delete($zipPath);
-
                     return response()->json(['message' => 'Carpeta subida y extraída exitosamente.']);
                 } else {
                     return response()->json(['error' => 'No se pudo abrir el archivo zip.'], 400);
@@ -199,16 +231,17 @@ class FileManagerController extends Controller
     /**
      * Elimina un archivo específico en una ruta dada.
      */
+    /**
+     * Elimina un archivo específico en una ruta dada.
+     */
     public function delete(Request $request)
     {
         $employee = Auth::guard('employee')->user();
 
-        // Verificar permisos
         if (!$employee->hasPermission('can_delete_files_and_folders')) {
             return response()->json(['error' => 'No tienes permiso para eliminar archivos.'], 403);
         }
 
-        // Validar la solicitud
         $validator = Validator::make($request->all(), [
             'filename' => 'required|string',
             'path' => 'required|string',
@@ -219,14 +252,13 @@ class FileManagerController extends Controller
         }
 
         $filename = $request->input('filename');
-        $path = $request->input('path');
+        $path = $this->normalizePath($request->input('path'));
 
-        // Validar la ruta
         if (!$this->isValidPath($path)) {
             return response()->json(['error' => 'Ruta inválida.'], 400);
         }
 
-        $filePath = rtrim($path, '/') . '/' . ltrim($filename, '/');
+        $filePath = "$path/$filename";
 
         if (!Storage::disk('local')->exists($filePath)) {
             return response()->json(['error' => 'El archivo no existe.'], 404);
@@ -244,12 +276,10 @@ class FileManagerController extends Controller
     {
         $employee = Auth::guard('employee')->user();
 
-        // Verificar permisos
         if (!$employee->hasPermission('can_delete_files_and_folders')) {
             return response()->json(['error' => 'No tienes permiso para eliminar carpetas.'], 403);
         }
 
-        // Validar la solicitud
         $validator = Validator::make($request->all(), [
             'folder_name' => 'required|string',
             'path' => 'required|string',
@@ -260,24 +290,23 @@ class FileManagerController extends Controller
         }
 
         $folderName = $request->input('folder_name');
-        $path = $request->input('path');
+        $path = $this->normalizePath($request->input('path'));
 
-        // Validar la ruta
         if (!$this->isValidPath($path)) {
             return response()->json(['error' => 'Ruta inválida.'], 400);
         }
 
-        $folderPath = rtrim($path, '/') . '/' . ltrim($folderName, '/');
+        $folderPath = "$path/$folderName";
 
         if (!Storage::disk('local')->exists($folderPath)) {
             return response()->json(['error' => 'La carpeta no existe.'], 404);
         }
 
-        // Eliminar la carpeta de forma recursiva
         Storage::disk('local')->deleteDirectory($folderPath);
 
         return response()->json(['message' => 'Carpeta eliminada exitosamente.']);
     }
+
 
     /**
      * Crea una nueva carpeta en una ruta específica.
@@ -286,12 +315,10 @@ class FileManagerController extends Controller
     {
         $employee = Auth::guard('employee')->user();
 
-        // Verificar permisos
         if (!$employee->hasPermission('can_create_folders')) {
             return response()->json(['error' => 'No tienes permiso para crear carpetas.'], 403);
         }
 
-        // Validar la solicitud
         $validator = Validator::make($request->all(), [
             'folder_name' => 'required|string|max:255',
             'path' => 'required|string',
@@ -302,20 +329,18 @@ class FileManagerController extends Controller
         }
 
         $folderName = $request->input('folder_name');
-        $path = $request->input('path');
+        $path = $this->normalizePath($request->input('path'));
 
-        // Validar la ruta
         if (!$this->isValidPath($path)) {
             return response()->json(['error' => 'Ruta inválida.'], 400);
         }
 
-        $newFolderPath = rtrim($path, '/') . '/' . ltrim($folderName, '/');
+        $newFolderPath = "$path/$folderName";
 
         if (Storage::disk('local')->exists($newFolderPath)) {
             return response()->json(['error' => 'La carpeta ya existe.'], 400);
         }
 
-        // Crear la carpeta
         Storage::disk('local')->makeDirectory($newFolderPath);
 
         return response()->json(['message' => 'Carpeta creada exitosamente.', 'path' => $newFolderPath]);
@@ -328,25 +353,13 @@ class FileManagerController extends Controller
     {
         $employee = Auth::guard('employee')->user();
 
-        // Verificar permisos
         if (!$employee->hasPermission('can_rename_files_and_folders')) {
             return response()->json(['error' => 'No tienes permiso para editar carpetas.'], 403);
         }
 
-        // Validar la solicitud
         $validator = Validator::make($request->all(), [
-            'old_folder_name' => [
-                'required',
-                'string',
-                'max:255',
-                'regex:/^[\w\- ]+$/'
-            ],
-            'new_folder_name' => [
-                'required',
-                'string',
-                'max:255',
-                'regex:/^[\w\- ]+$/'
-            ],
+            'old_folder_name' => 'required|string|max:255|regex:/^[\w\- ]+$/',
+            'new_folder_name' => 'required|string|max:255|regex:/^[\w\- ]+$/',
             'path' => 'required|string',
         ], [
             'old_folder_name.regex' => 'El nombre de la carpeta original contiene caracteres inválidos.',
@@ -359,38 +372,30 @@ class FileManagerController extends Controller
 
         $oldFolderName = $request->input('old_folder_name');
         $newFolderName = $request->input('new_folder_name');
-        $path = $request->input('path');
+        $path = $this->normalizePath($request->input('path'));
 
-        // Validar la ruta para prevenir ataques de Path Traversal
         if (!$this->isValidPath($path)) {
             return response()->json(['error' => 'Ruta inválida.'], 400);
         }
 
-        $oldPath = rtrim($path, '/') . '/' . ltrim($oldFolderName, '/');
-        $newPath = rtrim($path, '/') . '/' . ltrim($newFolderName, '/');
+        $oldPath = "$path/$oldFolderName";
+        $newPath = "$path/$newFolderName";
 
-        try {
-            if (!Storage::disk('local')->exists($oldPath)) {
-                return response()->json(['error' => 'La carpeta original no existe.'], 404);
-            }
-
-            if (Storage::disk('local')->exists($newPath)) {
-                return response()->json(['error' => 'La nueva carpeta ya existe.'], 400);
-            }
-
-            Storage::disk('local')->move($oldPath, $newPath);
-
-            return response()->json([
-                'message' => 'Carpeta renombrada exitosamente.',
-                'old_path' => $oldPath,
-                'new_path' => $newPath
-            ]);
-        } catch (\Exception $e) {
-            // Registrar el error para depuración
-            \Log::error('Error al renombrar la carpeta: ' . $e->getMessage());
-
-            return response()->json(['error' => 'Error al renombrar la carpeta.'], 500);
+        if (!Storage::disk('local')->exists($oldPath)) {
+            return response()->json(['error' => 'La carpeta original no existe.'], 404);
         }
+
+        if (Storage::disk('local')->exists($newPath)) {
+            return response()->json(['error' => 'La nueva carpeta ya existe.'], 400);
+        }
+
+        Storage::disk('local')->move($oldPath, $newPath);
+
+        return response()->json([
+            'message' => 'Carpeta renombrada exitosamente.',
+            'old_path' => $oldPath,
+            'new_path' => $newPath
+        ]);
     }
 
     /**
@@ -400,15 +405,10 @@ class FileManagerController extends Controller
     {
         $employee = Auth::guard('employee')->user();
 
-        // Verificar permisos
-        if (
-            !$employee->hasPermission('can_view_file_explorer') ||
-            !$employee->hasPermission('can_open_files')
-        ) {
+        if (!$employee->hasPermission('can_view_file_explorer') || !$employee->hasPermission('can_open_files')) {
             return response()->json(['error' => 'No tienes permiso para ver archivos.'], 403);
         }
 
-        // Validar request
         $validator = Validator::make($request->all(), [
             'filename' => 'required|string',
             'path' => 'required|string',
@@ -419,24 +419,21 @@ class FileManagerController extends Controller
         }
 
         $filename = $request->input('filename');
-        $path = $request->input('path');
+        $path = $this->normalizePath($request->input('path'));
 
-        // Validar la ruta para evitar path traversal
         if (!$this->isValidPath($path)) {
             return response()->json(['error' => 'Ruta inválida.'], 400);
         }
 
-        $filePath = rtrim($path, '/') . '/' . ltrim($filename, '/');
+        $filePath = "$path/$filename";
 
         if (!Storage::disk('local')->exists($filePath)) {
             return response()->json(['error' => 'El archivo no existe.'], 404);
         }
 
-        // Obtener la ruta completa y MIME type
         $fullPath = Storage::disk('local')->path($filePath);
         $mimeType = mime_content_type($fullPath);
 
-        // Configurar encabezado Content-Disposition para mostrar en el navegador
         return response()->file($fullPath, [
             'Content-Type' => $mimeType,
             'Content-Disposition' => 'inline; filename="' . $filename . '"'
@@ -516,12 +513,10 @@ class FileManagerController extends Controller
     {
         $employee = Auth::guard('employee')->user();
 
-        // Verificar permisos
         if (!$employee->hasPermission('can_copy_files')) {
             return response()->json(['error' => 'No tienes permiso para copiar archivos.'], 403);
         }
 
-        // Validar la solicitud
         $validator = Validator::make($request->all(), [
             'filename' => 'required|string',
             'source_path' => 'required|string',
@@ -533,16 +528,15 @@ class FileManagerController extends Controller
         }
 
         $filename = $request->input('filename');
-        $sourcePath = $request->input('source_path');
-        $targetPath = $request->input('target_path');
+        $sourcePath = $this->normalizePath($request->input('source_path'));
+        $targetPath = $this->normalizePath($request->input('target_path'));
 
-        // Validar las rutas para prevenir ataques de Path Traversal
         if (!$this->isValidPath($sourcePath) || !$this->isValidPath($targetPath)) {
             return response()->json(['error' => 'Ruta inválida.'], 400);
         }
 
-        $sourceFilePath = rtrim($sourcePath, '/') . '/' . ltrim($filename, '/');
-        $targetFilePath = rtrim($targetPath, '/') . '/' . ltrim($filename, '/');
+        $sourceFilePath = "$sourcePath/$filename";
+        $targetFilePath = "$targetPath/$filename";
 
         if (!Storage::disk('local')->exists($sourceFilePath)) {
             return response()->json(['error' => 'El archivo original no existe.'], 404);
@@ -552,7 +546,6 @@ class FileManagerController extends Controller
             return response()->json(['error' => 'Ya existe un archivo con el mismo nombre en la carpeta de destino.'], 400);
         }
 
-        // Copiar el archivo
         Storage::disk('local')->copy($sourceFilePath, $targetFilePath);
 
         return response()->json(['message' => 'Archivo copiado exitosamente.', 'path' => $targetFilePath]);
@@ -565,12 +558,10 @@ class FileManagerController extends Controller
     {
         $employee = Auth::guard('employee')->user();
 
-        // Verificar permisos
         if (!$employee->hasPermission('can_move_files')) {
             return response()->json(['error' => 'No tienes permiso para mover archivos.'], 403);
         }
 
-        // Validar la solicitud
         $validator = Validator::make($request->all(), [
             'filename' => 'required|string',
             'source_path' => 'required|string',
@@ -582,16 +573,15 @@ class FileManagerController extends Controller
         }
 
         $filename = $request->input('filename');
-        $sourcePath = $request->input('source_path');
-        $targetPath = $request->input('target_path');
+        $sourcePath = $this->normalizePath($request->input('source_path'));
+        $targetPath = $this->normalizePath($request->input('target_path'));
 
-        // Validar las rutas para prevenir ataques de Path Traversal
         if (!$this->isValidPath($sourcePath) || !$this->isValidPath($targetPath)) {
             return response()->json(['error' => 'Ruta inválida.'], 400);
         }
 
-        $sourceFilePath = rtrim($sourcePath, '/') . '/' . ltrim($filename, '/');
-        $targetFilePath = rtrim($targetPath, '/') . '/' . ltrim($filename, '/');
+        $sourceFilePath = "$sourcePath/$filename";
+        $targetFilePath = "$targetPath/$filename";
 
         if (!Storage::disk('local')->exists($sourceFilePath)) {
             return response()->json(['error' => 'El archivo original no existe.'], 404);
@@ -601,7 +591,6 @@ class FileManagerController extends Controller
             return response()->json(['error' => 'Ya existe un archivo con el mismo nombre en la carpeta de destino.'], 400);
         }
 
-        // Mover el archivo
         Storage::disk('local')->move($sourceFilePath, $targetFilePath);
 
         return response()->json(['message' => 'Archivo movido exitosamente.', 'path' => $targetFilePath]);

@@ -63,4 +63,8 @@ Route::prefix('filemanager')->name('filemanager.')->middleware('auth:employee')-
     // Ruta para obtener toda la estructura de archivos y carpetas
     Route::get('/files-tree', [FileManagerController::class, 'getFilesTree'])->name('files.tree');
 
+    // Ruta para obtener la jerarquía y empresa del usuario
+    Route::get('/hierarchy-company', [FileManagerController::class, 'fetchHierarchyAndCompany']);
+
+
 });
