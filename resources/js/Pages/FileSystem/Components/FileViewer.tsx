@@ -1,7 +1,15 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import * as XLSX from 'xlsx';
 import mammoth from 'mammoth';
 import axios from 'axios';
+import { Document, Page, pdfjs } from 'react-pdf';
+import 'react-pdf/dist/Page/TextLayer.css';
+import 'react-pdf/dist/Page/AnnotationLayer.css';
+
+pdfjs.GlobalWorkerOptions.workerSrc = new URL(
+    'pdfjs-dist/build/pdf.worker.min.mjs',
+    import.meta.url,
+).toString();
 
 interface FileViewerProps {
     fileUrl: string;
@@ -12,14 +20,28 @@ const FileViewer: React.FC<FileViewerProps> = ({ fileUrl, fileType }) => {
     const [docContent, setDocContent] = useState<string | null>(null);
     const [excelContent, setExcelContent] = useState<any[][] | null>(null);
     const [loading, setLoading] = useState<boolean>(true);
+    const [numPages, setNumPages] = useState<number | null>(null);
+    const [currentPage, setCurrentPage] = useState<number>(1);
+    const containerRef = useRef<HTMLDivElement | null>(null);
+    const [pageWidth, setPageWidth] = useState<number>(600);
 
     useEffect(() => {
-        // Reset content and loading state
+        const updatePageWidth = () => {
+            if (containerRef.current) {
+                setPageWidth(containerRef.current.offsetWidth);
+            }
+        };
+
+        updatePageWidth();
+        window.addEventListener("resize", updatePageWidth);
+        return () => window.removeEventListener("resize", updatePageWidth);
+    }, []);
+
+    useEffect(() => {
         setDocContent(null);
         setExcelContent(null);
         setLoading(true);
 
-        // Fetch file content for docx and xlsx files
         const fetchFile = async () => {
             try {
                 const response = await axios.get(fileUrl, {
@@ -44,6 +66,8 @@ const FileViewer: React.FC<FileViewerProps> = ({ fileUrl, fileType }) => {
                     const data = XLSX.utils.sheet_to_json(sheet, { header: 1 });
                     setExcelContent(data as any[][]);
                     setLoading(false);
+                } else if (fileType === 'pdf') {
+                    setLoading(false);
                 }
             } catch (error) {
                 console.error(`Error al cargar el archivo ${fileType}:`, error);
@@ -51,58 +75,28 @@ const FileViewer: React.FC<FileViewerProps> = ({ fileUrl, fileType }) => {
             }
         };
 
-        if (fileType === 'docx' || fileType === 'xlsx') {
+        if (fileType === 'docx' || fileType === 'xlsx' || fileType === 'pdf') {
             fetchFile();
-        } else if (fileType === 'pdf') {
-            setLoading(false);
         } else {
             console.error(`Unsupported file type: ${fileType}`);
             setLoading(false);
         }
-
-        // Restricciones adicionales de seguridad
-        const handleKeyDown = (event: KeyboardEvent) => {
-            if (
-                event.key === 'F12' ||
-                (event.ctrlKey && (event.key === 'c' || event.key === 'u' || event.key === 's')) ||
-                (event.ctrlKey && event.shiftKey && (event.key === 'I' || event.key === 'J' || event.key === 'C')) ||
-                event.key === 'PrintScreen'
-            ) {
-                event.preventDefault();
-                alert('Esta acción está deshabilitada');
-            }
-        };
-
-        const handleContextMenu = (event: MouseEvent) => {
-            event.preventDefault();
-        };
-
-        const handleDragStart = (event: DragEvent) => {
-            event.preventDefault();
-        };
-
-        const disableSelection = () => {
-            document.body.style.userSelect = 'none';
-        };
-
-        const enableSelection = () => {
-            document.body.style.userSelect = 'auto';
-        };
-
-        // Añadir los eventos
-        document.addEventListener('keydown', handleKeyDown);
-        document.addEventListener('contextmenu', handleContextMenu);
-        document.addEventListener('dragstart', handleDragStart);
-        disableSelection();
-
-        return () => {
-            // Limpiar eventos y estilos
-            document.removeEventListener('keydown', handleKeyDown);
-            document.removeEventListener('contextmenu', handleContextMenu);
-            document.removeEventListener('dragstart', handleDragStart);
-            enableSelection();
-        };
     }, [fileUrl, fileType]);
+
+    const onDocumentLoadSuccess = ({ numPages }: { numPages: number }) => {
+        setNumPages(numPages);
+        setLoading(false);
+    };
+
+    const goToPreviousPage = () => {
+        setCurrentPage((prevPage) => Math.max(prevPage - 1, 1));
+    };
+
+    const goToNextPage = () => {
+        if (numPages) {
+            setCurrentPage((prevPage) => Math.min(prevPage + 1, numPages));
+        }
+    };
 
     if (loading) {
         return <div className="text-center text-gray-500">Cargando...</div>;
@@ -110,12 +104,41 @@ const FileViewer: React.FC<FileViewerProps> = ({ fileUrl, fileType }) => {
 
     if (fileType === 'pdf') {
         return (
-            <div className="file-viewer w-full h-full flex justify-center items-center">
-                <iframe
-                    src={`${fileUrl}#toolbar=0`}
-                    title="PDF Viewer"
-                    className="w-full h-full md:w-11/12 md:h-4/5 lg:w-3/4 lg:h-4/5 border rounded-lg shadow-md"
-                ></iframe>
+            <div ref={containerRef} className="file-viewer w-full h-full flex flex-col items-center">
+                <Document
+                    file={fileUrl}
+                    onLoadSuccess={onDocumentLoadSuccess}
+                    onLoadError={(error) => {
+                        console.error("Error al cargar el PDF:", error);
+                        setLoading(false);
+                    }}
+                    loading={<div className="text-center text-gray-500">Cargando...</div>}
+                >
+                    <Page
+                        pageNumber={currentPage}
+                        width={pageWidth}
+                        className="my-2"
+                    />
+                </Document>
+                <div className="flex items-center justify-between w-1/2 mt-4">
+                    <button
+                        onClick={goToPreviousPage}
+                        disabled={currentPage === 1}
+                        className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md disabled:opacity-50"
+                    >
+                        Anterior
+                    </button>
+                    <span>
+                        Página {currentPage} de {numPages}
+                    </span>
+                    <button
+                        onClick={goToNextPage}
+                        disabled={currentPage === numPages}
+                        className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md disabled:opacity-50"
+                    >
+                        Siguiente
+                    </button>
+                </div>
             </div>
         );
     }
@@ -133,14 +156,23 @@ const FileViewer: React.FC<FileViewerProps> = ({ fileUrl, fileType }) => {
 
     if (fileType === 'xlsx') {
         return (
-            <div className="file-viewer w-full h-full overflow-auto p-2 sm:p-4 md:p-6 lg:p-8 xl:p-10">
+            <div className="file-viewer w-full h-full overflow-auto p-4">
                 <div className="overflow-x-auto">
-                    <table className="min-w-full border border-gray-300 text-sm sm:text-base">
+                    <table className="min-w-full border border-gray-300 text-sm sm:text-base table-auto">
+                        <thead className="bg-gray-200 text-gray-700 font-semibold">
+                        <tr>
+                            {excelContent && excelContent[0]?.map((header, index) => (
+                                <th key={index} className="px-4 py-2 border border-gray-300 text-left">
+                                    {header || "Columna " + (index + 1)}
+                                </th>
+                            ))}
+                        </tr>
+                        </thead>
                         <tbody>
-                        {excelContent?.map((row, rowIndex) => (
+                        {excelContent?.slice(1).map((row, rowIndex) => (
                             <tr key={rowIndex} className={rowIndex % 2 === 0 ? 'bg-white' : 'bg-gray-100'}>
                                 {row.map((cell, cellIndex) => (
-                                    <td key={cellIndex} className="border border-gray-300 px-2 py-1 sm:px-4 sm:py-2">
+                                    <td key={cellIndex} className="border border-gray-300 px-4 py-2 text-left whitespace-nowrap">
                                         {cell}
                                     </td>
                                 ))}
