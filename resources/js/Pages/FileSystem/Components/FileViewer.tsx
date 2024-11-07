@@ -5,8 +5,11 @@ import axios from 'axios';
 import { Document, Page, pdfjs } from 'react-pdf';
 import 'react-pdf/dist/Page/TextLayer.css';
 import 'react-pdf/dist/Page/AnnotationLayer.css';
+import { FaArrowLeft, FaArrowRight } from 'react-icons/fa';
+import {ImZoomIn, ImZoomOut} from "react-icons/im";
 
-pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
+pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.mjs`;
+
 
 interface FileViewerProps {
     fileUrl: string;
@@ -19,13 +22,14 @@ const FileViewer: React.FC<FileViewerProps> = ({ fileUrl, fileType }) => {
     const [loading, setLoading] = useState<boolean>(true);
     const [numPages, setNumPages] = useState<number | null>(null);
     const [currentPage, setCurrentPage] = useState<number>(1);
+    const [scale, setScale] = useState<number>(1.0); // Variable para el zoom
     const containerRef = useRef<HTMLDivElement | null>(null);
     const [pageWidth, setPageWidth] = useState<number>(600);
 
     useEffect(() => {
         const updatePageWidth = () => {
             if (containerRef.current) {
-                setPageWidth(containerRef.current.offsetWidth);
+                setPageWidth(containerRef.current.offsetWidth - 80); // Restar el ancho de la barra lateral (80px)
             }
         };
 
@@ -95,51 +99,85 @@ const FileViewer: React.FC<FileViewerProps> = ({ fileUrl, fileType }) => {
         }
     };
 
+    const zoomIn = () => {
+        setScale((prevScale) => Math.min(prevScale + 0.25, 3.0)); // Zoom máximo 3.0
+    };
+
+    const zoomOut = () => {
+        setScale((prevScale) => Math.max(prevScale - 0.25, 0.5)); // Zoom mínimo 0.5
+    };
+
     if (loading) {
-        return <div className="text-center text-gray-500">Cargando...</div>;
+        return <div className="flex items-center justify-center h-full text-gray-500">Cargando...</div>;
     }
 
     if (fileType === 'pdf') {
         return (
-            <div ref={containerRef} className="file-viewer w-full h-full flex flex-col items-center">
-                <Document
-                    file={fileUrl}
-                    onLoadSuccess={onDocumentLoadSuccess}
-                    onLoadError={(error) => {
-                        console.error("Error al cargar el PDF:", error);
-                        setLoading(false);
-                    }}
-                    loading={<div className="text-center text-gray-500">Cargando...</div>}
-                >
-                    <Page
-                        pageNumber={currentPage}
-                        width={pageWidth}
-                        className="my-2"
-                    />
-                </Document>
-                <div className="flex items-center justify-between w-1/2 mt-4">
+            <div ref={containerRef} className="file-viewer flex h-full">
+                {/* Barra lateral izquierda con los botones */}
+                <div className="flex flex-col items-center p-4 bg-gray-100 w-20 space-y-6">
+                    <button
+                        onClick={zoomOut}
+                        className="flex items-center justify-center w-10 h-10 bg-white rounded-full shadow hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                        disabled={scale <= 0.5}
+                        title="Zoom Out"
+                    >
+                        <ImZoomOut />
+                    </button>
                     <button
                         onClick={goToPreviousPage}
                         disabled={currentPage === 1}
-                        className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md disabled:opacity-50"
+                        className={`flex items-center justify-center w-10 h-10 bg-white rounded-full shadow hover:bg-gray-200 ${currentPage === 1 ? 'cursor-not-allowed opacity-50' : ''}`}
+                        title="Página Anterior"
                     >
-                        Anterior
+                        <FaArrowLeft />
                     </button>
-                    <span>
-                        Página {currentPage} de {numPages}
+                    <span className="text-sm text-gray-700">
+                        {currentPage} / {numPages}
                     </span>
                     <button
                         onClick={goToNextPage}
                         disabled={currentPage === numPages}
-                        className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md disabled:opacity-50"
+                        className={`flex items-center justify-center w-10 h-10 bg-white rounded-full shadow hover:bg-gray-200 ${currentPage === numPages ? 'cursor-not-allowed opacity-50' : ''}`}
+                        title="Página Siguiente"
                     >
-                        Siguiente
+                        <FaArrowRight />
                     </button>
+                    <button
+                        onClick={zoomIn}
+                        className="flex items-center justify-center w-10 h-10 bg-white rounded-full shadow hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                        disabled={scale >= 3.0}
+                        title="Zoom In"
+                    >
+                        <ImZoomIn />
+                    </button>
+                </div>
+                {/* Área principal con el PDF */}
+                <div className="flex-1 overflow-auto bg-gray-50 p-4">
+                    <Document
+                        file={fileUrl}
+                        onLoadSuccess={onDocumentLoadSuccess}
+                        onLoadError={(error) => {
+                            console.error("Error al cargar el PDF:", error);
+                            setLoading(false);
+                        }}
+                        loading={<div className="text-center text-gray-500">Cargando PDF...</div>}
+                        noData={<div className="text-center text-gray-500">No se encontró el PDF.</div>}
+                        className="flex justify-center"
+                    >
+                        <Page
+                            pageNumber={currentPage}
+                            scale={scale}
+                            width={pageWidth}
+                            className="my-2"
+                        />
+                    </Document>
                 </div>
             </div>
         );
     }
 
+    // Manejo para docx y xlsx (similar a tu código actual)
     if (fileType === 'docx') {
         return (
             <div className="file-viewer w-full h-full overflow-auto p-4 sm:p-6 md:p-8 lg:p-10 xl:p-12">
@@ -182,7 +220,7 @@ const FileViewer: React.FC<FileViewerProps> = ({ fileUrl, fileType }) => {
         );
     }
 
-    return <div className="text-center text-red-500">No se puede mostrar este tipo de archivo.</div>;
+    return <div className="flex items-center justify-center h-full text-red-500">No se puede mostrar este tipo de archivo.</div>;
 };
 
 export default FileViewer;

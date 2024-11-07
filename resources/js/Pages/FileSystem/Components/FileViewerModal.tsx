@@ -111,9 +111,7 @@ const FileViewerModal: React.FC<FileViewerModalProps> = ({ isOpen, fileUrl, file
                     rounded-lg
                     shadow-lg
                     w-full
-                    max-w-6xl
                     h-full
-                    max-h-[90vh]
                     overflow-hidden
                     flex
                     flex-col
