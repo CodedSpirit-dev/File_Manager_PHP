@@ -35,6 +35,7 @@ interface FileManagerToolbarProps {
     isMoving: boolean;
     onBack: () => void; // Added onBack prop
     canGoBack: boolean; // Added canGoBack prop
+    selectedItemsCount: number; // Añadir esta prop
 }
 
 const FileManagerToolbar: React.FC<FileManagerToolbarProps> = ({
@@ -56,6 +57,7 @@ const FileManagerToolbar: React.FC<FileManagerToolbarProps> = ({
                                                                    isMoving,
                                                                    onBack,
                                                                    canGoBack,
+                                                                   selectedItemsCount,
                                                                }) => {
     const { hasPermission: checkPermission } = usePermissions(); // Obtener la función de verificación de permisos desde el contexto
 
@@ -77,11 +79,14 @@ const FileManagerToolbar: React.FC<FileManagerToolbarProps> = ({
     const canRename = checkPermission('can_rename_files_and_folders');
     const canMove = checkPermission('can_move_files');
     const canDelete = checkPermission('can_delete_files_and_folders');
+
+    const canSort = true; // Ordenar está disponible por defecto
+
     const canCopyHere = checkPermission('can_copy_files'); // Permiso necesario para copiar aquí
     const canMoveHere = checkPermission('can_move_files'); // Permiso necesario para mover aquí
 
     return (
-        <div className="flex flex-col sm:flex-row items-center justify-between p-4 bg-base-100 shadow-sm rounded-lg">
+        <div className="flex flex-col sm:flex-row items-center justify-between p-4 bg-base-100 shadow-sm rounded-lg z-40">
             {/* Botones Principales */}
             <div className="flex flex-wrap items-center space-x-2">
                 {/* Volver Button */}
@@ -98,7 +103,7 @@ const FileManagerToolbar: React.FC<FileManagerToolbarProps> = ({
 
                 {/* Crear Dropdown */}
                 {(canCreateFolder || canUploadFolder || canUploadFile) && (
-                    <div className="dropdown dropdown-bottom">
+                    <div className="dropdown dropdown-bottom z-40">
                         <button
                             tabIndex={0}
                             className="btn btn-outline flex items-center space-x-2 hover:text-primary-content"
@@ -111,7 +116,7 @@ const FileManagerToolbar: React.FC<FileManagerToolbarProps> = ({
                         </button>
                         <ul
                             tabIndex={0}
-                            className="dropdown-content menu p-2 shadow bg-base-100 rounded-box w-52"
+                            className="dropdown-content menu p-2 shadow bg-base-100 rounded-box w-52 z-40"
                             aria-label="Opciones de Crear"
                         >
                             {canCreateFolder && (
@@ -144,11 +149,11 @@ const FileManagerToolbar: React.FC<FileManagerToolbarProps> = ({
 
                 {/* Acciones Dropdown */}
                 {(canDownload || canCopy || canRename || canMove || canDelete) && (
-                    <div className="dropdown dropdown-end">
+                    <div className="dropdown dropdown-end z-40">
                         <button
                             tabIndex={0}
-                            className={`btn btn-outline flex items-center space-x-2 hover:text-primary-content ${!isItemSelected ? 'btn-disabled' : ''}`}
-                            disabled={!isItemSelected}
+                            className={`btn btn-outline flex items-center space-x-2 hover:text-primary-content ${selectedItemsCount === 0 ? 'btn-disabled' : ''}`}
+                            disabled={selectedItemsCount === 0}
                             aria-haspopup="true"
                             aria-expanded="false"
                             aria-label="Acciones"
@@ -158,10 +163,10 @@ const FileManagerToolbar: React.FC<FileManagerToolbarProps> = ({
                         </button>
                         <ul
                             tabIndex={0}
-                            className="dropdown-content menu p-2 shadow bg-base-100 rounded-box w-52"
+                            className="dropdown-content menu p-2 shadow bg-base-100 rounded-box w-52 z-40"
                             aria-label="Opciones de Acciones"
                         >
-                            {isItemSelected && canDownload && (
+                            {canDownload && (
                                 <li>
                                     <button onClick={onDownloadFile} className="flex items-center space-x-2 w-full text-left">
                                         <BsFileEarmarkArrowDown className="w-5 h-5" />
@@ -169,7 +174,7 @@ const FileManagerToolbar: React.FC<FileManagerToolbarProps> = ({
                                     </button>
                                 </li>
                             )}
-                            {isItemSelected && canCopy && (
+                            {canCopy && (
                                 <li>
                                     <button onClick={onCopy} className="flex items-center space-x-2 w-full text-left">
                                         <TbCopy className="w-5 h-5" />
@@ -177,15 +182,7 @@ const FileManagerToolbar: React.FC<FileManagerToolbarProps> = ({
                                     </button>
                                 </li>
                             )}
-                            {isItemSelected && canRename && (
-                                <li>
-                                    <button onClick={onRename} className="flex items-center space-x-2 w-full text-left">
-                                        <TbCursorText className="w-5 h-5" />
-                                        <span>Cambiar nombre</span>
-                                    </button>
-                                </li>
-                            )}
-                            {isItemSelected && canMove && (
+                            {canMove && (
                                 <li>
                                     <button onClick={onMove} className="flex items-center space-x-2 w-full text-left">
                                         <MdOutlineDriveFileMove className="w-5 h-5" />
@@ -193,7 +190,7 @@ const FileManagerToolbar: React.FC<FileManagerToolbarProps> = ({
                                     </button>
                                 </li>
                             )}
-                            {isItemSelected && canDelete && (
+                            {canDelete && (
                                 <li>
                                     <button onClick={onDelete} className="flex items-center space-x-2 w-full text-left">
                                         <MdOutlineDeleteOutline className="w-5 h-5" />
@@ -206,6 +203,7 @@ const FileManagerToolbar: React.FC<FileManagerToolbarProps> = ({
                 )}
 
                 {/* Ordenar Botón */}
+                {canSort && (
                     <button
                         onClick={handleSortToggle}
                         className="btn btn-outline flex items-center space-x-2 hover:text-primary-content ml-2"
@@ -223,6 +221,7 @@ const FileManagerToolbar: React.FC<FileManagerToolbarProps> = ({
                             </>
                         )}
                     </button>
+                )}
             </div>
 
             {/* Acciones de Copiar/Mover Aquí */}
@@ -270,7 +269,6 @@ const FileManagerToolbar: React.FC<FileManagerToolbarProps> = ({
                     )}
                 </div>
             )}
-
         </div>
     );
 }

@@ -1,3 +1,5 @@
+// src/components/FileManager/FileManager.tsx
+
 import React, { useState, useEffect, useCallback } from 'react';
 import FileManagerToolbar from './Components/Toolbar';
 import Modal from './Components/Modal';
@@ -95,7 +97,9 @@ const FileManager: React.FC = () => {
     const { auth } = usePage().props as any;
     const userPermissions: string[] = auth.user?.permissions || [];
 
-    const [selectedItem, setSelectedItem] = useState<string | null>(null);
+    // Estado para múltiples selecciones
+    const [selectedItems, setSelectedItems] = useState<string[]>([]);
+
     const [items, setItems] = useState<Item[]>([]);
     const [currentPath, setCurrentPath] = useState<string>(''); // Ruta inicial a establecer
     const [companyName, setCompanyName] = useState<string | null>(null);
@@ -112,11 +116,11 @@ const FileManager: React.FC = () => {
 
     // Estados para manejar la acción de copiar
     const [isCopying, setIsCopying] = useState<boolean>(false);
-    const [copySource, setCopySource] = useState<{ filename: string; path: string } | null>(null);
+    const [copySource, setCopySource] = useState<{ filenames: string[]; path: string } | null>(null);
 
     // Estados para manejar la acción de mover
     const [isMoving, setIsMoving] = useState<boolean>(false);
-    const [moveSource, setMoveSource] = useState<{ filename: string; path: string } | null>(null);
+    const [moveSource, setMoveSource] = useState<{ filenames: string[]; path: string } | null>(null);
 
     // Estados para el Modal de Estado
     const [modalOpen, setModalOpen] = useState<boolean>(false);
@@ -126,7 +130,7 @@ const FileManager: React.FC = () => {
 
     // Estados para el Modal de Renombrar
     const [renameModalOpen, setRenameModalOpen] = useState<boolean>(false);
-    const [renameNewName, setRenameNewName] = useState<string>('');
+    const [renameNewName, setRenameNewName] = useState<string>(''); // Solo el nombre
     const [renameIsFile, setRenameIsFile] = useState<boolean>(true); // Indica si el elemento es un archivo
 
     useEffect(() => {
@@ -140,7 +144,7 @@ const FileManager: React.FC = () => {
 
                 // Actualiza los items actuales después de haber obtenido el árbol y la ruta
                 updateCurrentItems(fileTree, currentPath);
-                setSelectedItem(null);
+                setSelectedItems([]);
             } catch (error) {
                 console.error("Error al inicializar datos:", error);
             } finally {
@@ -220,6 +224,9 @@ const FileManager: React.FC = () => {
             date: new Date(),
             path: item.path,
         })) || [];
+
+        // Ordenar los items por nombre de A a Z
+        formattedItems.sort((a, b) => a.name.localeCompare(b.name));
 
         setItems(formattedItems);
     };
@@ -340,9 +347,25 @@ const FileManager: React.FC = () => {
         return userPermissions.includes(permission);
     };
 
-    // Manejar la selección de un elemento
-    const handleSelectItem = (itemName: string) => {
-        setSelectedItem((prev) => (prev === itemName ? null : itemName));
+    // Manejar la selección de un elemento con soporte para selección múltiple
+    const handleSelectItem = (itemName: string, event: React.MouseEvent) => {
+        if (event.ctrlKey || event.metaKey) {
+            // Selección múltiple con Ctrl/Cmd
+            setSelectedItems((prevSelected) => {
+                if (prevSelected.includes(itemName)) {
+                    // Si ya está seleccionado, lo deselecciona
+                    return prevSelected.filter(name => name !== itemName);
+                } else {
+                    // Si no está seleccionado, lo añade
+                    return [...prevSelected, itemName];
+                }
+            });
+        } else {
+            // Selección única sin Ctrl/Cmd
+            setSelectedItems((prevSelected) =>
+                prevSelected.includes(itemName) && prevSelected.length === 1 ? [] : [itemName]
+            );
+        }
     };
 
     // Manejar doble clic en elementos (carpetas o archivos)
@@ -448,76 +471,69 @@ const FileManager: React.FC = () => {
     };
 
     const handleDownloadAction = async () => {
-        if (selectedItem) {
-            const item = items.find((i) => i.name === selectedItem);
-            if (item) {
-                if (item.type === 'file') {
-                    try {
-                        const blob = await downloadFile(item.name, currentPath);
-                        const url = window.URL.createObjectURL(new Blob([blob]));
-                        const link = document.createElement('a');
-                        link.href = url;
-                        link.setAttribute('download', item.name);
-                        document.body.appendChild(link);
-                        link.click();
-                        link.parentNode?.removeChild(link);
-                        showModal('Éxito', 'Archivo descargado exitosamente.', 'success');
-                    } catch (error: any) {
-                        if (error.response && error.response.status === 403) {
-                            showModal('Error', 'No tienes permiso para descargar archivos.', 'error');
-                        } else {
-                            showModal('Error', 'Error al descargar el archivo.', 'error');
+        if (selectedItems.length > 0) {
+            try {
+                for (const itemName of selectedItems) {
+                    const item = items.find((i) => i.name === itemName);
+                    if (item) {
+                        if (item.type === 'file') {
+                            const blob = await downloadFile(item.name, currentPath);
+                            const url = window.URL.createObjectURL(new Blob([blob]));
+                            const link = document.createElement('a');
+                            link.href = url;
+                            link.setAttribute('download', item.name);
+                            document.body.appendChild(link);
+                            link.click();
+                            link.parentNode?.removeChild(link);
+                        } else if (item.type === 'folder') {
+                            const blob = await downloadFolder(item.name, currentPath);
+                            const url = window.URL.createObjectURL(new Blob([blob]));
+                            const link = document.createElement('a');
+                            link.href = url;
+                            link.setAttribute('download', `${item.name}.zip`);
+                            document.body.appendChild(link);
+                            link.click();
+                            link.parentNode?.removeChild(link);
                         }
-                        console.error(error);
-                    }
-                } else if (item.type === 'folder') {
-                    try {
-                        const blob = await downloadFolder(item.name, currentPath);
-                        const url = window.URL.createObjectURL(new Blob([blob]));
-                        const link = document.createElement('a');
-                        link.href = url;
-                        link.setAttribute('download', `${item.name}.zip`);
-                        document.body.appendChild(link);
-                        link.click();
-                        link.parentNode?.removeChild(link);
-                        showModal('Éxito', 'Carpeta descargada exitosamente.', 'success');
-                    } catch (error: any) {
-                        if (error.response && error.response.status === 403) {
-                            showModal('Error', 'No tienes permiso para descargar carpetas.', 'error');
-                        } else {
-                            showModal('Error', 'Error al descargar la carpeta.', 'error');
-                        }
-                        console.error(error);
                     }
                 }
+                showModal('Éxito', 'Elemento(s) descargado(s) exitosamente.', 'success');
+            } catch (error: any) {
+                if (error.response && error.response.status === 403) {
+                    showModal('Error', 'No tienes permiso para descargar uno o más elementos.', 'error');
+                } else {
+                    showModal('Error', 'Error al descargar uno o más elementos.', 'error');
+                }
+                console.error(error);
             }
         } else {
-            showModal('Error', 'Por favor, selecciona un elemento para descargar.', 'error');
+            showModal('Error', 'Por favor, selecciona al menos un elemento para descargar.', 'error');
         }
     };
 
     const handleDeleteAction = async () => {
-        if (selectedItem) {
-            const confirmDelete = window.confirm(`¿Estás seguro de que deseas eliminar "${selectedItem}"?`);
+        if (selectedItems.length > 0) {
+            const confirmDelete = window.confirm(`¿Estás seguro de que deseas eliminar ${selectedItems.length} elemento(s)?`);
             if (confirmDelete) {
                 try {
-                    const item = items.find((i) => i.name === selectedItem);
-                    if (item) {
-                        let response;
-                        if (item.type === 'file') {
-                            response = await deleteFile(item.name, currentPath);
-                        } else if (item.type === 'folder') {
-                            response = await deleteFolder(item.name, currentPath);
+                    for (const itemName of selectedItems) {
+                        const item = items.find((i) => i.name === itemName);
+                        if (item) {
+                            if (item.type === 'file') {
+                                await deleteFile(item.name, currentPath);
+                            } else if (item.type === 'folder') {
+                                await deleteFolder(item.name, currentPath);
+                            }
                         }
-                        showModal('Éxito', response.message || 'Elemento eliminado exitosamente.', 'success');
-                        fetchFilesTree(); // Refrescar el árbol
-                        setSelectedItem(null);
                     }
+                    showModal('Éxito', 'Elemento(s) eliminado(s) exitosamente.', 'success');
+                    fetchFilesTree(); // Refrescar el árbol
+                    setSelectedItems([]); // Deseleccionar todos los elementos
                 } catch (error: any) {
                     if (error.response && error.response.status === 403) {
-                        showModal('Error', 'No tienes permiso para eliminar este elemento.', 'error');
+                        showModal('Error', 'No tienes permiso para eliminar uno o más elementos.', 'error');
                     } else {
-                        showModal('Error', 'Error al eliminar el elemento.', 'error');
+                        showModal('Error', 'Error al eliminar uno o más elementos.', 'error');
                     }
                     console.error(error);
                 }
@@ -526,10 +542,15 @@ const FileManager: React.FC = () => {
     };
 
     const handleCopy = async () => {
-        if (selectedItem) {
-            const item = items.find((i) => i.name === selectedItem);
-            if (item && item.type === 'file') {
-                setCopySource({ filename: item.name, path: currentPath });
+        if (selectedItems.length > 0) {
+            // Solo permitir copiar archivos por ahora
+            const allFiles = selectedItems.every(itemName => {
+                const item = items.find(i => i.name === itemName);
+                return item && item.type === 'file';
+            });
+
+            if (allFiles) {
+                setCopySource({ filenames: selectedItems, path: currentPath });
                 setIsCopying(true);
             } else {
                 showModal('Error', 'Solo se pueden copiar archivos.', 'error');
@@ -540,16 +561,19 @@ const FileManager: React.FC = () => {
     const handleConfirmCopy = async () => {
         if (copySource) {
             try {
-                const response = await copyFile(copySource.filename, copySource.path, currentPath);
-                showModal('Éxito', 'Archivo copiado exitosamente.', 'success');
+                for (const filename of copySource.filenames) {
+                    await copyFile(filename, copySource.path, currentPath);
+                }
+                showModal('Éxito', 'Archivo(s) copiado(s) exitosamente.', 'success');
                 fetchFilesTree(); // Refrescar el árbol
                 setIsCopying(false);
                 setCopySource(null);
+                setSelectedItems([]); // Deseleccionar los elementos copiados
             } catch (error: any) {
                 if (error.response && error.response.status === 403) {
-                    showModal('Error', 'No tienes permiso para copiar archivos.', 'error');
+                    showModal('Error', 'No tienes permiso para copiar uno o más archivos.', 'error');
                 } else {
-                    showModal('Error', 'Error al copiar el archivo.', 'error');
+                    showModal('Error', 'Error al copiar uno o más archivos.', 'error');
                 }
                 console.error(error);
             }
@@ -562,10 +586,15 @@ const FileManager: React.FC = () => {
     };
 
     const handleMove = async () => {
-        if (selectedItem) {
-            const item = items.find((i) => i.name === selectedItem);
-            if (item && item.type === 'file') {
-                setMoveSource({ filename: item.name, path: currentPath });
+        if (selectedItems.length > 0) {
+            // Solo permitir mover archivos por ahora
+            const allFiles = selectedItems.every(itemName => {
+                const item = items.find(i => i.name === itemName);
+                return item && item.type === 'file';
+            });
+
+            if (allFiles) {
+                setMoveSource({ filenames: selectedItems, path: currentPath });
                 setIsMoving(true);
             } else {
                 showModal('Error', 'Solo se pueden mover archivos.', 'error');
@@ -576,17 +605,19 @@ const FileManager: React.FC = () => {
     const handleConfirmMove = async () => {
         if (moveSource) {
             try {
-                const response = await moveFile(moveSource.filename, moveSource.path, currentPath);
-                showModal('Éxito', 'Archivo movido exitosamente.', 'success');
+                for (const filename of moveSource.filenames) {
+                    await moveFile(filename, moveSource.path, currentPath);
+                }
+                showModal('Éxito', 'Archivo(s) movido(s) exitosamente.', 'success');
                 fetchFilesTree(); // Refrescar el árbol
                 setIsMoving(false);
                 setMoveSource(null);
-                setSelectedItem(null); // Deseleccionar el elemento movido
+                setSelectedItems([]); // Deseleccionar los elementos movidos
             } catch (error: any) {
                 if (error.response && error.response.status === 403) {
-                    showModal('Error', 'No tienes permiso para mover archivos.', 'error');
+                    showModal('Error', 'No tienes permiso para mover uno o más archivos.', 'error');
                 } else {
-                    showModal('Error', 'Error al mover el archivo.', 'error');
+                    showModal('Error', 'Error al mover uno o más archivos.', 'error');
                 }
                 console.error(error);
             }
@@ -599,8 +630,9 @@ const FileManager: React.FC = () => {
     };
 
     const handleRename = () => {
-        if (selectedItem) {
-            const item = items.find((i) => i.name === selectedItem);
+        if (selectedItems.length === 1) { // Solo permitir renombrar si hay un elemento seleccionado
+            const selectedItemName = selectedItems[0];
+            const item = items.find((i) => i.name === selectedItemName);
             if (item) {
                 const currentName = item.type === 'file'
                     ? item.name.slice(0, item.name.lastIndexOf('.')) || item.name
@@ -610,6 +642,8 @@ const FileManager: React.FC = () => {
                 setRenameIsFile(item.type === 'file');
                 setRenameModalOpen(true);
             }
+        } else {
+            showModal('Error', 'Solo puedes renombrar un elemento a la vez.', 'error');
         }
     };
 
@@ -625,7 +659,7 @@ const FileManager: React.FC = () => {
         // Obtener la extensión original si es un archivo
         let newFilename = renameNewName;
         if (renameIsFile) {
-            const item = items.find((i) => i.name === selectedItem);
+            const item = items.find((i) => i.name === selectedItems[0]);
             if (item) {
                 const extensionIndex = item.name.lastIndexOf('.');
                 const extension = extensionIndex !== -1 ? item.name.slice(extensionIndex) : '';
@@ -634,14 +668,14 @@ const FileManager: React.FC = () => {
         }
 
         try {
-            if (selectedItem != null) {
-                const response = await renameFile(selectedItem, newFilename, currentPath);
+            if (selectedItems.length === 1 && selectedItems[0] != null) {
+                const response = await renameFile(selectedItems[0], newFilename, currentPath);
+                showModal('Éxito', 'Elemento renombrado exitosamente.', 'success');
+                fetchFilesTree(); // Refrescar el árbol
+                setSelectedItems([]); // Deseleccionar el elemento renombrado
+                setRenameModalOpen(false);
+                setRenameNewName('');
             }
-            showModal('Éxito', 'Elemento renombrado exitosamente.', 'success');
-            fetchFilesTree(); // Refrescar el árbol
-            setSelectedItem(null);
-            setRenameModalOpen(false);
-            setRenameNewName('');
         } catch (error: any) {
             if (error.response && error.response.status === 403) {
                 showModal('Error', 'No tienes permiso para renombrar este elemento.', 'error');
@@ -737,7 +771,7 @@ const FileManager: React.FC = () => {
                     onRename={handleRename}
                     onMove={handleMove}
                     onSort={handleSort}
-                    isItemSelected={selectedItem !== null}
+                    isItemSelected={selectedItems.length > 0}
                     onCopyHere={handleConfirmCopy}
                     onCancelCopy={handleCancelCopy}
                     isCopying={isCopying}
@@ -746,6 +780,7 @@ const FileManager: React.FC = () => {
                     isMoving={isMoving}
                     onBack={handleGoBack} // Pasar `onBack`
                     canGoBack={canGoBack} // Pasar `canGoBack` actualizado
+                    selectedItemsCount={selectedItems.length} // Pasar el conteo de elementos seleccionados
                 />
 
 
@@ -802,7 +837,6 @@ const FileManager: React.FC = () => {
                                     placeholder="Nombre"
                                 />
                             </div>
-                            {/* Eliminado: Campo para la extensión */}
                         </div>
                         <div className="flex justify-end mt-4 space-x-2">
                             <button type="button" className="btn btn-secondary" onClick={handleCancelRename}>
@@ -828,16 +862,23 @@ const FileManager: React.FC = () => {
                             {items.map((item) => (
                                 <li
                                     key={item.id}
-                                    className={`p-4 border rounded-lg cursor-pointer flex flex-col items-center ${
-                                        selectedItem === item.name ? 'bg-blue-100' : 'bg-white'
+                                    className={`p-4 border rounded-lg cursor-pointer flex flex-col items-center relative ${
+                                        selectedItems.includes(item.name) ? 'bg-blue-100' : 'bg-white'
                                     } hover:bg-gray-200 transition-colors duration-200`}
-                                    onClick={() => handleSelectItem(item.name)}
+                                    onClick={(e) => handleSelectItem(item.name, e)}
                                     onDoubleClick={() => handleDoubleClickItem(item)}
                                 >
                                     <span className="text-4xl">
                                         {item.type === 'folder' ? <FaFolder /> : getFileIcon(item.name)}
                                     </span>
                                     <span className="mt-2 text-center truncate w-full">{item.name}</span>
+
+                                    {/* Indicador de Selección */}
+                                    {selectedItems.includes(item.name) && (
+                                        <span className="absolute top-2 right-2 bg-blue-500 text-white rounded-full w-5 h-5 flex items-center justify-center">
+                                            ✓
+                                        </span>
+                                    )}
                                 </li>
                             ))}
                         </ul>
