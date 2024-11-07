@@ -127,7 +127,6 @@ const FileManager: React.FC = () => {
     // Estados para el Modal de Renombrar
     const [renameModalOpen, setRenameModalOpen] = useState<boolean>(false);
     const [renameNewName, setRenameNewName] = useState<string>('');
-    const [renameNewExtension, setRenameNewExtension] = useState<string>('');
     const [renameIsFile, setRenameIsFile] = useState<boolean>(true); // Indica si el elemento es un archivo
 
     useEffect(() => {
@@ -603,12 +602,11 @@ const FileManager: React.FC = () => {
         if (selectedItem) {
             const item = items.find((i) => i.name === selectedItem);
             if (item) {
-                const [currentName, currentExtension] = item.type === 'file'
-                    ? [selectedItem.slice(0, selectedItem.lastIndexOf('.')) || selectedItem, selectedItem.slice(selectedItem.lastIndexOf('.') + 1)]
-                    : [selectedItem, '']; // Para carpetas, extensión vacía
+                const currentName = item.type === 'file'
+                    ? item.name.slice(0, item.name.lastIndexOf('.')) || item.name
+                    : item.name; // Para carpetas, nombre completo
 
                 setRenameNewName(currentName);
-                setRenameNewExtension(currentExtension);
                 setRenameIsFile(item.type === 'file');
                 setRenameModalOpen(true);
             }
@@ -624,16 +622,16 @@ const FileManager: React.FC = () => {
             return;
         }
 
+        // Obtener la extensión original si es un archivo
+        let newFilename = renameNewName;
         if (renameIsFile) {
-            // Validar la extensión
-            if (renameNewExtension.trim() === '') {
-                showModal('Error', 'La extensión del archivo no puede estar vacía.', 'error');
-                return;
+            const item = items.find((i) => i.name === selectedItem);
+            if (item) {
+                const extensionIndex = item.name.lastIndexOf('.');
+                const extension = extensionIndex !== -1 ? item.name.slice(extensionIndex) : '';
+                newFilename += extension;
             }
         }
-
-        // Combinar nombre y extensión si es un archivo
-        const newFilename = renameIsFile ? `${renameNewName}.${renameNewExtension}` : renameNewName;
 
         try {
             if (selectedItem != null) {
@@ -644,8 +642,6 @@ const FileManager: React.FC = () => {
             setSelectedItem(null);
             setRenameModalOpen(false);
             setRenameNewName('');
-            setRenameNewExtension('');
-            setRenameIsFile(true);
         } catch (error: any) {
             if (error.response && error.response.status === 403) {
                 showModal('Error', 'No tienes permiso para renombrar este elemento.', 'error');
@@ -659,7 +655,6 @@ const FileManager: React.FC = () => {
     const handleCancelRename = () => {
         setRenameModalOpen(false);
         setRenameNewName('');
-        setRenameNewExtension('');
         setRenameIsFile(true);
     };
 
@@ -807,20 +802,7 @@ const FileManager: React.FC = () => {
                                     placeholder="Nombre"
                                 />
                             </div>
-                            {renameIsFile && (
-                                <div>
-                                    <label className="label">
-                                        <span className="label-text">Extensión del archivo</span>
-                                    </label>
-                                    <input
-                                        type="text"
-                                        value={renameNewExtension}
-                                        onChange={(e) => setRenameNewExtension(e.target.value)}
-                                        className="input input-bordered w-full"
-                                        placeholder="Extensión (ej: txt, pdf)"
-                                    />
-                                </div>
-                            )}
+                            {/* Eliminado: Campo para la extensión */}
                         </div>
                         <div className="flex justify-end mt-4 space-x-2">
                             <button type="button" className="btn btn-secondary" onClick={handleCancelRename}>

@@ -8,7 +8,7 @@ import {
 import { TbCopy, TbCursorText, TbFolderPlus, TbFolderUp } from "react-icons/tb";
 import { BsFileEarmarkArrowDown, BsFileEarmarkArrowUp, BsSortAlphaDown, BsSortAlphaDownAlt } from "react-icons/bs";
 import { MdOutlineDeleteOutline, MdOutlineDriveFileMove } from "react-icons/md";
-import { IoClose, IoArrowBack, IoChevronBackOutline } from "react-icons/io5";
+import { IoClose, IoChevronBackOutline } from "react-icons/io5";
 import { usePermissions } from '@/contexts/PermissionsContext'; // Importar el hook de permisos
 
 interface SortPayload {
@@ -77,14 +77,11 @@ const FileManagerToolbar: React.FC<FileManagerToolbarProps> = ({
     const canRename = checkPermission('can_rename_files_and_folders');
     const canMove = checkPermission('can_move_files');
     const canDelete = checkPermission('can_delete_files_and_folders');
-
-    const canSort = checkPermission('can_sort_files_and_folders'); // Asumiendo que este permiso existe
-
     const canCopyHere = checkPermission('can_copy_files'); // Permiso necesario para copiar aquí
     const canMoveHere = checkPermission('can_move_files'); // Permiso necesario para mover aquí
 
     return (
-        <div className="flex flex-col sm:flex-row items-center justify-end p-4 bg-base-100 shadow-sm rounded-lg">
+        <div className="flex flex-col sm:flex-row items-center justify-between p-4 bg-base-100 shadow-sm rounded-lg">
             {/* Botones Principales */}
             <div className="flex flex-wrap items-center space-x-2">
                 {/* Volver Button */}
@@ -209,10 +206,9 @@ const FileManagerToolbar: React.FC<FileManagerToolbarProps> = ({
                 )}
 
                 {/* Ordenar Botón */}
-                {canSort && (
                     <button
                         onClick={handleSortToggle}
-                        className="btn btn-outline flex items-center space-x-2 hover:text-primary-content"
+                        className="btn btn-outline flex items-center space-x-2 hover:text-primary-content ml-2"
                         aria-label="Ordenar por nombre"
                     >
                         {currentSortOrder === 'asc' ? (
@@ -227,16 +223,15 @@ const FileManagerToolbar: React.FC<FileManagerToolbarProps> = ({
                             </>
                         )}
                     </button>
-                )}
             </div>
 
             {/* Acciones de Copiar/Mover Aquí */}
             {(isCopying || isMoving) && (
-                <div className="flex items-center space-x-2 mt-4 sm:mt-0">
+                <div className="flex items-center space-x-4 mt-4 sm:mt-0">
                     {isCopying && canCopyHere && (
                         <>
                             <button
-                                className="btn btn-primary flex items-center space-x-2 mr-2"
+                                className="btn btn-primary flex items-center space-x-2"
                                 onClick={onCopyHere}
                                 aria-label="Copiar aquí"
                             >
@@ -256,7 +251,7 @@ const FileManagerToolbar: React.FC<FileManagerToolbarProps> = ({
                     {isMoving && canMoveHere && (
                         <>
                             <button
-                                className="btn btn-primary flex items-center space-x-2 mr-2"
+                                className="btn btn-primary flex items-center space-x-2"
                                 onClick={onMoveHere}
                                 aria-label="Mover aquí"
                             >
@@ -275,9 +270,9 @@ const FileManagerToolbar: React.FC<FileManagerToolbarProps> = ({
                     )}
                 </div>
             )}
+
         </div>
     );
-
 }
 
 export default FileManagerToolbar;
