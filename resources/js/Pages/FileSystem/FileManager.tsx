@@ -133,6 +133,10 @@ const FileManager: React.FC = () => {
     const [renameNewName, setRenameNewName] = useState<string>(''); // Solo el nombre
     const [renameIsFile, setRenameIsFile] = useState<boolean>(true); // Indica si el elemento es un archivo
 
+    // Estados de progreso para las operaciones de subida y eliminación
+    const [uploadProgress, setUploadProgress] = useState<{ total: number; completed: number } | null>(null);
+    const [deleteProgress, setDeleteProgress] = useState<{ total: number; completed: number } | null>(null);
+
     // Estado para el progreso de la operación
     const [operationProgress, setOperationProgress] = useState<{
         type: 'copy' | 'move' | null;
@@ -435,47 +439,68 @@ const FileManager: React.FC = () => {
     const handleUploadFolderAction = async () => {
         const folderInput = document.createElement('input');
         folderInput.type = 'file';
-        (folderInput as any).webkitdirectory = true; // Habilitar selección de directorio
+        (folderInput as any).webkitdirectory = true;
         folderInput.onchange = async () => {
             if (folderInput.files && folderInput.files.length > 0) {
+                const totalFiles = folderInput.files.length;
+                let completedFiles = 0;
+
+                // Iniciar progreso de subida
+                setUploadProgress({ total: totalFiles, completed: 0 });
+
                 try {
-                    const response = await uploadDirectory(folderInput.files, currentPath);
+                    await uploadDirectory(folderInput.files, currentPath);
+                    completedFiles = totalFiles;
+                    setUploadProgress({ total: totalFiles, completed: completedFiles });
                     showModal('Éxito', 'Carpeta subida exitosamente.', 'success');
                     fetchFilesTree(); // Refrescar el árbol
-                } catch (error: any) {
-                    if (error.response && error.response.status === 403) {
-                        showModal('Error', 'No tienes permiso para subir carpetas.', 'error');
-                    } else {
-                        showModal('Error', 'Error al subir la carpeta.', 'error');
-                    }
-                    console.error(error);
+                } catch (error) {
+                    showModal('Error', 'Error al subir la carpeta.', 'error');
+                } finally {
+                    setUploadProgress(null); // Finalizar el progreso de subida
                 }
             }
         };
         folderInput.click();
     };
 
+
+    // Función para subir un archivo con progreso
     const handleUploadFileAction = async () => {
         const fileInput = document.createElement('input');
         fileInput.type = 'file';
+        fileInput.multiple = true; // Permitir seleccionar varios archivos
         fileInput.onchange = async () => {
-            if (fileInput.files && fileInput.files[0]) {
+            if (fileInput.files && fileInput.files.length > 0) {
+                const totalFiles = fileInput.files.length;
+                let completedFiles = 0;
+
+                // Iniciar progreso de subida
+                setUploadProgress({ total: totalFiles, completed: 0 });
+
                 try {
-                    const response = await uploadFile(fileInput.files[0], currentPath);
-                    showModal('Éxito', 'Archivo subido exitosamente.', 'success');
+                    for (const file of Array.from(fileInput.files)) {
+                        await uploadFile(file, currentPath); // Llamar a la función de subida para cada archivo
+                        completedFiles += 1;
+                        setUploadProgress({ total: totalFiles, completed: completedFiles });
+                    }
+                    showModal('Éxito', 'Archivos subidos exitosamente.', 'success');
                     fetchFilesTree(); // Refrescar el árbol
                 } catch (error: any) {
-                    if (error.response && error.response.status === 403) {
-                        showModal('Error', 'No tienes permiso para subir archivos.', 'error');
+                    // Verificar si el error es una respuesta de Laravel por límite de tamaño
+                    if (error.response?.data?.exception === "Illuminate\\Http\\Exceptions\\PostTooLargeException") {
+                        showModal('Error', 'Uno de los archivos supera el límite de 10MB.', 'error');
                     } else {
-                        showModal('Error', 'Error al subir el archivo.', 'error');
+                        showModal('Error', 'Error al subir uno o más archivos.', 'error');
                     }
-                    console.error(error);
+                } finally {
+                    setUploadProgress(null); // Finalizar el progreso de subida
                 }
             }
         };
         fileInput.click();
     };
+
 
     const handleDownloadAction = async () => {
         if (selectedItems.length > 0) {
@@ -522,6 +547,12 @@ const FileManager: React.FC = () => {
         if (selectedItems.length > 0) {
             const confirmDelete = window.confirm(`¿Estás seguro de que deseas eliminar ${selectedItems.length} elemento(s)?`);
             if (confirmDelete) {
+                const totalItems = selectedItems.length;
+                let completedItems = 0;
+
+                // Iniciar progreso de eliminación
+                setDeleteProgress({ total: totalItems, completed: 0 });
+
                 try {
                     for (const itemPath of selectedItems) {
                         const item = items.find((i) => i.path === itemPath);
@@ -531,18 +562,16 @@ const FileManager: React.FC = () => {
                             } else if (item.type === 'folder') {
                                 await deleteFolder(item.name, currentPath);
                             }
+                            completedItems += 1;
+                            setDeleteProgress({ total: totalItems, completed: completedItems });
                         }
                     }
                     showModal('Éxito', 'Elemento(s) eliminado(s) exitosamente.', 'success');
                     fetchFilesTree(); // Refrescar el árbol
-                    setSelectedItems([]); // Deseleccionar todos los elementos
-                } catch (error: any) {
-                    if (error.response && error.response.status === 403) {
-                        showModal('Error', 'No tienes permiso para eliminar uno o más elementos.', 'error');
-                    } else {
-                        showModal('Error', 'Error al eliminar uno o más elementos.', 'error');
-                    }
-                    console.error(error);
+                } catch (error) {
+                    showModal('Error', 'Error al eliminar uno o más elementos.', 'error');
+                } finally {
+                    setDeleteProgress(null); // Finalizar el progreso de eliminación
                 }
             }
         }
@@ -821,6 +850,40 @@ const FileManager: React.FC = () => {
                     selectedItemsCount={selectedItems.length} // Pasar el conteo de elementos seleccionados
                 />
 
+                {/* Modal de progreso de subida */}
+                {uploadProgress && (
+                    <Modal
+                        isOpen={true}
+                        title="Subiendo Archivos"
+                        onClose={() => { /* No permitir cerrar */ }}
+                        canClose={false}
+                    >
+                        <div className="flex flex-col items-center space-y-4">
+                            <span className="loading loading-spinner loading-lg text-primary"></span>
+                            <p>
+                                Subiendo {uploadProgress.completed} de {uploadProgress.total} archivos.
+                            </p>
+                        </div>
+                    </Modal>
+                )}
+
+                {/* Modal de progreso de eliminación */}
+                {deleteProgress && (
+                    <Modal
+                        isOpen={true}
+                        title="Eliminando Archivos"
+                        onClose={() => { /* No permitir cerrar */ }}
+                        canClose={false}
+                    >
+                        <div className="flex flex-col items-center space-y-4">
+                            <span className="loading loading-spinner loading-lg text-primary"></span>
+                            <p>
+                                Eliminando {deleteProgress.completed} de {deleteProgress.total} archivos.
+                            </p>
+                        </div>
+                    </Modal>
+                )}
+
 
                 {/* Modal para crear una nueva carpeta */}
                 <Modal
@@ -951,7 +1014,7 @@ const FileManager: React.FC = () => {
                         </p>
                     </div>
                 </Modal>
-            )}
+    )}
         </>
     );
 
