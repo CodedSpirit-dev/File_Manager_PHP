@@ -5,10 +5,11 @@ import {
     FcPlus,
     FcSettings,
 } from "react-icons/fc";
-import { TbCopy, TbCursorText, TbFolderPlus, TbFolderUp } from "react-icons/tb";
+import { TbCopy, TbFolderPlus, TbFolderUp } from "react-icons/tb";
 import { BsFileEarmarkArrowDown, BsFileEarmarkArrowUp, BsSortAlphaDown, BsSortAlphaDownAlt } from "react-icons/bs";
 import { MdOutlineDeleteOutline, MdOutlineDriveFileMove } from "react-icons/md";
 import { IoClose, IoChevronBackOutline } from "react-icons/io5";
+import { Menu } from '@headlessui/react';
 import { usePermissions } from '@/contexts/PermissionsContext'; // Importar el hook de permisos
 
 interface SortPayload {
@@ -33,9 +34,9 @@ interface FileManagerToolbarProps {
     onMoveHere: () => void;
     onCancelMove: () => void;
     isMoving: boolean;
-    onBack: () => void; // Added onBack prop
-    canGoBack: boolean; // Added canGoBack prop
-    selectedItemsCount: number; // Añadir esta prop
+    onBack: () => void;
+    canGoBack: boolean;
+    selectedItemsCount: number;
 }
 
 const FileManagerToolbar: React.FC<FileManagerToolbarProps> = ({
@@ -59,7 +60,7 @@ const FileManagerToolbar: React.FC<FileManagerToolbarProps> = ({
                                                                    canGoBack,
                                                                    selectedItemsCount,
                                                                }) => {
-    const { hasPermission: checkPermission } = usePermissions(); // Obtener la función de verificación de permisos desde el contexto
+    const { hasPermission: checkPermission } = usePermissions();
 
     const [currentSortOrder, setCurrentSortOrder] = useState<'asc' | 'desc'>('asc');
 
@@ -69,7 +70,6 @@ const FileManagerToolbar: React.FC<FileManagerToolbarProps> = ({
         onSort({ criteria: 'name', order: newOrder });
     };
 
-    // Definir qué acciones están permitidas
     const canCreateFolder = checkPermission('can_create_folders');
     const canUploadFolder = checkPermission('can_upload_folders');
     const canUploadFile = checkPermission('can_upload_files_and_folders');
@@ -80,154 +80,176 @@ const FileManagerToolbar: React.FC<FileManagerToolbarProps> = ({
     const canMove = checkPermission('can_move_files');
     const canDelete = checkPermission('can_delete_files_and_folders');
 
-    const canSort = true; // Ordenar está disponible por defecto
-
-    const canCopyHere = checkPermission('can_copy_files'); // Permiso necesario para copiar aquí
-    const canMoveHere = checkPermission('can_move_files'); // Permiso necesario para mover aquí
+    const canSort = true;
 
     return (
-        <div className="flex flex-col sm:flex-row items-center justify-between p-4 bg-base-100 shadow-sm rounded-lg z-40">
-            {/* Botones Principales */}
-            <div className="flex flex-wrap items-center space-x-2">
-                {/* Volver Button */}
-                {canGoBack && (
-                    <button
-                        onClick={onBack}
-                        className="btn btn-outline flex items-center space-x-2 hover:text-primary-content"
-                        aria-label="Volver"
-                    >
-                        <IoChevronBackOutline className="w-5 h-5" />
-                        <span className="hidden sm:inline">Volver</span>
-                    </button>
-                )}
-
-                {/* Crear Dropdown */}
-                {(canCreateFolder || canUploadFolder || canUploadFile) && (
-                    <div className="dropdown dropdown-bottom z-40">
+        <>
+            <div className="flex flex-col sm:flex-row items-center justify-between p-4 bg-base-100 shadow-sm rounded-lg z-40">
+                <div className="flex flex-wrap items-center space-x-2">
+                    {canGoBack && (
                         <button
-                            tabIndex={0}
+                            onClick={onBack}
                             className="btn btn-outline flex items-center space-x-2 hover:text-primary-content"
-                            aria-haspopup="true"
-                            aria-expanded="false"
-                            aria-label="Crear"
+                            aria-label="Volver"
                         >
-                            <FcPlus className="w-5 h-5" />
-                            <span className="hidden sm:inline">Crear</span>
+                            <IoChevronBackOutline className="w-5 h-5" />
+                            <span className="hidden sm:inline">Volver</span>
                         </button>
-                        <ul
-                            tabIndex={0}
-                            className="dropdown-content menu p-2 shadow bg-base-100 rounded-box w-52 z-40"
-                            aria-label="Opciones de Crear"
-                        >
-                            {canCreateFolder && (
-                                <li>
-                                    <button onClick={onCreateFolder} className="flex items-center space-x-2 w-full text-left">
-                                        <TbFolderPlus className="w-5 h-5" />
-                                        <span>Crear carpeta</span>
-                                    </button>
-                                </li>
-                            )}
-                            {canUploadFolder && (
-                                <li>
-                                    <button onClick={onUploadFolder} className="flex items-center space-x-2 w-full text-left">
-                                        <TbFolderUp className="w-5 h-5" />
-                                        <span>Subir carpeta</span>
-                                    </button>
-                                </li>
-                            )}
-                            {canUploadFile && (
-                                <li>
-                                    <button onClick={onUploadFile} className="flex items-center space-x-2 w-full text-left">
-                                        <BsFileEarmarkArrowUp className="w-5 h-5" />
-                                        <span>Subir archivo</span>
-                                    </button>
-                                </li>
-                            )}
-                        </ul>
-                    </div>
-                )}
+                    )}
 
-                {/* Acciones Dropdown */}
-                {(canDownload || canCopy || canRename || canMove || canDelete) && (
-                    <div className="dropdown dropdown-end z-40">
+                    {(canCreateFolder || canUploadFolder || canUploadFile) && (
+                        <Menu as="div" className="relative inline-block text-left">
+                            <div>
+                                <Menu.Button className="btn btn-outline flex items-center space-x-2 hover:text-primary-content">
+                                    <FcPlus className="w-5 h-5" />
+                                    <span className="hidden sm:inline">Crear</span>
+                                </Menu.Button>
+                            </div>
+
+                            <Menu.Items className="absolute left-0 mt-2 w-56 origin-top-left bg-base-100 border border-gray-200 divide-y divide-gray-100 rounded-md shadow-lg focus:outline-none z-50">
+                                <div className="py-1">
+                                    {canCreateFolder && (
+                                        <Menu.Item>
+                                            {({ active }) => (
+                                                <button
+                                                    onClick={onCreateFolder}
+                                                    className={`${active ? 'bg-blue-500 text-white' : 'text-gray-900'} group flex rounded-md items-center w-full px-2 py-2 text-sm`}
+                                                >
+                                                    <TbFolderPlus className="w-5 h-5 mr-2" />
+                                                    Crear carpeta
+                                                </button>
+                                            )}
+                                        </Menu.Item>
+                                    )}
+                                    {canUploadFolder && (
+                                        <Menu.Item>
+                                            {({ active }) => (
+                                                <button
+                                                    onClick={onUploadFolder}
+                                                    className={`${active ? 'bg-blue-500 text-white' : 'text-gray-900'} group flex rounded-md items-center w-full px-2 py-2 text-sm`}
+                                                >
+                                                    <TbFolderUp className="w-5 h-5 mr-2" />
+                                                    Subir carpeta
+                                                </button>
+                                            )}
+                                        </Menu.Item>
+                                    )}
+                                    {canUploadFile && (
+                                        <Menu.Item>
+                                            {({ active }) => (
+                                                <button
+                                                    onClick={onUploadFile}
+                                                    className={`${active ? 'bg-blue-500 text-white' : 'text-gray-900'} group flex rounded-md items-center w-full px-2 py-2 text-sm`}
+                                                >
+                                                    <BsFileEarmarkArrowUp className="w-5 h-5 mr-2" />
+                                                    Subir archivo
+                                                </button>
+                                            )}
+                                        </Menu.Item>
+                                    )}
+                                </div>
+                            </Menu.Items>
+                        </Menu>
+                    )}
+
+                    {(canDownload || canCopy || canRename || canMove || canDelete) && (
+                        <Menu as="div" className="relative inline-block text-left">
+                            <div>
+                                <Menu.Button
+                                    className={`btn btn-outline flex items-center space-x-2 hover:text-primary-content ${selectedItemsCount === 0 ? 'btn-disabled' : ''}`}
+                                    disabled={selectedItemsCount === 0}
+                                    aria-label="Acciones"
+                                >
+                                    <FcSettings className="w-5 h-5" />
+                                    <span className="hidden sm:inline">Acciones</span>
+                                </Menu.Button>
+                            </div>
+
+                            <Menu.Items className="absolute right-0 mt-2 w-56 origin-top-right bg-base-100 border border-gray-200 divide-y divide-gray-100 rounded-md shadow-lg focus:outline-none z-50">
+                                <div className="py-1">
+                                    {canDownload && (
+                                        <Menu.Item>
+                                            {({ active }) => (
+                                                <button
+                                                    onClick={onDownloadFile}
+                                                    className={`${active ? 'bg-blue-500 text-white' : 'text-gray-900'} group flex rounded-md items-center w-full px-2 py-2 text-sm`}
+                                                >
+                                                    <BsFileEarmarkArrowDown className="w-5 h-5 mr-2" />
+                                                    Descargar
+                                                </button>
+                                            )}
+                                        </Menu.Item>
+                                    )}
+                                    {canCopy && (
+                                        <Menu.Item>
+                                            {({ active }) => (
+                                                <button
+                                                    onClick={onCopy}
+                                                    className={`${active ? 'bg-blue-500 text-white' : 'text-gray-900'} group flex rounded-md items-center w-full px-2 py-2 text-sm`}
+                                                >
+                                                    <TbCopy className="w-5 h-5 mr-2" />
+                                                    Copiar
+                                                </button>
+                                            )}
+                                        </Menu.Item>
+                                    )}
+                                    {canMove && (
+                                        <Menu.Item>
+                                            {({ active }) => (
+                                                <button
+                                                    onClick={onMove}
+                                                    className={`${active ? 'bg-blue-500 text-white' : 'text-gray-900'} group flex rounded-md items-center w-full px-2 py-2 text-sm`}
+                                                >
+                                                    <MdOutlineDriveFileMove className="w-5 h-5 mr-2" />
+                                                    Mover
+                                                </button>
+                                            )}
+                                        </Menu.Item>
+                                    )}
+                                    {canDelete && (
+                                        <Menu.Item>
+                                            {({ active }) => (
+                                                <button
+                                                    onClick={onDelete}
+                                                    className={`${active ? 'bg-blue-500 text-white' : 'text-gray-900'} group flex rounded-md items-center w-full px-2 py-2 text-sm`}
+                                                >
+                                                    <MdOutlineDeleteOutline className="w-5 h-5 mr-2" />
+                                                    Eliminar
+                                                </button>
+                                            )}
+                                        </Menu.Item>
+                                    )}
+                                </div>
+                            </Menu.Items>
+                        </Menu>
+                    )}
+
+                    {canSort && (
                         <button
-                            tabIndex={0}
-                            className={`btn btn-outline flex items-center space-x-2 hover:text-primary-content ${selectedItemsCount === 0 ? 'btn-disabled' : ''}`}
-                            disabled={selectedItemsCount === 0}
-                            aria-haspopup="true"
-                            aria-expanded="false"
-                            aria-label="Acciones"
+                            onClick={handleSortToggle}
+                            className="btn btn-outline flex items-center space-x-2 hover:text-primary-content ml-2"
+                            aria-label="Ordenar por nombre"
                         >
-                            <FcSettings className="w-5 h-5" />
-                            <span className="hidden sm:inline">Acciones</span>
+                            {currentSortOrder === 'asc' ? (
+                                <>
+                                    <BsSortAlphaDown className="w-5 h-5" />
+                                    <span className="hidden sm:inline">Ordenar A-Z</span>
+                                </>
+                            ) : (
+                                <>
+                                    <BsSortAlphaDownAlt className="w-5 h-5" />
+                                    <span className="hidden sm:inline">Ordenar Z-A</span>
+                                </>
+                            )}
                         </button>
-                        <ul
-                            tabIndex={0}
-                            className="dropdown-content menu p-2 shadow bg-base-100 rounded-box w-52 z-40"
-                            aria-label="Opciones de Acciones"
-                        >
-                            {canDownload && (
-                                <li>
-                                    <button onClick={onDownloadFile} className="flex items-center space-x-2 w-full text-left">
-                                        <BsFileEarmarkArrowDown className="w-5 h-5" />
-                                        <span>Descargar</span>
-                                    </button>
-                                </li>
-                            )}
-                            {canCopy && (
-                                <li>
-                                    <button onClick={onCopy} className="flex items-center space-x-2 w-full text-left">
-                                        <TbCopy className="w-5 h-5" />
-                                        <span>Copiar</span>
-                                    </button>
-                                </li>
-                            )}
-                            {canMove && (
-                                <li>
-                                    <button onClick={onMove} className="flex items-center space-x-2 w-full text-left">
-                                        <MdOutlineDriveFileMove className="w-5 h-5" />
-                                        <span>Mover</span>
-                                    </button>
-                                </li>
-                            )}
-                            {canDelete && (
-                                <li>
-                                    <button onClick={onDelete} className="flex items-center space-x-2 w-full text-left">
-                                        <MdOutlineDeleteOutline className="w-5 h-5" />
-                                        <span>Eliminar</span>
-                                    </button>
-                                </li>
-                            )}
-                        </ul>
-                    </div>
-                )}
-
-                {/* Ordenar Botón */}
-                {canSort && (
-                    <button
-                        onClick={handleSortToggle}
-                        className="btn btn-outline flex items-center space-x-2 hover:text-primary-content ml-2"
-                        aria-label="Ordenar por nombre"
-                    >
-                        {currentSortOrder === 'asc' ? (
-                            <>
-                                <BsSortAlphaDown className="w-5 h-5" />
-                                <span className="hidden sm:inline">Ordenar A-Z</span>
-                            </>
-                        ) : (
-                            <>
-                                <BsSortAlphaDownAlt className="w-5 h-5" />
-                                <span className="hidden sm:inline">Ordenar Z-A</span>
-                            </>
-                        )}
-                    </button>
-                )}
+                    )}
+                </div>
             </div>
 
-            {/* Acciones de Copiar/Mover Aquí */}
+            {/* Contenedor Flotante para Acciones de Copiar/Mover */}
             {(isCopying || isMoving) && (
-                <div className="flex items-center space-x-4 mt-4 sm:mt-0">
-                    {isCopying && canCopyHere && (
+                <div className="fixed bottom-0 left-0 right-0 p-4 text-white flex justify-center items-center space-x-4 z-50">
+                    {isCopying && (
                         <>
                             <button
                                 className="btn btn-primary flex items-center space-x-2"
@@ -247,7 +269,7 @@ const FileManagerToolbar: React.FC<FileManagerToolbarProps> = ({
                             </button>
                         </>
                     )}
-                    {isMoving && canMoveHere && (
+                    {isMoving && (
                         <>
                             <button
                                 className="btn btn-primary flex items-center space-x-2"
@@ -269,8 +291,8 @@ const FileManagerToolbar: React.FC<FileManagerToolbarProps> = ({
                     )}
                 </div>
             )}
-        </div>
+        </>
     );
-}
+};
 
 export default FileManagerToolbar;

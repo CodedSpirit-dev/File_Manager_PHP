@@ -39,6 +39,9 @@ Route::prefix('filemanager')->name('filemanager.')->middleware('auth:employee')-
     // Ruta para copiar archivos
     Route::post('/files/copy-file', [FileManagerController::class, 'copyFile'])->name('files.copyFile');
 
+    // Ruta para copiar archivos
+    Route::post('/files/copy-files', [FileManagerController::class, 'copyFiles'])->name('files.copyFiles');
+
     // Ruta para mover archivos
     Route::post('/files/move-file', [FileManagerController::class, 'moveFile'])->name('files.moveFile');
 

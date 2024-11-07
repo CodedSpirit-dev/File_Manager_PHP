@@ -1,16 +1,17 @@
 // src/components/FileManager/Components/Modal.tsx
 
 import React from 'react';
-import { IoClose } from 'react-icons/io5';
+import {IoClose} from 'react-icons/io5';
 
 interface ModalProps {
-    isOpen: boolean;
-    title: string;
-    children: React.ReactNode;
-    onClose: () => void;
+    isOpen: boolean,
+    title: string,
+    children: React.ReactNode,
+    onClose: () => void,
+    canClose?: boolean
 }
 
-const Modal: React.FC<ModalProps> = ({ isOpen, title, children, onClose }) => {
+const Modal: React.FC<ModalProps> = ({isOpen, title, children, onClose, canClose}) => {
     if (!isOpen) return null;
 
     return (
@@ -26,7 +27,7 @@ const Modal: React.FC<ModalProps> = ({ isOpen, title, children, onClose }) => {
                         className="text-gray-500 hover:text-gray-700 focus:outline-none"
                         aria-label="Cerrar modal"
                     >
-                        <IoClose size={24} />
+                        <IoClose size={24}/>
                     </button>
                 </div>
 

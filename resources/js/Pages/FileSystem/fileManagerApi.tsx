@@ -214,6 +214,21 @@ export const copyFile = async (filename: string, sourcePath: string, targetPath:
     }
 };
 
+export const copyFiles = async (filenames: string[], sourcePath: string, targetPath: string): Promise<any> => {
+    try {
+        const response = await axios.post(`${FILEMANAGER_PREFIX}/files/copy-files`, {
+            filenames,
+            source_path: sourcePath,
+            target_path: targetPath
+        });
+        return response.data;
+    } catch (error) {
+        console.error('Error al copiar archivos:', error);
+        throw error;
+    }
+};
+
+
 /**
  * Mover un archivo a otra carpeta.
  * @param {string} filename - Nombre del archivo a mover.

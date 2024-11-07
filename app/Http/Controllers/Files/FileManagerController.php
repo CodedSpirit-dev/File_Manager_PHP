@@ -551,6 +551,59 @@ class FileManagerController extends Controller
         return response()->json(['message' => 'Archivo copiado exitosamente.', 'path' => $targetFilePath]);
     }
 
+    public function copyFiles(Request $request)
+    {
+        $employee = Auth::guard('employee')->user();
+
+        if (!$employee->hasPermission('can_copy_files')) {
+            return response()->json(['error' => 'No tienes permiso para copiar archivos.'], 403);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'filenames' => 'required|array',
+            'filenames.*' => 'required|string',
+            'source_path' => 'required|string',
+            'target_path' => 'required|string',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        $filenames = $request->input('filenames');
+        $sourcePath = $this->normalizePath($request->input('source_path'));
+        $targetPath = $this->normalizePath($request->input('target_path'));
+
+        if (!$this->isValidPath($sourcePath) || !$this->isValidPath($targetPath)) {
+            return response()->json(['error' => 'Ruta inválida.'], 400);
+        }
+
+        $errors = [];
+        foreach ($filenames as $filename) {
+            $sourceFilePath = "$sourcePath/$filename";
+            $targetFilePath = "$targetPath/$filename";
+
+            if (!Storage::disk('local')->exists($sourceFilePath)) {
+                $errors[] = "El archivo original $filename no existe.";
+                continue;
+            }
+
+            if (Storage::disk('local')->exists($targetFilePath)) {
+                $errors[] = "Ya existe un archivo con el mismo nombre $filename en la carpeta de destino.";
+                continue;
+            }
+
+            Storage::disk('local')->copy($sourceFilePath, $targetFilePath);
+        }
+
+        if (!empty($errors)) {
+            return response()->json(['errors' => $errors], 400);
+        }
+
+        return response()->json(['message' => 'Archivos copiados exitosamente.']);
+    }
+
+
     /**
      * Mueve un archivo a otra carpeta.
      */

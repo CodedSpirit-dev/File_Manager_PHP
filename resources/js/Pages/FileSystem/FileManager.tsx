@@ -67,7 +67,7 @@ import {
     renameFile,
     copyFile,
     moveFile,
-    downloadFolder,
+    downloadFolder, copyFiles,
 } from './fileManagerApi';
 import { usePage } from '@inertiajs/react';
 import Breadcrumb from "@/Pages/FileSystem/Components/Breadcrumb";
@@ -132,6 +132,13 @@ const FileManager: React.FC = () => {
     const [renameModalOpen, setRenameModalOpen] = useState<boolean>(false);
     const [renameNewName, setRenameNewName] = useState<string>(''); // Solo el nombre
     const [renameIsFile, setRenameIsFile] = useState<boolean>(true); // Indica si el elemento es un archivo
+
+    // Estado para el progreso de la operación
+    const [operationProgress, setOperationProgress] = useState<{
+        type: 'copy' | 'move' | null;
+        total: number;
+        completed: number;
+    } | null>(null);
 
     useEffect(() => {
         const initializeData = async () => {
@@ -348,22 +355,22 @@ const FileManager: React.FC = () => {
     };
 
     // Manejar la selección de un elemento con soporte para selección múltiple
-    const handleSelectItem = (itemName: string, event: React.MouseEvent) => {
+    const handleSelectItem = (itemPath: string, event: React.MouseEvent) => {
         if (event.ctrlKey || event.metaKey) {
             // Selección múltiple con Ctrl/Cmd
             setSelectedItems((prevSelected) => {
-                if (prevSelected.includes(itemName)) {
+                if (prevSelected.includes(itemPath)) {
                     // Si ya está seleccionado, lo deselecciona
-                    return prevSelected.filter(name => name !== itemName);
+                    return prevSelected.filter(name => name !== itemPath);
                 } else {
                     // Si no está seleccionado, lo añade
-                    return [...prevSelected, itemName];
+                    return [...prevSelected, itemPath];
                 }
             });
         } else {
             // Selección única sin Ctrl/Cmd
             setSelectedItems((prevSelected) =>
-                prevSelected.includes(itemName) && prevSelected.length === 1 ? [] : [itemName]
+                prevSelected.includes(itemPath) && prevSelected.length === 1 ? [] : [itemPath]
             );
         }
     };
@@ -473,8 +480,8 @@ const FileManager: React.FC = () => {
     const handleDownloadAction = async () => {
         if (selectedItems.length > 0) {
             try {
-                for (const itemName of selectedItems) {
-                    const item = items.find((i) => i.name === itemName);
+                for (const itemPath of selectedItems) {
+                    const item = items.find((i) => i.path === itemPath);
                     if (item) {
                         if (item.type === 'file') {
                             const blob = await downloadFile(item.name, currentPath);
@@ -516,8 +523,8 @@ const FileManager: React.FC = () => {
             const confirmDelete = window.confirm(`¿Estás seguro de que deseas eliminar ${selectedItems.length} elemento(s)?`);
             if (confirmDelete) {
                 try {
-                    for (const itemName of selectedItems) {
-                        const item = items.find((i) => i.name === itemName);
+                    for (const itemPath of selectedItems) {
+                        const item = items.find((i) => i.path === itemPath);
                         if (item) {
                             if (item.type === 'file') {
                                 await deleteFile(item.name, currentPath);
@@ -543,27 +550,34 @@ const FileManager: React.FC = () => {
 
     const handleCopy = async () => {
         if (selectedItems.length > 0) {
-            // Solo permitir copiar archivos por ahora
-            const allFiles = selectedItems.every(itemName => {
-                const item = items.find(i => i.name === itemName);
-                return item && item.type === 'file';
-            });
-
-            if (allFiles) {
-                setCopySource({ filenames: selectedItems, path: currentPath });
-                setIsCopying(true);
-            } else {
-                showModal('Error', 'Solo se pueden copiar archivos.', 'error');
-            }
+            // Permitir copiar archivos y carpetas
+            setCopySource({ filenames: selectedItems, path: currentPath });
+            setIsCopying(true);
         }
     };
 
     const handleConfirmCopy = async () => {
         if (copySource) {
+            const { filenames, path } = copySource;
+            const totalFiles = filenames.length;
+            let completedFiles = 0;
+
+            // Iniciar el seguimiento del progreso
+            setOperationProgress({
+                type: 'copy',
+                total: totalFiles,
+                completed: completedFiles,
+            });
+
             try {
-                for (const filename of copySource.filenames) {
-                    await copyFile(filename, copySource.path, currentPath);
-                }
+                await copyFiles(filenames.map(filePath => filePath.split('/').pop() || filePath), path, currentPath);
+                completedFiles = totalFiles;
+                setOperationProgress({
+                    type: 'copy',
+                    total: totalFiles,
+                    completed: completedFiles,
+                });
+
                 showModal('Éxito', 'Archivo(s) copiado(s) exitosamente.', 'success');
                 fetchFilesTree(); // Refrescar el árbol
                 setIsCopying(false);
@@ -572,13 +586,19 @@ const FileManager: React.FC = () => {
             } catch (error: any) {
                 if (error.response && error.response.status === 403) {
                     showModal('Error', 'No tienes permiso para copiar uno o más archivos.', 'error');
+                } else if (error.response && error.response.data.errors) {
+                    showModal('Error', error.response.data.errors.join(' '), 'error');
                 } else {
                     showModal('Error', 'Error al copiar uno o más archivos.', 'error');
                 }
                 console.error(error);
+            } finally {
+                // Finalizar el seguimiento del progreso
+                setOperationProgress(null);
             }
         }
     };
+
 
     const handleCancelCopy = () => {
         setIsCopying(false);
@@ -587,27 +607,42 @@ const FileManager: React.FC = () => {
 
     const handleMove = async () => {
         if (selectedItems.length > 0) {
-            // Solo permitir mover archivos por ahora
-            const allFiles = selectedItems.every(itemName => {
-                const item = items.find(i => i.name === itemName);
-                return item && item.type === 'file';
-            });
-
-            if (allFiles) {
-                setMoveSource({ filenames: selectedItems, path: currentPath });
-                setIsMoving(true);
-            } else {
-                showModal('Error', 'Solo se pueden mover archivos.', 'error');
-            }
+            setMoveSource({ filenames: selectedItems, path: currentPath });
+            setIsMoving(true);
         }
     };
 
     const handleConfirmMove = async () => {
         if (moveSource) {
+            const { filenames, path } = moveSource;
+            const totalFiles = filenames.length;
+            let completedFiles = 0;
+
+            // Iniciar el seguimiento del progreso
+            setOperationProgress({
+                type: 'move',
+                total: totalFiles,
+                completed: completedFiles,
+            });
+
             try {
-                for (const filename of moveSource.filenames) {
-                    await moveFile(filename, moveSource.path, currentPath);
-                }
+                // Crear un array de promesas
+                const movePromises = filenames.map(async (filePath) => {
+                    const filename = filePath.split('/').pop(); // Extraer solo el nombre del archivo
+                    if (filename) {
+                        await moveFile(filename, path, currentPath);
+                        completedFiles += 1;
+                        setOperationProgress({
+                            type: 'move',
+                            total: totalFiles,
+                            completed: completedFiles,
+                        });
+                    }
+                });
+
+                // Ejecutar todas las promesas de movimiento en paralelo
+                await Promise.all(movePromises);
+
                 showModal('Éxito', 'Archivo(s) movido(s) exitosamente.', 'success');
                 fetchFilesTree(); // Refrescar el árbol
                 setIsMoving(false);
@@ -620,6 +655,9 @@ const FileManager: React.FC = () => {
                     showModal('Error', 'Error al mover uno o más archivos.', 'error');
                 }
                 console.error(error);
+            } finally {
+                // Finalizar el seguimiento del progreso
+                setOperationProgress(null);
             }
         }
     };
@@ -631,8 +669,8 @@ const FileManager: React.FC = () => {
 
     const handleRename = () => {
         if (selectedItems.length === 1) { // Solo permitir renombrar si hay un elemento seleccionado
-            const selectedItemName = selectedItems[0];
-            const item = items.find((i) => i.name === selectedItemName);
+            const selectedItemPath = selectedItems[0];
+            const item = items.find((i) => i.path === selectedItemPath);
             if (item) {
                 const currentName = item.type === 'file'
                     ? item.name.slice(0, item.name.lastIndexOf('.')) || item.name
@@ -659,7 +697,7 @@ const FileManager: React.FC = () => {
         // Obtener la extensión original si es un archivo
         let newFilename = renameNewName;
         if (renameIsFile) {
-            const item = items.find((i) => i.name === selectedItems[0]);
+            const item = items.find((i) => i.path === selectedItems[0]);
             if (item) {
                 const extensionIndex = item.name.lastIndexOf('.');
                 const extension = extensionIndex !== -1 ? item.name.slice(extensionIndex) : '';
@@ -861,11 +899,11 @@ const FileManager: React.FC = () => {
                         <ul className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-4">
                             {items.map((item) => (
                                 <li
-                                    key={item.id}
+                                    key={item.path} // Usa path único
                                     className={`p-4 border rounded-lg cursor-pointer flex flex-col items-center relative ${
-                                        selectedItems.includes(item.name) ? 'bg-blue-100' : 'bg-white'
+                                        selectedItems.includes(item.path) ? 'bg-blue-100' : 'bg-white'
                                     } hover:bg-gray-200 transition-colors duration-200`}
-                                    onClick={(e) => handleSelectItem(item.name, e)}
+                                    onClick={(e) => handleSelectItem(item.path, e)}
                                     onDoubleClick={() => handleDoubleClickItem(item)}
                                 >
                                     <span className="text-4xl">
@@ -874,7 +912,7 @@ const FileManager: React.FC = () => {
                                     <span className="mt-2 text-center truncate w-full">{item.name}</span>
 
                                     {/* Indicador de Selección */}
-                                    {selectedItems.includes(item.name) && (
+                                    {selectedItems.includes(item.path) && (
                                         <span className="absolute top-2 right-2 bg-blue-500 text-white rounded-full w-5 h-5 flex items-center justify-center">
                                             ✓
                                         </span>
@@ -897,6 +935,23 @@ const FileManager: React.FC = () => {
                     <button className="btn" onClick={() => setModalOpen(false)}>Aceptar</button>
                 </div>
             </Modal>
+
+            {/* Modal de Progreso (Copiar/Moviendo) */}
+            {operationProgress && (
+                <Modal
+                    isOpen={true}
+                    title={operationProgress.type === 'copy' ? 'Copiando Archivos' : 'Moviendo Archivos'}
+                    onClose={() => { /* No permitir cerrar */ }}
+                    canClose={false} // No permitir cerrar durante la operación
+                >
+                    <div className="flex flex-col items-center space-y-4">
+                        <span className="loading loading-spinner loading-lg text-primary"></span>
+                        <p>
+                            {operationProgress.type === 'copy' ? 'Copiando' : 'Moviendo'} {operationProgress.completed} de {operationProgress.total} archivos.
+                        </p>
+                    </div>
+                </Modal>
+            )}
         </>
     );
 
