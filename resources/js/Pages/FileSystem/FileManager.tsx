@@ -86,10 +86,10 @@ interface Item {
     type: 'file' | 'folder';
     date: Date;
     path: string;
+    children?: Item[];
 }
-
 interface SortPayload {
-    criteria: 'name';
+    criteria: 'name' | 'type';
     order: 'asc' | 'desc';
 }
 
@@ -97,7 +97,6 @@ const FileManager: React.FC = () => {
     const { auth } = usePage().props as any;
     const userPermissions: string[] = auth.user?.permissions || [];
 
-    // Estado para múltiples selecciones
     const [selectedItems, setSelectedItems] = useState<string[]>([]);
 
     const [items, setItems] = useState<Item[]>([]);
@@ -110,9 +109,8 @@ const FileManager: React.FC = () => {
     const [isCreateFolderOpen, setIsCreateFolderOpen] = useState<boolean>(false);
     const [newFolderName, setNewFolderName] = useState<string>('');
     const [isFileViewerOpen, setIsFileViewerOpen] = useState<boolean>(false);
-    const [fileToView, setFileToView] = useState<{ url: string; type: 'pdf' | 'docx' | 'xlsx' } | null>(null);
-
-    const [loading, setLoading] = useState<boolean>(true); // Estado de carga
+    const [fileToView, setFileToView] = useState<{ url: string; type: 'pdf' | 'docx' | 'xlsx' | 'csv' | 'doc' | 'txt' } | null>(null);
+    const [loading, setLoading] = useState<boolean>(true);
 
     // Estados para manejar la acción de copiar
     const [isCopying, setIsCopying] = useState<boolean>(false);
@@ -196,7 +194,22 @@ const FileManager: React.FC = () => {
     const fetchFilesTree = async () => {
         try {
             const data = await getFilesTree();
-            setFileTree([{ name: 'public', path: 'public', type: 'folder', children: data }]);
+
+            // Función recursiva para ordenar el árbol de archivos alfabéticamente
+            const sortFileTree = (items: Item[]): Item[] => {
+                return items
+                    .sort((a, b) => a.name.localeCompare(b.name))
+                    .map(item => {
+                        if (item.type === 'folder' && item.children) {
+                            item.children = sortFileTree(item.children);
+                        }
+                        return item;
+                    });
+            };
+
+            const sortedData = sortFileTree(data);
+
+            setFileTree([{ name: 'public', path: 'public', type: 'folder', children: sortedData }]);
         } catch (error) {
             console.error('Error fetching files tree:', error);
             showModal('Error', 'Error al obtener el árbol de archivos.', 'error');
@@ -379,16 +392,18 @@ const FileManager: React.FC = () => {
         }
     };
 
-    // Manejar doble clic en elementos (carpetas o archivos)
+// Manejar doble clic en elementos (carpetas o archivos)
     const handleDoubleClickItem = (item: Item) => {
         if (item.type === 'folder') {
             setCurrentPath(item.path);
         } else {
             const extension = item.name.split('.').pop()?.toLowerCase();
-            if (extension === 'pdf' || extension === 'docx' || extension === 'xlsx') {
+            const supportedExtensions = ['pdf', 'docx', 'xlsx', 'xls', 'csv', 'txt', 'doc'];
+
+            if (extension && supportedExtensions.includes(extension)) {
                 setFileToView({
                     url: `/filemanager/files/view?filename=${encodeURIComponent(item.name)}&path=${encodeURIComponent(currentPath)}`,
-                    type: extension as 'pdf' | 'docx' | 'xlsx',
+                    type: extension as 'pdf' | 'docx' | 'xlsx' | 'doc' | 'xls' | 'txt' | 'csv',
                 });
                 setIsFileViewerOpen(true);
             } else {
@@ -396,6 +411,7 @@ const FileManager: React.FC = () => {
             }
         }
     };
+
 
     // Función auxiliar para mostrar el modal de estado
     const showModal = (title: string, message: string, type: 'success' | 'error') => {
@@ -423,7 +439,6 @@ const FileManager: React.FC = () => {
 
             // Refrescar el árbol completo
             fetchFilesTree();
-
             setNewFolderName('');
             setIsCreateFolderOpen(false);
         } catch (error: any) {
@@ -761,16 +776,39 @@ const FileManager: React.FC = () => {
 
     const handleSort = ({ criteria, order }: SortPayload) => {
         const sortedItems = [...items].sort((a, b) => {
-            let comparison = 0;
+            let compareA: string = '';
+            let compareB: string = '';
+
             if (criteria === 'name') {
-                comparison = a.name.localeCompare(b.name);
+                compareA = a.name.toLowerCase();
+                compareB = b.name.toLowerCase();
+            } else if (criteria === 'type') {
+                // Si es archivo, obtenemos la extensión; si es carpeta, asignamos un valor para que se ordene antes o después
+                const extA = a.type === 'file' ? a.name.split('.').pop()?.toLowerCase() || '' : '0';
+                const extB = b.type === 'file' ? b.name.split('.').pop()?.toLowerCase() || '' : '0';
+
+                compareA = extA;
+                compareB = extB;
+
+                // Opcional: Si quieres que las carpetas siempre aparezcan antes que los archivos
+                if (a.type === 'folder' && b.type !== 'folder') {
+                    return order === 'asc' ? -1 : 1;
+                } else if (a.type !== 'folder' && b.type === 'folder') {
+                    return order === 'asc' ? 1 : -1;
+                }
             }
 
-            return order === 'asc' ? comparison : -comparison;
+            if (order === 'asc') {
+                return compareA.localeCompare(compareB);
+            } else {
+                return compareB.localeCompare(compareA);
+            }
         });
 
         setItems(sortedItems);
     };
+
+
 
     // Manejar el evento de tecla ESC para cancelar la copia, mover y renombrar
     const handleKeyDown = useCallback((event: KeyboardEvent) => {

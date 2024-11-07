@@ -7,7 +7,7 @@ import FileViewer from './FileViewer';
 interface FileViewerModalProps {
     isOpen: boolean;
     fileUrl: string;
-    fileType: 'pdf' | 'docx' | 'xlsx';
+    fileType: 'pdf' | 'docx' | 'xlsx' | 'csv' | 'txt' | 'doc';
     onClose: () => void;
 }
 

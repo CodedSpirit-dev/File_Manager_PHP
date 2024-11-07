@@ -1,13 +1,13 @@
 import { EmployeePageProps } from '@/types';
 import { Button } from '@headlessui/react';
 import React, { useState } from 'react';
-import CreateEmployee from './Admin/CreateEmployee';
-import EmployeeList from './Admin/EmployeeList';
+import CreateEmployee from './Admin/Employee/CreateEmployee';
+import EmployeeList from './Admin/Employee/EmployeeList';
 import axios from 'axios';
 import Profile from './Profile/Profile';
 import { Head, usePage } from '@inertiajs/react';
-import CreateCompany from './Admin/CreateCompany';
-import CreatePosition from './Admin/CreatePosition';
+import CreateCompany from './Admin/Company/CreateCompany';
+import CreatePosition from './Admin/Position/CreatePosition';
 import FileManager from './FileSystem/FileManager';
 import AdminDropdown from '@/Components/AdminDropdown';
 import { PermissionsProvider, usePermissions } from '@/contexts/PermissionsContext';

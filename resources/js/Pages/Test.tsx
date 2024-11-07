@@ -16,6 +16,7 @@ export default function Test() {
     };
 
     return (
+        <>
             <section className="bg-white dark:bg-gray-800">
                 <div className="container px-6 py-8 mx-auto">
                     <h2 className="text-3xl font-semibold text-center text-gray-800 dark:text-white">
@@ -66,5 +67,12 @@ export default function Test() {
                     </form>
                 </div>
             </section>
+
+        <section>
+
+        </section>
+
+        </>
+
     );
 }

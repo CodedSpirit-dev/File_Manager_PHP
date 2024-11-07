@@ -13,7 +13,7 @@ pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/b
 
 interface FileViewerProps {
     fileUrl: string;
-    fileType: 'pdf' | 'docx' | 'xlsx';
+    fileType: 'pdf' | 'docx' | 'xlsx' | 'xls' | 'csv' | 'txt' | 'doc';
 }
 
 const FileViewer: React.FC<FileViewerProps> = ({ fileUrl, fileType }) => {
@@ -50,42 +50,60 @@ const FileViewer: React.FC<FileViewerProps> = ({ fileUrl, fileType }) => {
 
         const fetchFile = async () => {
             try {
-                const response = await axios.get(fileUrl, {
-                    responseType: 'arraybuffer',
-                });
-                const arrayBuffer = response.data;
-
-                if (fileType === 'docx') {
-                    mammoth.convertToHtml({ arrayBuffer })
-                        .then(result => {
-                            setDocContent(result.value);
-                            setLoading(false);
-                        })
-                        .catch(err => {
-                            console.error('Error al leer el archivo DOCX:', err);
-                            setError('No se pudo procesar el archivo DOCX.');
-                            setLoading(false);
-                        });
-                } else if (fileType === 'xlsx') {
-                    const workbook = SheetJS.read(arrayBuffer, { type: 'array' });
-                    const sheetName = workbook.SheetNames[0];
-                    const sheet = workbook.Sheets[sheetName];
-                    const data: any[] = SheetJS.utils.sheet_to_json(sheet, { header: 1 });
-
-                    // Estructurar datos con encabezados
-                    const headers = data[0] as string[];
-                    const rows = data.slice(1).map(row => {
-                        const rowData: { [key: string]: any } = {};
-                        headers.forEach((header, index) => {
-                            rowData[header || `Columna ${index + 1}`] = row[index];
-                        });
-                        return rowData;
+                if (fileType === 'txt') {
+                    // Manejo de archivos TXT
+                    const response = await axios.get(fileUrl, {
+                        responseType: 'text',
                     });
+                    setDocContent(response.data);
+                    setLoading(false);
+                } else {
+                    const response = await axios.get(fileUrl, {
+                        responseType: 'arraybuffer',
+                    });
+                    const arrayBuffer = response.data;
 
-                    setExcelContent(rows);
-                    setLoading(false);
-                } else if (fileType === 'pdf') {
-                    setLoading(false);
+                    if (fileType === 'docx') {
+                        mammoth.convertToHtml({ arrayBuffer })
+                            .then(result => {
+                                setDocContent(result.value);
+                                setLoading(false);
+                            })
+                            .catch(err => {
+                                console.error('Error al leer el archivo DOCX:', err);
+                                setError('No se pudo procesar el archivo DOCX.');
+                                setLoading(false);
+                            });
+                    } else if (fileType === 'xlsx' || fileType === 'xls' || fileType === 'csv') {
+                        try {
+                            const workbook = SheetJS.read(arrayBuffer, { type: 'array' });
+                            const sheetName = workbook.SheetNames[0];
+                            const sheet = workbook.Sheets[sheetName];
+                            const data: any[] = SheetJS.utils.sheet_to_json(sheet, { header: 1 });
+
+                            // Estructurar datos con encabezados
+                            const headers = data[0] as string[];
+                            const rows = data.slice(1).map(row => {
+                                const rowData: { [key: string]: any } = {};
+                                headers.forEach((header, index) => {
+                                    rowData[header || `Columna ${index + 1}`] = row[index];
+                                });
+                                return rowData;
+                            });
+
+                            setExcelContent(rows);
+                            setLoading(false);
+                        } catch (err) {
+                            console.error('Error al leer el archivo de Excel:', err);
+                            setError('No se pudo procesar el archivo de Excel.');
+                            setLoading(false);
+                        }
+                    } else if (fileType === 'pdf') {
+                        setLoading(false);
+                    } else {
+                        setError('Tipo de archivo no soportado.');
+                        setLoading(false);
+                    }
                 }
             } catch (error) {
                 console.error(`Error al cargar el archivo ${fileType}:`, error);
@@ -94,13 +112,7 @@ const FileViewer: React.FC<FileViewerProps> = ({ fileUrl, fileType }) => {
             }
         };
 
-        if (fileType === 'docx' || fileType === 'xlsx' || fileType === 'pdf') {
-            fetchFile();
-        } else {
-            console.error(`Unsupported file type: ${fileType}`);
-            setError('Tipo de archivo no soportado.');
-            setLoading(false);
-        }
+        fetchFile();
     }, [fileUrl, fileType]);
 
     const onDocumentLoadSuccess = ({ numPages }: { numPages: number }) => {
@@ -233,8 +245,8 @@ const FileViewer: React.FC<FileViewerProps> = ({ fileUrl, fileType }) => {
         );
     }
 
-    // Componente para renderizar archivos XLSX
-    if (fileType === 'xlsx') {
+    // Componente para renderizar archivos XLS, XLSX y CSV
+    if (fileType === 'xlsx' || fileType === 'xls' || fileType === 'csv') {
         return (
             <div className="file-viewer w-full h-full overflow-auto p-4 sm:p-6 md:p-8 lg:p-10 xl:p-12">
                 <div className="overflow-x-auto">
@@ -281,6 +293,17 @@ const FileViewer: React.FC<FileViewerProps> = ({ fileUrl, fileType }) => {
                     className="prose max-w-none"
                     dangerouslySetInnerHTML={{ __html: docContent || '' }}
                 />
+            </div>
+        );
+    }
+
+    // Componente para renderizar archivos TXT
+    if (fileType === 'txt') {
+        return (
+            <div className="file-viewer w-full h-full overflow-auto p-4 sm:p-6 md:p-8 lg:p-10 xl:p-12">
+                <pre className="whitespace-pre-wrap text-gray-800">
+                    {docContent}
+                </pre>
             </div>
         );
     }

@@ -1,19 +1,23 @@
-// src/components/FileManager/Components/Toolbar.tsx
-
 import React, { useState } from 'react';
 import {
     FcPlus,
     FcSettings,
 } from "react-icons/fc";
 import { TbCopy, TbFolderPlus, TbFolderUp } from "react-icons/tb";
-import { BsFileEarmarkArrowDown, BsFileEarmarkArrowUp, BsSortAlphaDown, BsSortAlphaDownAlt } from "react-icons/bs";
+import {
+    BsFileEarmarkArrowDown,
+    BsFileEarmarkArrowUp,
+    BsSortAlphaDown,
+    BsSortAlphaDownAlt
+} from "react-icons/bs";
 import { MdOutlineDeleteOutline, MdOutlineDriveFileMove } from "react-icons/md";
 import { IoClose, IoChevronBackOutline } from "react-icons/io5";
+import {BiExtension, BiSolidExtension} from 'react-icons/bi';
 import { Menu } from '@headlessui/react';
-import { usePermissions } from '@/contexts/PermissionsContext'; // Importar el hook de permisos
+import { usePermissions } from '@/contexts/PermissionsContext';
 
 interface SortPayload {
-    criteria: 'name';
+    criteria: 'name' | 'type';
     order: 'asc' | 'desc';
 }
 
@@ -62,13 +66,22 @@ const FileManagerToolbar: React.FC<FileManagerToolbarProps> = ({
                                                                }) => {
     const { hasPermission: checkPermission } = usePermissions();
 
-    const [currentSortOrder, setCurrentSortOrder] = useState<'asc' | 'desc'>('asc');
+    const [sortConfigIndex, setSortConfigIndex] = useState<number>(0);
+
+    const sortConfigs = [
+        { criteria: 'name' as 'name' | 'type', order: 'asc' as 'asc' | 'desc', icon: BsSortAlphaDown, label: 'Ordenar A-Z' },
+        { criteria: 'name' as 'name' | 'type', order: 'desc' as 'asc' | 'desc', icon: BsSortAlphaDownAlt, label: 'Ordenar Z-A' },
+        { criteria: 'type' as 'name' | 'type', order: 'asc' as 'asc' | 'desc', icon: BiExtension, label: 'Tipo A-Z' },
+        { criteria: 'type' as 'name' | 'type', order: 'desc' as 'asc' | 'desc', icon: BiSolidExtension, label: 'Tipo Z-A' },
+    ];
 
     const handleSortToggle = () => {
-        const newOrder = currentSortOrder === 'asc' ? 'desc' : 'asc';
-        setCurrentSortOrder(newOrder);
-        onSort({ criteria: 'name', order: newOrder });
+        const nextIndex = (sortConfigIndex + 1) % sortConfigs.length;
+        setSortConfigIndex(nextIndex);
+        const newSortConfig = sortConfigs[nextIndex];
+        onSort({ criteria: newSortConfig.criteria, order: newSortConfig.order });
     };
+
 
     const canCreateFolder = checkPermission('can_create_folders');
     const canUploadFolder = checkPermission('can_upload_folders');
@@ -228,21 +241,13 @@ const FileManagerToolbar: React.FC<FileManagerToolbarProps> = ({
                         <button
                             onClick={handleSortToggle}
                             className="btn btn-outline flex items-center space-x-2 hover:text-primary-content ml-2"
-                            aria-label="Ordenar por nombre"
+                            aria-label={`Ordenar por ${sortConfigs[sortConfigIndex].criteria}`}
                         >
-                            {currentSortOrder === 'asc' ? (
-                                <>
-                                    <BsSortAlphaDown className="w-5 h-5" />
-                                    <span className="hidden sm:inline">Ordenar A-Z</span>
-                                </>
-                            ) : (
-                                <>
-                                    <BsSortAlphaDownAlt className="w-5 h-5" />
-                                    <span className="hidden sm:inline">Ordenar Z-A</span>
-                                </>
-                            )}
+                            {React.createElement(sortConfigs[sortConfigIndex].icon, { className: 'w-5 h-5' })}
+                            <span className="hidden sm:inline">{sortConfigs[sortConfigIndex].label}</span>
                         </button>
                     )}
+
                 </div>
             </div>
 

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import EditEmployee from "@/Pages/Admin/EditEmployee";
+import EditEmployee from "@/Pages/Admin/Employee/EditEmployee";
 import { Company, Position, Employee } from "@/types";
 
 const EmployeeList: React.FC = (): React.ReactNode => {
