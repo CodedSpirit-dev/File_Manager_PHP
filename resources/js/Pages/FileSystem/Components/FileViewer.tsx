@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import * as XLSX from 'xlsx';
+import * as SheetJS from 'xlsx'; // Renombrar la importación a SheetJS
 import mammoth from 'mammoth';
 import axios from 'axios';
 import { Document, Page, pdfjs } from 'react-pdf';
@@ -8,7 +8,9 @@ import 'react-pdf/dist/Page/AnnotationLayer.css';
 import { FaArrowLeft, FaArrowRight } from 'react-icons/fa';
 import { ImZoomIn, ImZoomOut } from "react-icons/im";
 
+// Configuración correcta del worker de PDF.js
 pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.mjs`;
+
 interface FileViewerProps {
     fileUrl: string;
     fileType: 'pdf' | 'docx' | 'xlsx';
@@ -16,7 +18,7 @@ interface FileViewerProps {
 
 const FileViewer: React.FC<FileViewerProps> = ({ fileUrl, fileType }) => {
     const [docContent, setDocContent] = useState<string | null>(null);
-    const [excelContent, setExcelContent] = useState<any[][] | null>(null);
+    const [excelContent, setExcelContent] = useState<any[] | null>(null);
     const [loading, setLoading] = useState<boolean>(true);
     const [numPages, setNumPages] = useState<number | null>(null);
     const [currentPage, setCurrentPage] = useState<number>(1);
@@ -24,6 +26,9 @@ const FileViewer: React.FC<FileViewerProps> = ({ fileUrl, fileType }) => {
     const containerRef = useRef<HTMLDivElement | null>(null);
     const [pageWidth, setPageWidth] = useState<number>(600);
     const [error, setError] = useState<string | null>(null); // Estado para manejar errores
+
+    // Estado para ordenación de columnas en XLSX
+    const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'ascending' | 'descending' } | null>(null);
 
     useEffect(() => {
         const updatePageWidth = () => {
@@ -62,11 +67,22 @@ const FileViewer: React.FC<FileViewerProps> = ({ fileUrl, fileType }) => {
                             setLoading(false);
                         });
                 } else if (fileType === 'xlsx') {
-                    const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+                    const workbook = SheetJS.read(arrayBuffer, { type: 'array' });
                     const sheetName = workbook.SheetNames[0];
                     const sheet = workbook.Sheets[sheetName];
-                    const data = XLSX.utils.sheet_to_json(sheet, { header: 1 });
-                    setExcelContent(data as any[][]);
+                    const data: any[] = SheetJS.utils.sheet_to_json(sheet, { header: 1 });
+
+                    // Estructurar datos con encabezados
+                    const headers = data[0] as string[];
+                    const rows = data.slice(1).map(row => {
+                        const rowData: { [key: string]: any } = {};
+                        headers.forEach((header, index) => {
+                            rowData[header || `Columna ${index + 1}`] = row[index];
+                        });
+                        return rowData;
+                    });
+
+                    setExcelContent(rows);
                     setLoading(false);
                 } else if (fileType === 'pdf') {
                     setLoading(false);
@@ -107,8 +123,34 @@ const FileViewer: React.FC<FileViewerProps> = ({ fileUrl, fileType }) => {
     };
 
     const zoomOut = () => {
-        setScale((prevScale) => Math.max(prevScale - 0.15, 0.2)); // Zoom mínimo 0.5
+        setScale((prevScale) => Math.max(prevScale - 0.15, 0.2)); // Zoom mínimo 0.2
     };
+
+    // Función para manejar la ordenación de columnas
+    const handleSort = (key: string) => {
+        let direction: 'ascending' | 'descending' = 'ascending';
+        if (sortConfig && sortConfig.key === key && sortConfig.direction === 'ascending') {
+            direction = 'descending';
+        }
+        setSortConfig({ key, direction });
+    };
+
+    // Ordenar los datos según sortConfig
+    const sortedExcelContent = React.useMemo(() => {
+        if (sortConfig && excelContent) {
+            const sortedData = [...excelContent].sort((a, b) => {
+                if (a[sortConfig.key] < b[sortConfig.key]) {
+                    return sortConfig.direction === 'ascending' ? -1 : 1;
+                }
+                if (a[sortConfig.key] > b[sortConfig.key]) {
+                    return sortConfig.direction === 'ascending' ? 1 : -1;
+                }
+                return 0;
+            });
+            return sortedData;
+        }
+        return excelContent;
+    }, [excelContent, sortConfig]);
 
     if (loading) {
         return <div className="flex items-center justify-center h-full text-gray-500">Cargando...</div>;
@@ -146,7 +188,7 @@ const FileViewer: React.FC<FileViewerProps> = ({ fileUrl, fileType }) => {
                     <button
                         onClick={zoomOut}
                         className="flex items-center justify-center w-10 h-10 bg-transparent rounded-full hover:bg-gray-200 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                        disabled={scale <= 0.01}
+                        disabled={scale <= 0.2}
                         title="Zoom Out"
                         aria-label="Zoom Out"
                     >
@@ -191,38 +233,35 @@ const FileViewer: React.FC<FileViewerProps> = ({ fileUrl, fileType }) => {
         );
     }
 
-    // Manejo para docx y xlsx (similar a tu código actual)
-    if (fileType === 'docx') {
-        return (
-            <div className="file-viewer w-full h-full overflow-auto p-4 sm:p-6 md:p-8 lg:p-10 xl:p-12">
-                <div
-                    className="prose max-w-none"
-                    dangerouslySetInnerHTML={{ __html: docContent || '' }}
-                />
-            </div>
-        );
-    }
-
+    // Componente para renderizar archivos XLSX
     if (fileType === 'xlsx') {
         return (
-            <div className="file-viewer w-full h-full overflow-auto p-4">
+            <div className="file-viewer w-full h-full overflow-auto p-4 sm:p-6 md:p-8 lg:p-10 xl:p-12">
                 <div className="overflow-x-auto">
                     <table className="min-w-full border border-gray-300 text-sm sm:text-base table-auto">
                         <thead className="bg-gray-200 text-gray-700 font-semibold">
                         <tr>
-                            {excelContent && excelContent[0]?.map((header, index) => (
-                                <th key={index} className="px-4 py-2 border border-gray-300 text-left">
-                                    {header || "Columna " + (index + 1)}
+                            {excelContent && Object.keys(excelContent[0]).map((header, index) => (
+                                <th
+                                    key={index}
+                                    className="px-4 py-2 border border-gray-300 text-left cursor-pointer hover:bg-gray-300"
+                                    onClick={() => handleSort(header)}
+                                >
+                                    {header}
+                                    {/* Indicador de ordenación */}
+                                    {sortConfig?.key === header ? (
+                                        sortConfig.direction === 'ascending' ? ' ▲' : ' ▼'
+                                    ) : null}
                                 </th>
                             ))}
                         </tr>
                         </thead>
                         <tbody>
-                        {excelContent?.slice(1).map((row, rowIndex) => (
+                        {sortedExcelContent && sortedExcelContent.map((row, rowIndex) => (
                             <tr key={rowIndex} className={rowIndex % 2 === 0 ? 'bg-white' : 'bg-gray-100'}>
-                                {row.map((cell, cellIndex) => (
+                                {Object.values(row).map((cell, cellIndex) => (
                                     <td key={cellIndex} className="border border-gray-300 px-4 py-2 text-left whitespace-nowrap">
-                                        {cell}
+                                        {cell as React.ReactNode}
                                     </td>
                                 ))}
                             </tr>
@@ -230,6 +269,18 @@ const FileViewer: React.FC<FileViewerProps> = ({ fileUrl, fileType }) => {
                         </tbody>
                     </table>
                 </div>
+            </div>
+        );
+    }
+
+    // Componente para renderizar archivos DOCX
+    if (fileType === 'docx') {
+        return (
+            <div className="file-viewer w-full h-full overflow-auto p-4 sm:p-6 md:p-8 lg:p-10 xl:p-12">
+                <div
+                    className="prose max-w-none"
+                    dangerouslySetInnerHTML={{ __html: docContent || '' }}
+                />
             </div>
         );
     }
