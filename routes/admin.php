@@ -21,6 +21,8 @@ Route::middleware('auth:employee')->prefix('admin')->name('admin.')->group(funct
     Route::get('/companies/{id}/edit', [CompanyController::class, 'edit'])->name('companies.edit');
     Route::put('/companies/{id}', [CompanyController::class, 'update'])->name('companies.update');
     Route::delete('/companies/{id}', [CompanyController::class, 'destroy'])->name('companies.destroy');
+    Route::get('/companies/{id}/counts', [CompanyController::class, 'getCounts'])->name('companies.counts');
+
     // O puedes usar PATCH si prefieres actualizaciones parciales:
     // Route::patch('/companies/{id}', [CompanyController::class, 'update'])->name('companies.update');
 });

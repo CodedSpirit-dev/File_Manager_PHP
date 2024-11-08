@@ -52,12 +52,13 @@ class Company extends Model
     /**
      * Get the users associated with the company.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     * @return \Illuminate\Database\Eloquent\Relations\HasManyThrough
      */
     public function employees()
     {
-        return $this->hasMany(Employee::class, 'company_id', 'id');
+        return $this->hasManyThrough(Employee::class, Position::class, 'company_id', 'position_id', 'id', 'id');
     }
+
 
     /**
      * Get the positions associated with the company.
@@ -67,5 +68,17 @@ class Company extends Model
     public function positions()
     {
         return $this->hasMany(Position::class, 'company_id', 'id');
+    }
+
+    /**
+     * Cascade delete positions when a company is deleted.
+     *
+     * @return void
+     */
+    protected static function booted()
+    {
+        static::deleting(function ($company) {
+            $company->positions()->delete();
+        });
     }
 }

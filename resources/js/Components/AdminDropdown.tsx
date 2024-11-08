@@ -14,7 +14,7 @@ const AdminDropdown: React.FC<AdminDropdownProps> = ({ renderComponent }) => {
         'can_create_employees',
         'can_create_positions',
         'can_view_all_employees',
-        'can_view_company_employees', // Asegúrate de incluir todas las permissions usadas
+        'can_view_company_employees',
         'can_view_file_explorer',
     ];
 
@@ -44,20 +44,6 @@ const AdminDropdown: React.FC<AdminDropdownProps> = ({ renderComponent }) => {
                                     onClick={() => renderComponent('Profile')}
                                 >
                                     Perfil
-                                </button>
-                            )}
-                        </Menu.Item>
-                    )}
-                    {hasPermission('can_create_companies') && (
-                        <Menu.Item>
-                            {({ active }) => (
-                                <button
-                                    className={`${
-                                        active ? 'bg-blue-500 text-white' : 'text-gray-900'
-                                    } group flex rounded-md items-center w-full px-2 py-2 text-sm`}
-                                    onClick={() => renderComponent('CreateCompany')}
-                                >
-                                    Registrar nueva empresa
                                 </button>
                             )}
                         </Menu.Item>
@@ -104,6 +90,18 @@ const AdminDropdown: React.FC<AdminDropdownProps> = ({ renderComponent }) => {
                             )}
                         </Menu.Item>
                     )}
+                    <Menu.Item>
+                        {({ active }) => (
+                            <button
+                                className={`${
+                                    active ? 'bg-blue-500 text-white' : 'text-gray-900'
+                                } group flex rounded-md items-center w-full px-2 py-2 text-sm`}
+                                onClick={() => renderComponent('CompanyList')}
+                            >
+                                Empresas
+                            </button>
+                        )}
+                    </Menu.Item>
                 </div>
             </Menu.Items>
         </Menu>

@@ -14,13 +14,65 @@
         @apply min-h-screen bg-gray-100 text-gray-800;
     }
 
+    /* Título Principal (h1) */
+    h1 {
+        @apply text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold;
+    }
+
+    /* Subtítulo (h2) */
+    h2 {
+        @apply text-xl sm:text-2xl md:text-3xl lg:text-4xl font-semibold;
+    }
+
+    /* Tercer Nivel (h3) */
+    h3 {
+        @apply text-lg sm:text-xl md:text-2xl lg:text-3xl font-medium;
+    }
+
+    /* Cuarto Nivel (h4) */
+    h4 {
+        @apply text-base sm:text-lg md:text-xl lg:text-2xl font-medium;
+    }
+
+    /* Quinto Nivel (h5) */
+    h5 {
+        @apply text-sm sm:text-base md:text-lg lg:text-xl font-medium;
+    }
+
+    /* Sexto Nivel (h6) */
+    h6 {
+        @apply text-xs sm:text-sm md:text-base lg:text-lg font-medium;
+    }
+
+    /* Párrafo (p) */
+    p {
+        @apply text-sm sm:text-base md:text-lg lg:text-xl;
+    }
+
+    /* Texto pequeño (small) */
+    small {
+        @apply text-xs sm:text-sm md:text-base lg:text-lg;
+    }
+
     /* Botones Generales */
     .btn {
         @apply rounded-md hover:ring-2 transition duration-200;
     }
 
+    .btn-block_info {
+        @apply btn btn-info text-info-content rounded-md hover:ring-2 transition duration-200 block w-full;
+    }
+
     .btn-primary {
         @apply bg-blue-500 text-white hover:bg-blue-600;
+    }
+
+    .btn-accept {
+        @apply btn btn-info text-info-content rounded-md hover:ring-2 transition duration-200 btn-xs sm:btn-xs md:btn-sm lg:btn-md;
+    }
+
+    .btn-cancel {
+        @apply btn btn-error text-error-content rounded-md hover:ring-2 transition duration-200 btn-xs sm:btn-xs md:btn-sm lg:btn-md;
     }
 
     .btn-secondary {

@@ -11,7 +11,8 @@ import CreatePosition from './Admin/Position/CreatePosition';
 import FileManager from './FileSystem/FileManager';
 import AdminDropdown from '@/Components/AdminDropdown';
 import { PermissionsProvider, usePermissions } from '@/contexts/PermissionsContext';
-import { Menu } from '@headlessui/react'; // Importar Menu
+import { Menu } from '@headlessui/react';
+import CompanyList from "@/Pages/Admin/Company/CompanyList"; // Importar Menu
 
 const HomeContent: React.FC = () => {
     const { hasPermission } = usePermissions();
@@ -35,8 +36,8 @@ const HomeContent: React.FC = () => {
             case 'CreateEmployee':
                 setComponent(<CreateEmployee />);
                 break;
-            case 'CreateCompany':
-                setComponent(<CreateCompany />);
+            case 'CompanyList' :
+                setComponent(<CompanyList/>)
                 break;
             case 'CreatePosition':
                 setComponent(<CreatePosition />);
@@ -89,9 +90,9 @@ const HomeContent: React.FC = () => {
                                                     className={`${
                                                         active ? 'bg-blue-500 text-white' : 'text-gray-900'
                                                     } group flex rounded-md items-center w-full px-2 py-2 text-sm`}
-                                                    onClick={() => renderComponent('CreateCompany')}
+                                                    onClick={() => renderComponent('CompanyList')}
                                                 >
-                                                    Registrar nueva empresa
+                                                    Empresas
                                                 </button>
                                             )}
                                         </Menu.Item>

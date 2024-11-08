@@ -17,7 +17,7 @@ class CompanyController extends Controller
      */
     public function index()
     {
-        $companies = Company::orderBy("name", "asc")->get();
+        $companies = Company::withCount('employees')->orderBy("name", "asc")->get();
         return response()->json($companies);
     }
 
@@ -43,18 +43,26 @@ class CompanyController extends Controller
             'name' => 'required|string|max:255|unique:companies,name',
         ];
 
-        $validator = Validator::make($request->all(), $validationRules);
+        // Mensajes de error personalizados
+        $customMessages = [
+            'name.unique' => 'El nombre de la empresa ya está en uso. Por favor, elige otro.',
+            'name.required' => 'El nombre es obligatorio.',
+            // Puedes agregar más mensajes personalizados si lo deseas
+        ];
+
+        $validator = Validator::make($request->all(), $validationRules, $customMessages);
 
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
+        // Crear la nueva compañía
         $company = new Company();
         $company->name = $request->name;
         $company->save();
 
+        // Crear la carpeta para la compañía
         $companyFolderPath = 'public/' . $company->name;
-
         if (!Storage::exists($companyFolderPath)) {
             Storage::makeDirectory($companyFolderPath);
         }
@@ -64,6 +72,7 @@ class CompanyController extends Controller
             'company' => $company,
         ], 201);
     }
+
 
     /**
      * Muestra el formulario para editar una compañía.
@@ -90,7 +99,7 @@ class CompanyController extends Controller
         $employee = auth()->user();
 
         // Verificar si el empleado tiene jerarquía mayor a 1
-        if ($employee->hierarchy <= 1) {
+        if ($employee->hierarchy >= 1) {
             return response()->json(['message' => 'No tienes permiso para editar empresas.'], 403);
         }
 
@@ -148,7 +157,7 @@ class CompanyController extends Controller
 
         // No permitir eliminar la empresa SGI
         if ($company->name === 'SGI') {
-            return response()->json(['message' => 'No puedes eliminar la empresa SGI.'], 403);
+            return response()->json(['message' => 'No se debe eliminar SGI.'], 403);
         }
 
         $companyFolderPath = 'public/' . $company->name;
@@ -162,4 +171,20 @@ class CompanyController extends Controller
 
         return response()->json(['message' => 'Compañía eliminada exitosamente.']);
     }
+
+    public function getCounts($id)
+    {
+        $company = Company::withCount('positions')->with(['positions' => function ($query) {
+            $query->withCount('employees');
+        }])->findOrFail($id);
+
+        // Contar todos los empleados asociados a las posiciones de la empresa
+        $employeesCount = $company->positions->sum('employees_count');
+
+        return response()->json([
+            'positions_count' => $company->positions_count,
+            'employees_count' => $employeesCount,
+        ]);
+    }
+
 }

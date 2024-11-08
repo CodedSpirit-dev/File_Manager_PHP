@@ -44,6 +44,7 @@ export type EmployeePageProps<
 export interface Company {
     id: number;
     name: string;
+    employees_count: number;
 }
 
 export interface Position {
