@@ -33,9 +33,6 @@ const HomeContent: React.FC = () => {
             case 'EmployeeList':
                 setComponent(<EmployeeList />);
                 break;
-            case 'CreateEmployee':
-                setComponent(<CreateEmployee />);
-                break;
             case 'CompanyList' :
                 setComponent(<CompanyList/>)
                 break;
@@ -111,20 +108,6 @@ const HomeContent: React.FC = () => {
                                             )}
                                         </Menu.Item>
                                     )}
-                                    {hasPermission('can_create_employees') && (
-                                        <Menu.Item>
-                                            {({ active }) => (
-                                                <button
-                                                    className={`${
-                                                        active ? 'bg-blue-500 text-white' : 'text-gray-900'
-                                                    } group flex rounded-md items-center w-full px-2 py-2 text-sm`}
-                                                    onClick={() => renderComponent('CreateEmployee')}
-                                                >
-                                                    Agregar nuevo empleado
-                                                </button>
-                                            )}
-                                        </Menu.Item>
-                                    )}
                                     {hasPermission('can_view_all_employees') && (
                                         <Menu.Item>
                                             {({ active }) => (
@@ -134,7 +117,7 @@ const HomeContent: React.FC = () => {
                                                     } group flex rounded-md items-center w-full px-2 py-2 text-sm`}
                                                     onClick={() => renderComponent('EmployeeList')}
                                                 >
-                                                    Lista de Empleados
+                                                    Empleados
                                                 </button>
                                             )}
                                         </Menu.Item>

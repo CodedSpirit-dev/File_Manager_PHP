@@ -1,6 +1,9 @@
+// src/components/EmployeeList.tsx
+
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import EditEmployee from "@/Pages/Admin/Employee/EditEmployee";
+import CreateEmployee from "@/Pages/Admin/Employee/CreateEmployee";
 import { Company, Position, Employee } from "@/types";
 
 const EmployeeList: React.FC = (): React.ReactNode => {
@@ -10,18 +13,22 @@ const EmployeeList: React.FC = (): React.ReactNode => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
-    const [modalOpen, setModalOpen] = useState(false);
+    const [editModalOpen, setEditModalOpen] = useState(false);
+    const [addModalOpen, setAddModalOpen] = useState(false); // Nuevo estado para el modal de agregar
 
     const handleEditClick = (employee: Employee) => {
         const position = positions.find(position => position.id === employee.position_id);
         const companyId = position ? position.company_id : null;
         setEditingEmployee({ ...employee, company_id: companyId });
-        setModalOpen(true);
+        setEditModalOpen(true);
     };
 
     useEffect(() => {
-        setLoading(true);
+        fetchData();
+    }, []);
 
+    const fetchData = () => {
+        setLoading(true);
         Promise.all([
             axios.get('admin/employees'),
             axios.get('api/positions'),
@@ -34,10 +41,11 @@ const EmployeeList: React.FC = (): React.ReactNode => {
                 setLoading(false);
             })
             .catch((error) => {
+                console.error('Error al cargar los datos', error);
                 setError('Error al cargar los datos');
                 setLoading(false);
             });
-    }, []);
+    };
 
     const refreshEmployees = () => {
         axios.get('admin/employees')
@@ -64,6 +72,17 @@ const EmployeeList: React.FC = (): React.ReactNode => {
     return (
         <div className="container mx-auto px-4 py-8 bg-base-100">
             <h2 className="text-3xl font-bold mb-6 text-center text-primary">Lista de Empleados</h2>
+
+            {/* Botón para agregar un nuevo empleado */}
+            <div className="flex justify-end mb-4">
+                <button
+                    onClick={() => setAddModalOpen(true)}
+                    className="btn btn-success"
+                >
+                    Agregar Empleado
+                </button>
+            </div>
+
             <div className="overflow-x-auto">
                 <table className="table w-full">
                     <thead>
@@ -105,8 +124,8 @@ const EmployeeList: React.FC = (): React.ReactNode => {
                                     <br />
                                     {company && (
                                         <span className="mt-1 inline-block bg-secondary text-secondary-content text-xs px-2 py-1 rounded">
-                                            {company.name}
-                                        </span>
+                                                {company.name}
+                                            </span>
                                     )}
                                 </td>
                                 <td className="border px-4 py-2 text-sm text-base-content">
@@ -131,16 +150,38 @@ const EmployeeList: React.FC = (): React.ReactNode => {
                     </tbody>
                 </table>
 
-                {modalOpen && editingEmployee && (
+                {/* Modal para Editar Empleado */}
+                {editModalOpen && editingEmployee && (
                     <EditEmployee
                         employee={editingEmployee}
                         positions={positions}
                         companies={companies}
                         onClose={() => {
-                            setModalOpen(false);
-                            refreshEmployees();
+                            setEditModalOpen(false);
+                            fetchData();
                         }}
                     />
+                )}
+
+                {/* Modal para Agregar Empleado */}
+                {addModalOpen && (
+                    <div className="modal modal-open">
+                        <div className="modal-box">
+                            <button
+                                className="btn btn-sm btn-circle absolute right-2 top-2"
+                                onClick={() => setAddModalOpen(false)}
+                            >
+                                ✕
+                            </button>
+                            <CreateEmployee
+                                onSuccess={() => {
+                                    setAddModalOpen(false);
+                                    fetchData(); // Actualizar la lista de empleados
+                                }}
+                                onClose={() => setAddModalOpen(false)}
+                            />
+                        </div>
+                    </div>
                 )}
             </div>
         </div>

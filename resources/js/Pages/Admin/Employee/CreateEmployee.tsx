@@ -1,11 +1,16 @@
 // src/components/CreateEmployee.tsx
 
-import React, { useEffect, useState } from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import axios from 'axios';
 import { useForm, Controller } from 'react-hook-form';
 import { Position, Permission, Company } from '@/types';
 
-export default function CreateEmployee() {
+interface CreateEmployeeProps {
+    onSuccess: () => void; // Callback para notificar al padre
+    onClose: () => void;   // Callback para cerrar el modal desde el padre
+}
+
+export default function CreateEmployee({ onSuccess, onClose }: CreateEmployeeProps) {
     const { control, handleSubmit, setValue, watch, getValues, formState: { errors, isValid }, reset } = useForm({
         mode: 'onChange',
         defaultValues: {
@@ -26,15 +31,20 @@ export default function CreateEmployee() {
     const [companies, setCompanies] = useState<Company[]>([]);
     const [permissions, setPermissions] = useState<Permission[]>([]);
     const [filteredPositions, setFilteredPositions] = useState<Position[]>([]);
-    const [modalSuccess, setModalSuccess] = useState(false);
     const [modalError, setModalError] = useState(false);
+    const [modalSuccess, setModalSuccess] = useState(false); // Estado para el modal de éxito
     const [step, setStep] = useState(1);
     const totalSteps = 2;
+    const [successMessage, setSuccessMessage] = useState('');
+    const [errorMessage, setErrorMessage] = useState('');
 
-    const watchAllFields = watch(); // Observa todos los campos para feedback en tiempo real
+    const watchAllFields = watch();
     const watchPassword = watch('password');
     const watchPasswordConfirmation = watch('password_confirmation');
     const watchEnablePermissions = watch('enable_permissions');
+    const confirmModalRef = useRef<HTMLDialogElement>(null);
+    const successModalRef = useRef<HTMLDialogElement>(null);
+    const errorModalRef = useRef<HTMLDialogElement>(null);
 
     useEffect(() => {
         axios.get('api/positions')
@@ -68,38 +78,45 @@ export default function CreateEmployee() {
         }
     };
 
+    const handleOpenConfirmModal = () => {
+        confirmModalRef.current?.showModal();
+    };
+
+    const handleCloseConfirmModal = () => {
+        confirmModalRef.current?.close();
+    };
+
+    const handleOpenSuccessModal = () => {
+        successModalRef.current?.showModal();
+    };
+
+    const handleCloseSuccessModal = () => {
+        successModalRef.current?.close();
+        onClose();
+    };
+
+    const handleOpenErrorModal = () => {
+        errorModalRef.current?.showModal();
+    };
+
+    const handleCloseErrorModal = () => {
+        errorModalRef.current?.close();
+    };
+
     const onSubmit = (data: any) => {
-        if (step < totalSteps) {
-            setStep(step + 1);
-        } else {
-            axios.post('/admin/employees/store', data)
-                .then(response => {
-                    const employeeId = response.data.id;
-                    if (data.enable_permissions) {
-                        axios.post('/api/userpermissions', {
-                            employee_id: employeeId,
-                            permissions: data.selected_permissions
-                        })
-                            .then(() => {
-                                setModalSuccess(true);
-                                reset();
-                                setStep(1);
-                            })
-                            .catch(error => {
-                                console.error('Error al asignar permisos', error);
-                                setModalError(true);
-                            });
-                    } else {
-                        setModalSuccess(true);
-                        reset();
-                        setStep(1);
-                    }
-                })
-                .catch(error => {
-                    console.error('Error al registrar el empleado', error);
-                    setModalError(true);
-                });
-        }
+        axios.post('/admin/employees/', data)
+            .then(response => {
+                setSuccessMessage('¡Empleado registrado con éxito!');
+                reset();
+                setStep(1);
+                handleCloseConfirmModal();
+                handleOpenSuccessModal();
+            })
+            .catch(error => {
+                setErrorMessage(data.message);
+                handleCloseConfirmModal();
+                handleOpenErrorModal();
+            });
     };
 
     // Define las categorías y los permisos asociados
@@ -127,8 +144,8 @@ export default function CreateEmployee() {
     }));
 
     return (
-        <div className="container__25">
-            <h1 className="text-2xl text-center font-bold my-4">Registro de nuevos empleados</h1>
+        <div className={'mt-3'}>
+            <h3 className="">Registro de nuevos empleados</h3>
 
             {/* Lista de pasos */}
             <ul className="steps w-full">
@@ -136,12 +153,11 @@ export default function CreateEmployee() {
                 <li className={`step ${step === 2 ? 'step-primary' : ''}`}>Permisos</li>
             </ul>
 
-            <form onSubmit={handleSubmit(onSubmit)}>
+            <form className={'form_data_entry'} onSubmit={handleSubmit(onSubmit)}>
                 {step === 1 && (
                     <>
                         {/* Paso 1: Datos del Empleado */}
                         <div className="mt-4">
-                            <label>Nombre(s)</label>
                             <Controller
                                 name="first_name"
                                 control={control}
@@ -179,7 +195,6 @@ export default function CreateEmployee() {
                         )}
 
                         <div className="mt-4">
-                            <label>Primer apellido</label>
                             <Controller
                                 name="last_name_1"
                                 control={control}
@@ -211,7 +226,6 @@ export default function CreateEmployee() {
                         )}
 
                         <div className="mt-4">
-                            <label>Segundo apellido</label>
                             <Controller
                                 name="last_name_2"
                                 control={control}
@@ -242,13 +256,15 @@ export default function CreateEmployee() {
                         )}
 
                         <div className="mt-4">
-                            <label>Nombre de usuario (CURP)</label>
                             <Controller
                                 name="username"
                                 control={control}
                                 rules={{
                                     required: 'El nombre de usuario es obligatorio',
-                                    maxLength: { value: 18, message: 'El nombre de usuario no debe exceder los 18 caracteres' }
+                                    maxLength: {
+                                        value: 18,
+                                        message: 'El nombre de usuario no debe exceder los 18 caracteres'
+                                    }
                                 }}
                                 render={({ field }) => (
                                     <input
@@ -279,7 +295,6 @@ export default function CreateEmployee() {
                         )}
 
                         <div className="mt-4">
-                            <label>Empresa</label>
                             <Controller
                                 name="company_id"
                                 control={control}
@@ -297,18 +312,19 @@ export default function CreateEmployee() {
                         </div>
                         {watchAllFields.company_id && (
                             <>
-                                {watchAllFields.company_id === '' && <p className="text-red-600">La empresa es obligatoria</p>}
+                                {watchAllFields.company_id === '' &&
+                                    <p className="text-red-600">La empresa es obligatoria</p>}
                             </>
                         )}
 
                         <div className="mt-4">
-                            <label>Puesto</label>
                             <Controller
                                 name="position_id"
                                 control={control}
                                 rules={{ required: 'El puesto es obligatorio' }}
                                 render={({ field }) => (
-                                    <select {...field} className="input__data__entry" disabled={watch('company_id') === ''}>
+                                    <select {...field} className="input__data__entry"
+                                            disabled={watch('company_id') === ''}>
                                         <option value="">Seleccione un puesto</option>
                                         {filteredPositions.map(position => (
                                             <option key={position.id} value={position.id}>{position.name}</option>
@@ -318,10 +334,10 @@ export default function CreateEmployee() {
                             />
                             {errors.position_id && <p className="text-red-600">{errors.position_id.message}</p>}
                         </div>
-                        {watchAllFields.company_id === '' && <p className="text-red-600">Antes debes seleccionar una empresa</p>}
+                        {watchAllFields.company_id === '' &&
+                            <p className="text-red-600">Antes debes seleccionar una empresa</p>}
 
                         <div className="mt-4">
-                            <label>Contraseña</label>
                             <Controller
                                 name="password"
                                 control={control}
@@ -339,7 +355,6 @@ export default function CreateEmployee() {
                         </div>
 
                         <div className="mt-4">
-                            <label>Confirmar contraseña</label>
                             <Controller
                                 name="password_confirmation"
                                 control={control}
@@ -366,7 +381,8 @@ export default function CreateEmployee() {
 
                         {/* Botón para avanzar al siguiente paso */}
                         <div className="mt-4 flex justify-end">
-                            <button type="button" className="btn btn-block" onClick={() => setStep(step + 1)} disabled={!isValid}>
+                            <button type="button" className="btn-accept btn-block" onClick={() => setStep(step + 1)}
+                                    disabled={!isValid}>
                                 Siguiente
                             </button>
                         </div>
@@ -423,10 +439,10 @@ export default function CreateEmployee() {
 
                         {/* Botones para navegar entre pasos */}
                         <div className="mt-4 flex justify-center">
-                            <button type="button" className="btn size-2/4 mr-1" onClick={() => setStep(step - 1)}>
+                            <button type="button" className="btn btn-warning mr-1" onClick={() => setStep(step - 1)}>
                                 Anterior
                             </button>
-                            <button type="submit" className="btn size-2/4 ml-1">
+                            <button type="submit" className="btn btn-info ml-1">
                                 Guardar
                             </button>
                         </div>
@@ -434,29 +450,45 @@ export default function CreateEmployee() {
                 )}
             </form>
 
-            {/* Modal de éxito */}
-            {modalSuccess && (
-                <div className="modal modal-open">
-                    <div className="modal-box">
-                        <h3 className="font-bold text-lg">¡Empleado registrado con éxito!</h3>
-                        <div className="modal-action">
-                            <button className="btn btn-primary" onClick={() => { setModalSuccess(false); setStep(1); }}>Cerrar</button>
-                        </div>
+            {/* Modal de Confirmación */}
+            <dialog ref={confirmModalRef} id="modal_employee_confirm" className="modal modal-bottom sm:modal-middle">
+                <div className="modal-box">
+                    <h4 className="font-bold text-center">
+                        ¿Estás seguro de registrar al empleado <b>{getValues('first_name')} {getValues('last_name_1')}</b>?
+                    </h4>
+                    <div className="modal-action justify-center">
+                        <button className="btn-cancel" onClick={handleCloseConfirmModal}>No, cancelar</button>
+                        <button className="btn-accept" onClick={handleSubmit(onSubmit)}>Sí, registrar empleado</button>
                     </div>
                 </div>
-            )}
+            </dialog>
 
-            {/* Modal de error */}
-            {modalError && (
-                <div className="modal modal-open">
-                    <div className="modal-box">
-                        <h3 className="font-bold text-lg">Error al registrar el empleado</h3>
-                        <div className="modal-action">
-                            <button className="btn btn-primary" onClick={() => setModalError(false)}>Cerrar</button>
-                        </div>
+            {/* Modal de Éxito */}
+            <dialog ref={successModalRef} id="modal_employee_success" className="modal modal-bottom sm:modal-middle">
+                <div className="modal-box">
+                    <h3 className="font-bold text-center">Registro de Empleado</h3>
+                    <p className="text-center text-success">{successMessage}</p>
+                    <div className="modal-action justify-center">
+                        <button type="button" className="btn btn-info" onClick={handleCloseSuccessModal}>Aceptar</button>
                     </div>
                 </div>
-            )}
+            </dialog>
+
+            {/* Modal de Error */}
+            <dialog ref={errorModalRef} id="modal_employee_error" className="modal modal-bottom sm:modal-middle">
+                <div className="modal-box">
+                    <h4 className="font-bold text-center">Error al Registrar Empleado</h4>
+                    <p className="text-center text-error">{errorMessage}</p>
+                    <div className="modal-action justify-center">
+                        <button className="btn-accept" onClick={handleCloseErrorModal}>Cerrar</button>
+                    </div>
+                </div>
+            </dialog>
+
+            {/* Botón de cerrar */}
+            <div className="modal-action">
+                <button className="btn btn-error" onClick={onClose}>Cancelar</button>
+            </div>
         </div>
     );
 }
