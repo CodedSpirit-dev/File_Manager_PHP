@@ -43,20 +43,7 @@ Route::get('/login', [AuthenticatedSessionController::class, 'create'])->name('l
 Route::post('/login', [AuthenticatedSessionController::class, 'store'])->name('login.submit');
 Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout');
 
-// Grupo de rutas de administración (requiere autenticación)
-Route::middleware('auth:employee')->prefix('admin')->name('admin.')->group(function () {
-    // Administración de empleados
-    Route::get('/employees', [EmployeeController::class, 'index'])->name('employees.index');
-    Route::get('/employees/create', [EmployeeController::class, 'create'])->name('employees.create');
-    Route::post('/employees/store', [EmployeeController::class, 'store'])->name('employees.store');
-    Route::get('/employees/{id}/edit', [EmployeeController::class, 'edit'])->name('employees.edit');
-    Route::patch('/employees/{id}', [EmployeeController::class, 'update'])->name('employees.update'); // o usar PUT
 
-    // Administración de empresas
-    Route::get('/companies', [CompanyController::class, 'index'])->name('companies.index');
-    Route::get('/companies/create', [CompanyController::class, 'create'])->name('companies.create');
-    Route::post('/companies/store', [CompanyController::class, 'store'])->name('companies.store');
-});
 
 // Grupo de rutas API
 Route::prefix('api')->name('api.')->group(function () {
@@ -77,3 +64,4 @@ Route::middleware('auth:employee')->get('/user/hierarchy', [EmployeeController::
 
 // Rutas para la gestión de archivos
 require base_path('routes/filemanager.php');
+require base_path('routes/admin.php');

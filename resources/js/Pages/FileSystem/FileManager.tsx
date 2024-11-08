@@ -403,7 +403,7 @@ const FileManager: React.FC = () => {
             if (extension && supportedExtensions.includes(extension)) {
                 setFileToView({
                     url: `/filemanager/files/view?filename=${encodeURIComponent(item.name)}&path=${encodeURIComponent(currentPath)}`,
-                    type: extension as 'pdf' | 'docx' | 'xlsx' | 'doc' | 'xls' | 'txt' | 'csv',
+                    type: extension as 'pdf' | 'docx' | 'xlsx' | 'doc' | 'txt' | 'csv',
                 });
                 setIsFileViewerOpen(true);
             } else {
