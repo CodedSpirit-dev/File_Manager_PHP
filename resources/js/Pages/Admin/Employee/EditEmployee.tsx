@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react';
-import { useForm, Controller } from 'react-hook-form';
-import { Position, Permission, Company, Employee } from '@/types';
+import React, {useEffect, useState} from 'react';
+import {useForm, Controller} from 'react-hook-form';
+import {Position, Permission, Company, Employee} from '@/types';
 import axios from "axios";
 
 interface EditEmployeeProps {
@@ -28,7 +28,7 @@ const EditEmployee: React.FC<EditEmployeeProps> = ({
         setValue,
         watch,
         getValues,
-        formState: { errors, isValid },
+        formState: {errors, isValid},
         reset,
     } = useForm({
         mode: 'onChange',
@@ -163,7 +163,7 @@ const EditEmployee: React.FC<EditEmployeeProps> = ({
                 position_id: data.position_id,
                 company_id: data.company_id,
                 ...(data.password
-                    ? { password: data.password, password_confirmation: data.password_confirmation }
+                    ? {password: data.password, password_confirmation: data.password_confirmation}
                     : {}),
             };
 
@@ -239,7 +239,7 @@ const EditEmployee: React.FC<EditEmployeeProps> = ({
                                             message: 'El nombre solo puede contener letras'
                                         }
                                     }}
-                                    render={({ field }) => (
+                                    render={({field}) => (
                                         <input
                                             {...field}
                                             className="input__data__entry"
@@ -279,7 +279,7 @@ const EditEmployee: React.FC<EditEmployeeProps> = ({
                                             message: 'El primer apellido solo puede contener letras sin espacios'
                                         }
                                     }}
-                                    render={({ field }) => (
+                                    render={({field}) => (
                                         <input
                                             {...field}
                                             className="input__data__entry"
@@ -292,10 +292,12 @@ const EditEmployee: React.FC<EditEmployeeProps> = ({
                             {watchAllFields.last_name_1 && (
                                 <>
                                     {watchAllFields.last_name_1.length < 3 && (
-                                        <p className="text-red-600">El primer apellido no debe tener menos de 3 caracteres</p>
+                                        <p className="text-red-600">El primer apellido no debe tener menos de 3
+                                            caracteres</p>
                                     )}
                                     {watchAllFields.last_name_1.length > 50 && (
-                                        <p className="text-red-600">El primer apellido no debe exceder los 50 caracteres</p>
+                                        <p className="text-red-600">El primer apellido no debe exceder los 50
+                                            caracteres</p>
                                     )}
                                     {watchAllFields.last_name_1.includes(' ') && (
                                         <p className="text-red-600">El primer apellido no debe tener espacios</p>
@@ -321,7 +323,7 @@ const EditEmployee: React.FC<EditEmployeeProps> = ({
                                             message: 'El segundo apellido solo puede contener letras sin espacios'
                                         }
                                     }}
-                                    render={({ field }) => (
+                                    render={({field}) => (
                                         <input
                                             {...field}
                                             className="input__data__entry"
@@ -334,10 +336,12 @@ const EditEmployee: React.FC<EditEmployeeProps> = ({
                             {watchAllFields.last_name_2 && (
                                 <>
                                     {watchAllFields.last_name_2.length < 3 && (
-                                        <p className="text-red-600">El segundo apellido no debe tener menos de 3 caracteres</p>
+                                        <p className="text-red-600">El segundo apellido no debe tener menos de 3
+                                            caracteres</p>
                                     )}
                                     {watchAllFields.last_name_2.length > 50 && (
-                                        <p className="text-red-600">El segundo apellido no debe exceder los 50 caracteres</p>
+                                        <p className="text-red-600">El segundo apellido no debe exceder los 50
+                                            caracteres</p>
                                     )}
                                     {watchAllFields.last_name_2.includes(' ') && (
                                         <p className="text-red-600">El segundo apellido no debe tener espacios</p>
@@ -356,13 +360,16 @@ const EditEmployee: React.FC<EditEmployeeProps> = ({
                                     control={control}
                                     rules={{
                                         required: 'El nombre de usuario es obligatorio',
-                                        maxLength: { value: 18, message: 'El nombre de usuario no debe exceder los 18 caracteres' },
+                                        maxLength: {
+                                            value: 18,
+                                            message: 'El nombre de usuario no debe exceder los 18 caracteres'
+                                        },
                                         pattern: {
                                             value: /^[a-zA-Z0-9]+$/,
                                             message: 'El nombre de usuario solo puede contener letras y números sin espacios'
                                         }
                                     }}
-                                    render={({ field }) => (
+                                    render={({field}) => (
                                         <input
                                             {...field}
                                             className="input__data__entry"
@@ -375,16 +382,19 @@ const EditEmployee: React.FC<EditEmployeeProps> = ({
                             {watchAllFields.username && (
                                 <>
                                     {watchAllFields.username.length < 3 && (
-                                        <p className="text-red-600">El nombre de usuario no debe tener menos de 3 caracteres</p>
+                                        <p className="text-red-600">El nombre de usuario no debe tener menos de 3
+                                            caracteres</p>
                                     )}
                                     {watchAllFields.username.length > 18 && (
-                                        <p className="text-red-600">El nombre de usuario no debe exceder los 18 caracteres</p>
+                                        <p className="text-red-600">El nombre de usuario no debe exceder los 18
+                                            caracteres</p>
                                     )}
                                     {watchAllFields.username.includes(' ') && (
                                         <p className="text-red-600">El nombre de usuario no debe tener espacios</p>
                                     )}
                                     {watchAllFields.username.match(/[^a-zA-Z0-9]/) && (
-                                        <p className="text-red-600">El nombre de usuario solo puede contener letras y números</p>
+                                        <p className="text-red-600">El nombre de usuario solo puede contener letras y
+                                            números</p>
                                     )}
                                 </>
                             )}
@@ -395,19 +405,21 @@ const EditEmployee: React.FC<EditEmployeeProps> = ({
                                 <Controller
                                     name="company_id"
                                     control={control}
-                                    rules={{ required: 'La empresa es obligatoria' }}
-                                    render={({ field }) => (
+                                    rules={{required: 'La empresa es obligatoria'}}
+                                    render={({field}) => (
                                         <select {...field} className="input__data__entry">
                                             <option value="">Seleccione una empresa</option>
                                             {companies.map(company => (
-                                                <option key={company.id} value={company.id.toString()}>{company.name}</option>
+                                                <option key={company.id}
+                                                        value={company.id.toString()}>{company.name}</option>
                                             ))}
                                         </select>
                                     )}
                                 />
                             </div>
                             {errors.company_id && <p className="text-red-600">{errors.company_id.message}</p>}
-                            {watchAllFields.company_id === '' && <p className="text-red-600">La empresa es obligatoria</p>}
+                            {watchAllFields.company_id === '' &&
+                                <p className="text-red-600">La empresa es obligatoria</p>}
 
                             {/* Puesto */}
                             <div className="mt-4">
@@ -415,20 +427,23 @@ const EditEmployee: React.FC<EditEmployeeProps> = ({
                                 <Controller
                                     name="position_id"
                                     control={control}
-                                    rules={{ required: 'El puesto es obligatorio' }}
-                                    render={({ field }) => (
+                                    rules={{required: 'El puesto es obligatorio'}}
+                                    render={({field}) => (
                                         <select {...field} className="input__data__entry" disabled={!watchCompany}>
                                             <option value="">Seleccione un puesto</option>
                                             {filteredPositions.map(position => (
-                                                <option key={position.id} value={position.id.toString()}>{position.name}</option>
+                                                <option key={position.id}
+                                                        value={position.id.toString()}>{position.name}</option>
                                             ))}
                                         </select>
                                     )}
                                 />
                             </div>
                             {errors.position_id && <p className="text-red-600">{errors.position_id.message}</p>}
-                            {watchAllFields.company_id === '' && <p className="text-red-600">Antes debes seleccionar una empresa</p>}
-                            {watchAllFields.position_id === '' && <p className="text-red-600">El puesto es obligatorio</p>}
+                            {watchAllFields.company_id === '' &&
+                                <p className="text-red-600">Antes debes seleccionar una empresa</p>}
+                            {watchAllFields.position_id === '' &&
+                                <p className="text-red-600">El puesto es obligatorio</p>}
 
                             {/* Contraseña (opcional) */}
                             <div className="mt-4">
@@ -437,9 +452,9 @@ const EditEmployee: React.FC<EditEmployeeProps> = ({
                                     name="password"
                                     control={control}
                                     rules={{
-                                        minLength: { value: 4, message: 'La contraseña debe tener al menos 4 caracteres' }
+                                        minLength: {value: 4, message: 'La contraseña debe tener al menos 4 caracteres'}
                                     }}
-                                    render={({ field }) => (
+                                    render={({field}) => (
                                         <input
                                             {...field}
                                             type="password"
@@ -461,7 +476,7 @@ const EditEmployee: React.FC<EditEmployeeProps> = ({
                                         validate: value =>
                                             value === getValues('password') || 'Las contraseñas no coinciden'
                                     }}
-                                    render={({ field }) => (
+                                    render={({field}) => (
                                         <input
                                             {...field}
                                             type="password"
@@ -471,7 +486,8 @@ const EditEmployee: React.FC<EditEmployeeProps> = ({
                                     )}
                                 />
                             </div>
-                            {errors.password_confirmation && <p className="text-red-600">{errors.password_confirmation.message}</p>}
+                            {errors.password_confirmation &&
+                                <p className="text-red-600">{errors.password_confirmation.message}</p>}
                             {watchPassword && watchPasswordConfirmation && watchPassword !== watchPasswordConfirmation && (
                                 <p className="text-red-600">Las contraseñas no coinciden</p>
                             )}
@@ -479,9 +495,9 @@ const EditEmployee: React.FC<EditEmployeeProps> = ({
                             {/* Next Step Button */}
                             <div className="mt-4">
                                 {/* Cancel Button */}
-                                    <button className="btn btn-cancel mr-2" onClick={onClose}>
-                                        Cancelar
-                                    </button>
+                                <button className="btn btn-cancel mr-2" onClick={onClose}>
+                                    Cancelar
+                                </button>
                                 <button
                                     type="button"
                                     className="btn btn-accept ml-2"
@@ -504,7 +520,7 @@ const EditEmployee: React.FC<EditEmployeeProps> = ({
                                     <Controller
                                         name="enable_permissions"
                                         control={control}
-                                        render={({ field }) => (
+                                        render={({field}) => (
                                             <input
                                                 type="checkbox"
                                                 className="checkbox checkbox-primary"
@@ -522,7 +538,7 @@ const EditEmployee: React.FC<EditEmployeeProps> = ({
                             {watchEnablePermissions && (
                                 <div className="mt-6">
                                     <h2 className="mb-3 text-xl text-center font-bold">Permisos</h2>
-                                    {groupedPermissions.map(({ category, permissions }) => (
+                                    {groupedPermissions.map(({category, permissions}) => (
                                         <div key={category} className="mb-4">
                                             <h3 className="text-lg font-semibold mb-2">{category}</h3>
                                             <div className="grid grid-cols-2 gap-4">
@@ -545,9 +561,9 @@ const EditEmployee: React.FC<EditEmployeeProps> = ({
 
                             {/* Navigation Buttons */}
                             <div className="mt-4">
-                                    <button className="btn btn-cancel" onClick={onClose}>
-                                        Cancelar
-                                    </button>
+                                <button className="btn btn-cancel" onClick={onClose}>
+                                    Cancelar
+                                </button>
                                 <button
                                     type="button"
                                     className="btn-info-mod mx-2"

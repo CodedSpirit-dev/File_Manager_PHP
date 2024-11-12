@@ -1,23 +1,20 @@
-import { EmployeePageProps } from '@/types';
-import { Button } from '@headlessui/react';
-import React, { useState } from 'react';
-import CreateEmployee from './Admin/Employee/CreateEmployee';
+import {EmployeePageProps} from '@/types';
+import {Button} from '@headlessui/react';
+import React, {useState} from 'react';
 import EmployeeList from './Admin/Employee/EmployeeList';
 import axios from 'axios';
 import Profile from './Profile/Profile';
-import { Head, usePage } from '@inertiajs/react';
-import CreateCompany from './Admin/Company/CreateCompany';
-import CreatePosition from './Admin/Position/CreatePosition';
+import {Head, usePage} from '@inertiajs/react';
 import FileManager from './FileSystem/FileManager';
 import AdminDropdown from '@/Components/AdminDropdown';
-import { PermissionsProvider, usePermissions } from '@/contexts/PermissionsContext';
-import { Menu } from '@headlessui/react';
+import {PermissionsProvider, usePermissions} from '@/contexts/PermissionsContext';
+import {Menu} from '@headlessui/react';
 import CompanyList from "@/Pages/Admin/Company/CompanyList";
 import PositionList from "@/Pages/Admin/Position/PositionList"; // Importar Menu
 
 const HomeContent: React.FC = () => {
-    const { hasPermission } = usePermissions();
-    const { auth } = usePage<EmployeePageProps>().props;
+    const {hasPermission} = usePermissions();
+    const {auth} = usePage<EmployeePageProps>().props;
     const employee = auth.user;
 
     const [component, setComponent] = useState<JSX.Element | null>(null);
@@ -26,19 +23,19 @@ const HomeContent: React.FC = () => {
         // Renderizar el componente según el nombre recibido
         switch (componentName) {
             case 'Profile':
-                setComponent(<ProfileComponent />);
+                setComponent(<ProfileComponent/>);
                 break;
             case 'FileManager':
-                setComponent(<FileManager />);
+                setComponent(<FileManager/>);
                 break;
             case 'EmployeeList':
-                setComponent(<EmployeeList />);
+                setComponent(<EmployeeList/>);
                 break;
             case 'CompanyList' :
                 setComponent(<CompanyList/>)
                 break;
             case 'PositionList':
-                setComponent(<PositionList />);
+                setComponent(<PositionList/>);
                 break;
             default:
                 setComponent(null);
@@ -53,7 +50,7 @@ const HomeContent: React.FC = () => {
 
     return (
         <>
-            <Head title="Inicio" />
+            <Head title="Inicio"/>
             <section className="container mx-auto">
                 <nav className="nav__bar rounded-lg flex items-center justify-between p-4">
                     {/* Menú desplegable para pantallas pequeñas */}
@@ -65,11 +62,12 @@ const HomeContent: React.FC = () => {
                                 </Menu.Button>
                             </div>
 
-                            <Menu.Items className="absolute left-0 mt-2 w-56 origin-top-left bg-white border border-gray-200 divide-y divide-gray-100 rounded-md shadow-lg focus:outline-none z-20">
+                            <Menu.Items
+                                className="absolute left-0 mt-2 w-56 origin-top-left bg-white border border-gray-200 divide-y divide-gray-100 rounded-md shadow-lg focus:outline-none z-20">
                                 <div className="px-1 py-1 ">
                                     {hasPermission('can_view_company_employees') && (
                                         <Menu.Item>
-                                            {({ active }) => (
+                                            {({active}) => (
                                                 <button
                                                     className={`${
                                                         active ? 'bg-blue-500 text-white' : 'text-gray-900'
@@ -83,7 +81,7 @@ const HomeContent: React.FC = () => {
                                     )}
                                     {hasPermission('can_create_companies') && (
                                         <Menu.Item>
-                                            {({ active }) => (
+                                            {({active}) => (
                                                 <button
                                                     className={`${
                                                         active ? 'bg-blue-500 text-white' : 'text-gray-900'
@@ -97,7 +95,7 @@ const HomeContent: React.FC = () => {
                                     )}
                                     {hasPermission('can_create_positions') && (
                                         <Menu.Item>
-                                            {({ active }) => (
+                                            {({active}) => (
                                                 <button
                                                     className={`${
                                                         active ? 'bg-blue-500 text-white' : 'text-gray-900'
@@ -111,7 +109,7 @@ const HomeContent: React.FC = () => {
                                     )}
                                     {hasPermission('can_view_all_employees') && (
                                         <Menu.Item>
-                                            {({ active }) => (
+                                            {({active}) => (
                                                 <button
                                                     className={`${
                                                         active ? 'bg-blue-500 text-white' : 'text-gray-900'
@@ -125,7 +123,7 @@ const HomeContent: React.FC = () => {
                                     )}
                                     {hasPermission('can_view_file_explorer') && (
                                         <Menu.Item>
-                                            {({ active }) => (
+                                            {({active}) => (
                                                 <button
                                                     className={`${
                                                         active ? 'bg-blue-500 text-white' : 'text-gray-900'
@@ -174,7 +172,10 @@ const HomeContent: React.FC = () => {
                                 </h3>
                                 <div className="modal-action justify-center">
                                     <form method="dialog">
-                                        <button className="btn btn-active btn-secondary bg-warning text-base-content hover:text-base-100 m-3">No cerrar sesión</button>
+                                        <button
+                                            className="btn btn-active btn-secondary bg-warning text-base-content hover:text-base-100 m-3">No
+                                            cerrar sesión
+                                        </button>
                                         <button
                                             type="button"
                                             className="btn btn-active btn-primary m-3"
@@ -199,15 +200,15 @@ const HomeContent: React.FC = () => {
 
 // Componentes individuales
 const ProfileComponent: React.FC = () => {
-    const { auth } = usePage<EmployeePageProps>().props;
-    return <Profile mustVerifyEmail={false} status="" auth={auth} />;
+    const {auth} = usePage<EmployeePageProps>().props;
+    return <Profile mustVerifyEmail={false} status="" auth={auth}/>;
 };
 
 // Envolviendo el contenido de Home con el Provider de Permisos
 const Home: React.FC = () => {
     return (
         <PermissionsProvider>
-            <HomeContent />
+            <HomeContent/>
         </PermissionsProvider>
     );
 };

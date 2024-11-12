@@ -2,16 +2,16 @@
 
 import React, {useEffect, useRef, useState} from 'react';
 import axios from 'axios';
-import { useForm, Controller } from 'react-hook-form';
-import { Position, Permission, Company } from '@/types';
+import {useForm, Controller} from 'react-hook-form';
+import {Position, Permission, Company} from '@/types';
 
 interface CreateEmployeeProps {
     onSuccess: () => void; // Callback para notificar al padre
     onClose: () => void;   // Callback para cerrar el modal desde el padre
 }
 
-export default function CreateEmployee({ onSuccess, onClose }: CreateEmployeeProps) {
-    const { control, handleSubmit, setValue, watch, getValues, formState: { errors, isValid }, reset } = useForm({
+export default function CreateEmployee({onSuccess, onClose}: CreateEmployeeProps) {
+    const {control, handleSubmit, setValue, watch, getValues, formState: {errors, isValid}, reset} = useForm({
         mode: 'onChange',
         defaultValues: {
             first_name: '',
@@ -172,7 +172,7 @@ export default function CreateEmployee({ onSuccess, onClose }: CreateEmployeePro
                                         message: 'El nombre solo puede contener letras'
                                     }
                                 }}
-                                render={({ field }) => (
+                                render={({field}) => (
                                     <input
                                         {...field}
                                         className="input__data__entry"
@@ -199,8 +199,8 @@ export default function CreateEmployee({ onSuccess, onClose }: CreateEmployeePro
                             <Controller
                                 name="last_name_1"
                                 control={control}
-                                rules={{ required: 'El primer apellido es obligatorio' }}
-                                render={({ field }) => (
+                                rules={{required: 'El primer apellido es obligatorio'}}
+                                render={({field}) => (
                                     <input
                                         {...field}
                                         className="input__data__entry"
@@ -212,7 +212,8 @@ export default function CreateEmployee({ onSuccess, onClose }: CreateEmployeePro
                         {watchAllFields.last_name_1 && (
                             <>
                                 {watchAllFields.last_name_1.length < 3 && (
-                                    <p className="text-red-600">El primer apellido no debe tener menos de 3 caracteres</p>
+                                    <p className="text-red-600">El primer apellido no debe tener menos de 3
+                                        caracteres</p>
                                 )}
                                 {watchAllFields.last_name_1.length > 50 && (
                                     <p className="text-red-600">El primer apellido no debe exceder los 50 caracteres</p>
@@ -230,7 +231,7 @@ export default function CreateEmployee({ onSuccess, onClose }: CreateEmployeePro
                             <Controller
                                 name="last_name_2"
                                 control={control}
-                                render={({ field }) => (
+                                render={({field}) => (
                                     <input
                                         {...field}
                                         className="input__data__entry"
@@ -242,10 +243,12 @@ export default function CreateEmployee({ onSuccess, onClose }: CreateEmployeePro
                         {watchAllFields.last_name_2 && (
                             <>
                                 {watchAllFields.last_name_2.length < 3 && (
-                                    <p className="text-red-600">El segundo apellido no debe tener menos de 3 caracteres</p>
+                                    <p className="text-red-600">El segundo apellido no debe tener menos de 3
+                                        caracteres</p>
                                 )}
                                 {watchAllFields.last_name_2.length > 50 && (
-                                    <p className="text-red-600">El segundo apellido no debe exceder los 50 caracteres</p>
+                                    <p className="text-red-600">El segundo apellido no debe exceder los 50
+                                        caracteres</p>
                                 )}
                                 {watchAllFields.last_name_2.includes(' ') && (
                                     <p className="text-red-600">El segundo apellido no debe tener espacios</p>
@@ -267,7 +270,7 @@ export default function CreateEmployee({ onSuccess, onClose }: CreateEmployeePro
                                         message: 'El nombre de usuario no debe exceder los 18 caracteres'
                                     }
                                 }}
-                                render={({ field }) => (
+                                render={({field}) => (
                                     <input
                                         {...field}
                                         className="input__data__entry"
@@ -281,16 +284,19 @@ export default function CreateEmployee({ onSuccess, onClose }: CreateEmployeePro
                         {watchAllFields.username && (
                             <>
                                 {watchAllFields.username.length < 3 && (
-                                    <p className="text-red-600">El nombre de usuario no debe tener menos de 3 caracteres</p>
+                                    <p className="text-red-600">El nombre de usuario no debe tener menos de 3
+                                        caracteres</p>
                                 )}
                                 {watchAllFields.username.includes(' ') && (
                                     <p className="text-red-600">El nombre de usuario no debe tener espacios</p>
                                 )}
                                 {watchAllFields.username.length > 18 && (
-                                    <p className="text-red-600">El nombre de usuario no debe exceder los 18 caracteres</p>
+                                    <p className="text-red-600">El nombre de usuario no debe exceder los 18
+                                        caracteres</p>
                                 )}
                                 {watchAllFields.username.match(/[^a-zA-Z0-9]/) && (
-                                    <p className="text-red-600">El nombre de usuario solo puede contener letras y números</p>
+                                    <p className="text-red-600">El nombre de usuario solo puede contener letras y
+                                        números</p>
                                 )}
                             </>
                         )}
@@ -299,8 +305,8 @@ export default function CreateEmployee({ onSuccess, onClose }: CreateEmployeePro
                             <Controller
                                 name="company_id"
                                 control={control}
-                                rules={{ required: 'La empresa es obligatoria' }}
-                                render={({ field }) => (
+                                rules={{required: 'La empresa es obligatoria'}}
+                                render={({field}) => (
                                     <select {...field} className="input__data__entry">
                                         <option value="">Seleccione una empresa</option>
                                         {companies.map(company => (
@@ -322,8 +328,8 @@ export default function CreateEmployee({ onSuccess, onClose }: CreateEmployeePro
                             <Controller
                                 name="position_id"
                                 control={control}
-                                rules={{ required: 'El puesto es obligatorio' }}
-                                render={({ field }) => (
+                                rules={{required: 'El puesto es obligatorio'}}
+                                render={({field}) => (
                                     <select {...field} className="input__data__entry"
                                             disabled={watch('company_id') === ''}>
                                         <option value="">Seleccione un puesto</option>
@@ -342,8 +348,8 @@ export default function CreateEmployee({ onSuccess, onClose }: CreateEmployeePro
                             <Controller
                                 name="password"
                                 control={control}
-                                rules={{ required: 'La contraseña es obligatoria' }}
-                                render={({ field }) => (
+                                rules={{required: 'La contraseña es obligatoria'}}
+                                render={({field}) => (
                                     <input
                                         {...field}
                                         type="password"
@@ -364,7 +370,7 @@ export default function CreateEmployee({ onSuccess, onClose }: CreateEmployeePro
                                     validate: value =>
                                         value === getValues('password') || 'Las contraseñas no coinciden'
                                 }}
-                                render={({ field }) => (
+                                render={({field}) => (
                                     <input
                                         {...field}
                                         type="password"
@@ -383,7 +389,7 @@ export default function CreateEmployee({ onSuccess, onClose }: CreateEmployeePro
                         {/* Botón para avanzar al siguiente paso */}
                         <div className="mt-4">
                             {/* Botón de cerrar */}
-                                <button className="btn btn-cancel" onClick={onClose}>Cancelar</button>
+                            <button className="btn btn-cancel" onClick={onClose}>Cancelar</button>
                             <button type="button" className="btn btn-accept ml-2" onClick={() => setStep(step + 1)}
                                     disabled={!isValid}>
                                 Siguiente
@@ -402,7 +408,7 @@ export default function CreateEmployee({ onSuccess, onClose }: CreateEmployeePro
                                     name="enable_permissions"
                                     control={control}
                                     defaultValue={false}
-                                    render={({ field }) => (
+                                    render={({field}) => (
                                         <input
                                             type="checkbox"
                                             className="checkbox checkbox-primary"
@@ -419,7 +425,7 @@ export default function CreateEmployee({ onSuccess, onClose }: CreateEmployeePro
                         {watchEnablePermissions && (
                             <div className="mt-6">
                                 <h2 className="mb-3 text-xl text-center font-bold">Permisos</h2>
-                                {groupedPermissions.map(({ category, permissions }) => (
+                                {groupedPermissions.map(({category, permissions}) => (
                                     <div key={category} className="mb-4">
                                         <h3 className="text-lg font-semibold mb-2">{category}</h3>
                                         <div className="grid grid-cols-2 gap-4">
@@ -460,7 +466,8 @@ export default function CreateEmployee({ onSuccess, onClose }: CreateEmployeePro
             <dialog ref={confirmModalRef} id="modal_employee_confirm" className="modal modal-bottom sm:modal-middle">
                 <div className="modal-box">
                     <h4 className="font-bold text-center">
-                        ¿Estás seguro de registrar al empleado <b>{getValues('first_name')} {getValues('last_name_1')}</b>?
+                        ¿Estás seguro de registrar al
+                        empleado <b>{getValues('first_name')} {getValues('last_name_1')}</b>?
                     </h4>
                     <div className="modal-action justify-center">
                         <button className="btn-cancel" onClick={handleCloseConfirmModal}>No, cancelar</button>
@@ -475,7 +482,8 @@ export default function CreateEmployee({ onSuccess, onClose }: CreateEmployeePro
                     <h3 className="font-bold text-center">Registro de Empleado</h3>
                     <p className="text-center text-success">{successMessage}</p>
                     <div className="modal-action justify-center">
-                        <button type="button" className="btn btn-info" onClick={handleCloseSuccessModal}>Aceptar</button>
+                        <button type="button" className="btn btn-info" onClick={handleCloseSuccessModal}>Aceptar
+                        </button>
                     </div>
                 </div>
             </dialog>
