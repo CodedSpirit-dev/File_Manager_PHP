@@ -107,17 +107,12 @@ const EditEmployee: React.FC<EditEmployeeProps> = ({
         };
         reset(defaultVals);
 
-        // Filtrar posiciones basadas en la compañía seleccionada
-        const filteredPosition = positions.filter(
-            (position) => position.company_id === Number(defaultVals.company_id)
-        );
+        // Filtrar posiciones basadas en la empresa seleccionada y establecer la posición del empleado
+        const filteredPosition = positions.filter(position => position.company_id === Number(defaultVals.company_id));
         setFilteredPositions(filteredPosition);
 
-        // Establecer position_id solo si está dentro de las posiciones filtradas
-        if (
-            defaultVals.position_id &&
-            filteredPosition.some((pos) => pos.id.toString() === defaultVals.position_id)
-        ) {
+        // Verificar si la posición actual del empleado está dentro de las posiciones filtradas
+        if (defaultVals.position_id && filteredPosition.some(pos => pos.id.toString() === defaultVals.position_id)) {
             setValue('position_id', defaultVals.position_id);
         } else {
             setValue('position_id', '');
@@ -482,10 +477,14 @@ const EditEmployee: React.FC<EditEmployeeProps> = ({
                             )}
 
                             {/* Next Step Button */}
-                            <div className="mt-4 flex justify-end">
+                            <div className="mt-4">
+                                {/* Cancel Button */}
+                                    <button className="btn btn-cancel mr-2" onClick={onClose}>
+                                        Cancelar
+                                    </button>
                                 <button
                                     type="button"
-                                    className="btn btn-block"
+                                    className="btn btn-accept ml-2"
                                     onClick={() => setStep(step + 1)}
                                     disabled={!isValid}
                                 >
@@ -545,15 +544,18 @@ const EditEmployee: React.FC<EditEmployeeProps> = ({
                             )}
 
                             {/* Navigation Buttons */}
-                            <div className="mt-4 flex justify-center">
+                            <div className="mt-4">
+                                    <button className="btn btn-cancel" onClick={onClose}>
+                                        Cancelar
+                                    </button>
                                 <button
                                     type="button"
-                                    className="btn size-2/4 mr-1"
+                                    className="btn-info-mod mx-2"
                                     onClick={() => setStep(step - 1)}
                                 >
                                     Anterior
                                 </button>
-                                <button type="submit" className="btn size-2/4 ml-1">
+                                <button type="submit" className="btn btn-success">
                                     Guardar
                                 </button>
                             </div>
@@ -594,13 +596,6 @@ const EditEmployee: React.FC<EditEmployeeProps> = ({
                         </div>
                     </div>
                 )}
-
-                {/* Cancel Button */}
-                <div className="modal-action">
-                    <button className="btn btn-cancel" onClick={onClose}>
-                        Cancelar
-                    </button>
-                </div>
             </div>
         </div>
     );

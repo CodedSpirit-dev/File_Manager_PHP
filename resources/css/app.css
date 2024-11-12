@@ -59,8 +59,16 @@
         @apply rounded-md hover:ring-2 transition duration-200;
     }
 
+    .btn-success {
+        @apply text-base-100 rounded-md hover:ring-2 transition duration-200 btn-xs sm:btn-xs md:btn-sm lg:btn-md;
+    }
+
+    .btn-info-mod{
+        @apply btn btn-info text-base-100 rounded-md hover:ring-2 transition duration-200 btn-xs sm:btn-xs md:btn-sm lg:btn-md
+    }
+
     .btn-block_info {
-        @apply btn btn-info text-info-content rounded-md hover:ring-2 transition duration-200 block w-full;
+        @apply btn btn-info text-base-100 rounded-md hover:ring-2 transition duration-200 block w-full;
     }
 
     .btn-primary {
@@ -68,11 +76,11 @@
     }
 
     .btn-accept {
-        @apply btn btn-info text-info-content rounded-md hover:ring-2 transition duration-200 btn-xs sm:btn-xs md:btn-sm lg:btn-md;
+        @apply btn btn-info text-base-100 rounded-md hover:ring-2 transition duration-200 btn-xs sm:btn-xs md:btn-sm lg:btn-md;
     }
 
     .btn-cancel {
-        @apply btn btn-error text-error-content rounded-md hover:ring-2 transition duration-200 btn-xs sm:btn-xs md:btn-sm lg:btn-md;
+        @apply btn btn-error text-base-100 rounded-md hover:ring-2 transition duration-200 btn-xs sm:btn-xs md:btn-sm lg:btn-md;
     }
 
     .btn-secondary {

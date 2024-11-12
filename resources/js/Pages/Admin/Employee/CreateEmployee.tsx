@@ -381,8 +381,10 @@ export default function CreateEmployee({ onSuccess, onClose }: CreateEmployeePro
                         )}
 
                         {/* Botón para avanzar al siguiente paso */}
-                        <div className="mt-4 flex justify-end">
-                            <button type="button" className="btn-accept btn-block" onClick={() => setStep(step + 1)}
+                        <div className="mt-4">
+                            {/* Botón de cerrar */}
+                                <button className="btn btn-cancel" onClick={onClose}>Cancelar</button>
+                            <button type="button" className="btn btn-accept ml-2" onClick={() => setStep(step + 1)}
                                     disabled={!isValid}>
                                 Siguiente
                             </button>
@@ -440,10 +442,13 @@ export default function CreateEmployee({ onSuccess, onClose }: CreateEmployeePro
 
                         {/* Botones para navegar entre pasos */}
                         <div className="mt-4 flex justify-center">
-                            <button type="button" className="btn btn-warning mr-1" onClick={() => setStep(step - 1)}>
+                            <button className="btn btn-cancel" onClick={onClose}>
+                                Cancelar
+                            </button>
+                            <button type="button" className="btn-info-mod mx-2" onClick={() => setStep(step - 1)}>
                                 Anterior
                             </button>
-                            <button type="submit" className="btn btn-info ml-1">
+                            <button type="submit" className="btn btn-success">
                                 Guardar
                             </button>
                         </div>
@@ -485,11 +490,6 @@ export default function CreateEmployee({ onSuccess, onClose }: CreateEmployeePro
                     </div>
                 </div>
             </dialog>
-
-            {/* Botón de cerrar */}
-            <div className="modal-action">
-                <button className="btn btn-error" onClick={onClose}>Cancelar</button>
-            </div>
         </div>
     );
 }
