@@ -1,20 +1,36 @@
-// src/components/EditEmployee.tsx
-
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
 import { useForm, Controller } from 'react-hook-form';
 import { Position, Permission, Company, Employee } from '@/types';
+import axios from "axios";
 
 interface EditEmployeeProps {
     employee: Employee;
     positions: Position[];
     companies: Company[];
+    permissions: Permission[];
+    employeePermissions: Permission[];
     onClose: () => void;
+    onSuccess: () => void;
 }
 
-const EditEmployee: React.FC<EditEmployeeProps> = ({ employee, positions, companies, onClose }) => {
-
-    const { control, handleSubmit, setValue, watch, getValues, formState: { errors, isValid }, reset } = useForm({
+const EditEmployee: React.FC<EditEmployeeProps> = ({
+                                                       employee,
+                                                       positions,
+                                                       companies,
+                                                       permissions,
+                                                       employeePermissions,
+                                                       onClose,
+                                                       onSuccess,
+                                                   }) => {
+    const {
+        control,
+        handleSubmit,
+        setValue,
+        watch,
+        getValues,
+        formState: { errors, isValid },
+        reset,
+    } = useForm({
         mode: 'onChange',
         defaultValues: {
             first_name: '',
@@ -30,7 +46,6 @@ const EditEmployee: React.FC<EditEmployeeProps> = ({ employee, positions, compan
         },
     });
 
-    const [permissions, setPermissions] = useState<Permission[]>([]);
     const [filteredPositions, setFilteredPositions] = useState<Position[]>([]);
     const [modalSuccess, setModalSuccess] = useState(false);
     const [modalError, setModalError] = useState(false);
@@ -43,11 +58,17 @@ const EditEmployee: React.FC<EditEmployeeProps> = ({ employee, positions, compan
     const watchEnablePermissions = watch('enable_permissions');
     const watchCompany = watch('company_id');
 
-    // Definición de categorías de permisos
+    // Categorías de Permisos
     const permissionCategories: { [key: string]: string[] } = {
         'Empresas': ['can_create_companies', 'can_delete_companies', 'can_update_companies'],
         'Puestos': ['can_create_positions', 'can_update_positions', 'can_delete_positions'],
-        'Empleados': ['can_create_employees', 'can_delete_employees', 'can_update_employees', 'can_view_company_employees', 'can_view_all_employees'],
+        'Empleados': [
+            'can_create_employees',
+            'can_delete_employees',
+            'can_update_employees',
+            'can_view_company_employees',
+            'can_view_all_employees',
+        ],
         'Gestión de Archivos y Carpetas': [
             'can_view_file_explorer',
             'can_open_files',
@@ -57,62 +78,70 @@ const EditEmployee: React.FC<EditEmployeeProps> = ({ employee, positions, compan
             'can_copy_files',
             'can_move_files',
             'can_rename_files_and_folders',
-            'can_delete_files_and_folders'
-        ]
+            'can_delete_files_and_folders',
+        ],
     };
 
-    // Agrupación de permisos por categoría
-    const groupedPermissions = Object.keys(permissionCategories).map(category => ({
+    // Agrupación de Permisos por Categoría
+    const groupedPermissions = Object.keys(permissionCategories).map((category) => ({
         category,
-        permissions: permissions.filter(permission => permissionCategories[category].includes(permission.name))
+        permissions: permissions.filter((permission) =>
+            permissionCategories[category].includes(permission.name)
+        ),
     }));
 
+    // Inicializar Valores del Formulario
     useEffect(() => {
-        // Obtener todos los permisos disponibles
-        axios.get('/api/permissions')
-            .then(response => setPermissions(response.data))
-            .catch(error => console.error('Error al cargar los permisos', error));
+        const permissionIds = employeePermissions.map((permission: Permission) => permission.id);
+        const defaultVals = {
+            first_name: employee.first_name,
+            last_name_1: employee.last_name_1,
+            last_name_2: employee.last_name_2 || '',
+            username: employee.username,
+            position_id: employee.position_id ? employee.position_id.toString() : '',
+            company_id: employee.company_id ? employee.company_id.toString() : '',
+            password: '',
+            password_confirmation: '',
+            enable_permissions: permissionIds.length > 0,
+            selected_permissions: permissionIds,
+        };
+        reset(defaultVals);
 
-        // Obtener los permisos asignados al empleado
-        axios.get(`/api/employees/${employee.id}/permissions`)
-            .then(response => {
-                const permissionIds = response.data.map((permission: Permission) => permission.id);
-                const defaultVals = {
-                    first_name: employee.first_name,
-                    last_name_1: employee.last_name_1,
-                    last_name_2: employee.last_name_2 || '',
-                    username: employee.username,
-                    position_id: employee.position_id ? employee.position_id.toString() : '',
-                    company_id: employee.company_id ? employee.company_id.toString() : '',
-                    password: '',
-                    password_confirmation: '',
-                    enable_permissions: permissionIds.length > 0,
-                    selected_permissions: permissionIds,
-                };
-                reset(defaultVals);
-
-                // Filtrar posiciones basadas en la empresa seleccionada y establecer la posición del empleado
-                const filteredPosition = positions.filter(position => position.company_id === Number(defaultVals.company_id));
-                setFilteredPositions(filteredPosition);
-
-                // Verificar si la posición actual del empleado está dentro de las posiciones filtradas
-                if (defaultVals.position_id && filteredPosition.some(pos => pos.id.toString() === defaultVals.position_id)) {
-                    setValue('position_id', defaultVals.position_id);
-                } else {
-                    setValue('position_id', '');
-                }
-            })
-            .catch(error => console.error('Error al cargar los permisos del empleado', error));
-    }, [employee.id, employee.first_name, employee.last_name_1, employee.last_name_2, employee.username, employee.position_id, employee.company_id, positions, reset, setValue]);
-
-    useEffect(() => {
-        // Actualizar las posiciones filtradas cuando cambia la empresa
-        const filteredPosition = positions.filter(position => position.company_id === Number(watchCompany));
+        // Filtrar posiciones basadas en la compañía seleccionada
+        const filteredPosition = positions.filter(
+            (position) => position.company_id === Number(defaultVals.company_id)
+        );
         setFilteredPositions(filteredPosition);
 
-        // Si la posición actual no está en las posiciones filtradas, reiniciar el campo position_id
-        const currentPositionId = getValues('position_id');
-        if (currentPositionId && !filteredPosition.some(pos => pos.id.toString() === currentPositionId)) {
+        // Establecer position_id solo si está dentro de las posiciones filtradas
+        if (
+            defaultVals.position_id &&
+            filteredPosition.some((pos) => pos.id.toString() === defaultVals.position_id)
+        ) {
+            setValue('position_id', defaultVals.position_id);
+        } else {
+            setValue('position_id', '');
+        }
+    }, [employee, employeePermissions, positions, reset, setValue]);
+
+    // Actualizar posiciones filtradas cuando cambia la compañía
+    useEffect(() => {
+        if (watchCompany) {
+            const filteredPosition = positions.filter(
+                (position) => position.company_id === Number(watchCompany)
+            );
+            setFilteredPositions(filteredPosition);
+
+            // Si el puesto actual no está en las posiciones filtradas, reiniciar position_id
+            const currentPositionId = getValues('position_id');
+            if (
+                currentPositionId &&
+                !filteredPosition.some((pos) => pos.id.toString() === currentPositionId)
+            ) {
+                setValue('position_id', '');
+            }
+        } else {
+            setFilteredPositions([]);
             setValue('position_id', '');
         }
     }, [watchCompany, positions, setValue, getValues]);
@@ -121,7 +150,10 @@ const EditEmployee: React.FC<EditEmployeeProps> = ({ employee, positions, compan
         const currentPermissions = getValues('selected_permissions') as number[];
 
         if (currentPermissions.includes(permissionId)) {
-            setValue('selected_permissions', currentPermissions.filter(id => id !== permissionId));
+            setValue(
+                'selected_permissions',
+                currentPermissions.filter((id) => id !== permissionId)
+            );
         } else {
             setValue('selected_permissions', [...currentPermissions, permissionId]);
         }
@@ -135,43 +167,46 @@ const EditEmployee: React.FC<EditEmployeeProps> = ({ employee, positions, compan
                 ...data,
                 position_id: data.position_id,
                 company_id: data.company_id,
-                // Opcional: Incluye la contraseña solo si se ha ingresado
-                ...(data.password ? { password: data.password, password_confirmation: data.password_confirmation } : {})
+                ...(data.password
+                    ? { password: data.password, password_confirmation: data.password_confirmation }
+                    : {}),
             };
 
-            axios.patch(`/admin/employees/${employee.id}`, payload)
-                .then(response => {
+            axios
+                .patch(`/admin/employees/${employee.id}`, payload)
+                .then((response) => {
                     const employeeId = employee.id;
 
                     if (data.enable_permissions) {
-                        axios.post('/api/userpermissions', {
-                            employee_id: employeeId,
-                            permissions: data.selected_permissions
-                        })
+                        axios
+                            .post('/api/userpermissions', {
+                                employee_id: employeeId,
+                                permissions: data.selected_permissions,
+                            })
                             .then(() => {
                                 setModalSuccess(true);
                                 reset();
                                 setStep(1);
                             })
-                            .catch(error => {
+                            .catch((error) => {
                                 console.error('Error al asignar permisos', error);
                                 setModalError(true);
                             });
                     } else {
-                        // Si se deshabilitan los permisos, se pueden eliminar los permisos existentes
-                        axios.delete(`/api/userpermissions/${employeeId}`)
+                        axios
+                            .delete(`/api/userpermissions/${employeeId}`)
                             .then(() => {
                                 setModalSuccess(true);
                                 reset();
                                 setStep(1);
                             })
-                            .catch(error => {
+                            .catch((error) => {
                                 console.error('Error al eliminar permisos', error);
                                 setModalError(true);
                             });
                     }
                 })
-                .catch(error => {
+                .catch((error) => {
                     console.error('Error al actualizar el empleado', error);
                     setModalError(true);
                 });
@@ -180,7 +215,7 @@ const EditEmployee: React.FC<EditEmployeeProps> = ({ employee, positions, compan
 
     return (
         <div className="modal modal-open">
-            <div className="modal-box w-11/12 max-w-5xl">
+            <div className="modal-box">
                 <h1 className="text-2xl text-center font-bold my-4">Editar Empleado</h1>
 
                 {/* Indicador de pasos */}
@@ -446,9 +481,14 @@ const EditEmployee: React.FC<EditEmployeeProps> = ({ employee, positions, compan
                                 <p className="text-red-600">Las contraseñas no coinciden</p>
                             )}
 
-                            {/* Botón para avanzar al siguiente paso */}
+                            {/* Next Step Button */}
                             <div className="mt-4 flex justify-end">
-                                <button type="button" className="btn btn-block" onClick={() => setStep(step + 1)} disabled={!isValid}>
+                                <button
+                                    type="button"
+                                    className="btn btn-block"
+                                    onClick={() => setStep(step + 1)}
+                                    disabled={!isValid}
+                                >
                                     Siguiente
                                 </button>
                             </div>
@@ -458,8 +498,8 @@ const EditEmployee: React.FC<EditEmployeeProps> = ({ employee, positions, compan
 
                     {step === 2 && (
                         <>
-                            {/* Paso 2: Permisos */}
-                            {/* Habilitar permisos */}
+                            {/* Step 2: Permissions */}
+                            {/* Enable Permissions */}
                             <div className="mt-4">
                                 <label htmlFor="enable_permissions" className="flex items-center">
                                     <Controller
@@ -479,7 +519,7 @@ const EditEmployee: React.FC<EditEmployeeProps> = ({ employee, positions, compan
                                 </label>
                             </div>
 
-                            {/* Selección de permisos agrupados por categoría */}
+                            {/* Permissions Selection */}
                             {watchEnablePermissions && (
                                 <div className="mt-6">
                                     <h2 className="mb-3 text-xl text-center font-bold">Permisos</h2>
@@ -487,7 +527,7 @@ const EditEmployee: React.FC<EditEmployeeProps> = ({ employee, positions, compan
                                         <div key={category} className="mb-4">
                                             <h3 className="text-lg font-semibold mb-2">{category}</h3>
                                             <div className="grid grid-cols-2 gap-4">
-                                                {permissions.map(permission => (
+                                                {permissions.map((permission) => (
                                                     <label key={permission.id} className="flex items-center my-2">
                                                         <input
                                                             type="checkbox"
@@ -504,9 +544,13 @@ const EditEmployee: React.FC<EditEmployeeProps> = ({ employee, positions, compan
                                 </div>
                             )}
 
-                            {/* Botones para navegar entre pasos */}
+                            {/* Navigation Buttons */}
                             <div className="mt-4 flex justify-center">
-                                <button type="button" className="btn size-2/4 mr-1" onClick={() => setStep(step - 1)}>
+                                <button
+                                    type="button"
+                                    className="btn size-2/4 mr-1"
+                                    onClick={() => setStep(step - 1)}
+                                >
                                     Anterior
                                 </button>
                                 <button type="submit" className="btn size-2/4 ml-1">
@@ -517,13 +561,19 @@ const EditEmployee: React.FC<EditEmployeeProps> = ({ employee, positions, compan
                     )}
                 </form>
 
-                {/* Modal de éxito */}
+                {/* Success Modal */}
                 {modalSuccess && (
                     <div className="modal modal-open">
                         <div className="modal-box">
                             <h3 className="font-bold text-lg">¡Empleado actualizado con éxito!</h3>
                             <div className="modal-action">
-                                <button className="btn btn-primary" onClick={() => { setModalSuccess(false); onClose(); }}>
+                                <button
+                                    className="btn btn-primary"
+                                    onClick={() => {
+                                        setModalSuccess(false);
+                                        onSuccess();
+                                    }}
+                                >
                                     Cerrar
                                 </button>
                             </div>
@@ -531,7 +581,7 @@ const EditEmployee: React.FC<EditEmployeeProps> = ({ employee, positions, compan
                     </div>
                 )}
 
-                {/* Modal de error */}
+                {/* Error Modal */}
                 {modalError && (
                     <div className="modal modal-open">
                         <div className="modal-box">
@@ -545,9 +595,11 @@ const EditEmployee: React.FC<EditEmployeeProps> = ({ employee, positions, compan
                     </div>
                 )}
 
-                {/* Botón de cerrar */}
+                {/* Cancel Button */}
                 <div className="modal-action">
-                    <button className="btn btn-error" onClick={onClose}>Cancelar</button>
+                    <button className="btn btn-cancel" onClick={onClose}>
+                        Cancelar
+                    </button>
                 </div>
             </div>
         </div>

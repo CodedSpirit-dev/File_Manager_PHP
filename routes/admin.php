@@ -10,7 +10,7 @@ Route::middleware('auth:employee')->prefix('admin')->name('admin.')->group(funct
     Route::get('/employees/create', [EmployeeController::class, 'create'])->name('employees.create');
     Route::post('/employees', [EmployeeController::class, 'store'])->name('employees.store');
     Route::get('/employees/{id}/edit', [EmployeeController::class, 'edit'])->name('employees.edit');
-    Route::put('/employees/{id}', [EmployeeController::class, 'update'])->name('employees.update');
+    Route::patch('/employees/{id}', [EmployeeController::class, 'update'])->name('employees.update');
     // O puedes usar PATCH si prefieres actualizaciones parciales:
     // Route::patch('/employees/{id}', [EmployeeController::class, 'update'])->name('employees.update');
 

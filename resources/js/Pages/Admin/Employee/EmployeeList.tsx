@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import EditEmployee from "@/Pages/Admin/Employee/EditEmployee";
 import CreateEmployee from "@/Pages/Admin/Employee/CreateEmployee";
-import { Company, Position, Employee } from "@/types";
+import { Company, Position, Employee, Permission } from "@/types";
 
 const EmployeeList: React.FC = (): React.ReactNode => {
     const [employees, setEmployees] = useState<Employee[]>([]);
@@ -14,15 +14,46 @@ const EmployeeList: React.FC = (): React.ReactNode => {
     const [error, setError] = useState<string | null>(null);
     const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
     const [editModalOpen, setEditModalOpen] = useState(false);
-    const [addModalOpen, setAddModalOpen] = useState(false); // Nuevo estado para el modal de agregar
+    const [addModalOpen, setAddModalOpen] = useState(false);
 
+    // Estados para manejar el spinner en el botón "Editar"
+    const [loadingEmployeeId, setLoadingEmployeeId] = useState<number | null>(null);
+    const [editEmployeeData, setEditEmployeeData] = useState<{
+        permissions: Permission[];
+        employeePermissions: Permission[];
+    } | null>(null);
+
+    // Función para manejar el clic en "Editar"
     const handleEditClick = (employee: Employee) => {
-        const position = positions.find(position => position.id === employee.position_id);
+        setLoadingEmployeeId(employee.id);
+        const position = positions.find((position) => position.id === employee.position_id);
         const companyId = position ? position.company_id : null;
-        setEditingEmployee({ ...employee, company_id: companyId });
-        setEditModalOpen(true);
+        const employeeWithCompany = { ...employee, company_id: companyId };
+
+        // Realizar llamadas a la API para obtener permisos y permisos del empleado
+        Promise.all([
+            axios.get('/api/permissions'),
+            axios.get(`/api/employees/${employee.id}/permissions`),
+        ])
+            .then(([permissionsResponse, employeePermissionsResponse]) => {
+                const permissions = permissionsResponse.data;
+                const employeePermissions = employeePermissionsResponse.data;
+                setEditingEmployee(employeeWithCompany);
+                setEditEmployeeData({
+                    permissions,
+                    employeePermissions,
+                });
+                setEditModalOpen(true);
+                setLoadingEmployeeId(null);
+            })
+            .catch((error) => {
+                console.error('Error al cargar los datos para editar el empleado', error);
+                setLoadingEmployeeId(null);
+                // Opcional: Puedes mostrar un mensaje de error al usuario aquí
+            });
     };
 
+    // Función para obtener los datos iniciales
     useEffect(() => {
         fetchData();
     }, []);
@@ -45,12 +76,6 @@ const EmployeeList: React.FC = (): React.ReactNode => {
                 setError('Error al cargar los datos');
                 setLoading(false);
             });
-    };
-
-    const refreshEmployees = () => {
-        axios.get('admin/employees')
-            .then(response => setEmployees(response.data))
-            .catch(error => console.error('Error al actualizar la lista de empleados', error));
     };
 
     const handleDeleteClick = (employee: Employee) => {
@@ -83,6 +108,7 @@ const EmployeeList: React.FC = (): React.ReactNode => {
                 </button>
             </div>
 
+            {/* Tabla de Empleados */}
             <div className="overflow-x-auto">
                 <table className="table w-full">
                     <thead>
@@ -95,9 +121,11 @@ const EmployeeList: React.FC = (): React.ReactNode => {
                     </tr>
                     </thead>
                     <tbody>
-                    {employees.map(employee => {
-                        const position = positions.find(position => position.id === employee.position_id);
-                        const company = position ? companies.find(company => company.id === position.company_id) : null;
+                    {employees.map((employee) => {
+                        const position = positions.find((position) => position.id === employee.position_id);
+                        const company = position
+                            ? companies.find((company) => company.id === position.company_id)
+                            : null;
                         return (
                             <tr key={employee.id} className="hover:bg-base-200">
                                 <td className="border px-4 py-2 text-sm text-base-content truncate">
@@ -107,17 +135,19 @@ const EmployeeList: React.FC = (): React.ReactNode => {
                                     {new Date(employee.registered_at).toLocaleDateString('es-ES', {
                                         day: 'numeric',
                                         month: 'long',
-                                        year: 'numeric'
+                                        year: 'numeric',
                                     })}
                                 </td>
                                 <td className="border px-4 py-2 text-sm text-base-content">
-                                    {employee.last_login_at ? new Date(employee.last_login_at).toLocaleDateString('es-ES', {
-                                        day: 'numeric',
-                                        month: 'long',
-                                        year: 'numeric',
-                                        hour: '2-digit',
-                                        minute: '2-digit'
-                                    }) : 'No registrado'}
+                                    {employee.last_login_at
+                                        ? new Date(employee.last_login_at).toLocaleDateString('es-ES', {
+                                            day: 'numeric',
+                                            month: 'long',
+                                            year: 'numeric',
+                                            hour: '2-digit',
+                                            minute: '2-digit',
+                                        })
+                                        : 'No registrado'}
                                 </td>
                                 <td className="border px-4 py-2 text-sm text-base-content">
                                     {position?.name}
@@ -133,8 +163,13 @@ const EmployeeList: React.FC = (): React.ReactNode => {
                                         <button
                                             onClick={() => handleEditClick(employee)}
                                             className="btn btn-primary btn-sm"
+                                            disabled={loadingEmployeeId === employee.id}
                                         >
-                                            Editar
+                                            {loadingEmployeeId === employee.id ? (
+                                                <span className="loading loading-spinner"></span>
+                                            ) : (
+                                                'Editar'
+                                            )}
                                         </button>
                                         <button
                                             onClick={() => handleDeleteClick(employee)}
@@ -151,12 +186,15 @@ const EmployeeList: React.FC = (): React.ReactNode => {
                 </table>
 
                 {/* Modal para Editar Empleado */}
-                {editModalOpen && editingEmployee && (
+                {editModalOpen && editingEmployee && editEmployeeData && (
                     <EditEmployee
                         employee={editingEmployee}
                         positions={positions}
                         companies={companies}
-                        onClose={() => {
+                        permissions={editEmployeeData.permissions}
+                        employeePermissions={editEmployeeData.employeePermissions}
+                        onClose={() => setEditModalOpen(false)}
+                        onSuccess={() => {
                             setEditModalOpen(false);
                             fetchData();
                         }}
@@ -176,7 +214,7 @@ const EmployeeList: React.FC = (): React.ReactNode => {
                             <CreateEmployee
                                 onSuccess={() => {
                                     setAddModalOpen(false);
-                                    fetchData(); // Actualizar la lista de empleados
+                                    fetchData();
                                 }}
                                 onClose={() => setAddModalOpen(false)}
                             />
