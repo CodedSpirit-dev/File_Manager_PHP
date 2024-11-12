@@ -35,8 +35,9 @@ export default function CreateEmployee({ onSuccess, onClose }: CreateEmployeePro
     const [modalSuccess, setModalSuccess] = useState(false); // Estado para el modal de éxito
     const [step, setStep] = useState(1);
     const totalSteps = 2;
-    const [successMessage, setSuccessMessage] = useState('');
     const [errorMessage, setErrorMessage] = useState('');
+    const [successMessage, setSuccessMessage] = useState<string | null>(null);
+
 
     const watchAllFields = watch();
     const watchPassword = watch('password');
@@ -92,7 +93,7 @@ export default function CreateEmployee({ onSuccess, onClose }: CreateEmployeePro
 
     const handleCloseSuccessModal = () => {
         successModalRef.current?.close();
-        onClose();
+        onSuccess(); // Llama a onSuccess para notificar al padre que el registro fue exitoso
     };
 
     const handleOpenErrorModal = () => {

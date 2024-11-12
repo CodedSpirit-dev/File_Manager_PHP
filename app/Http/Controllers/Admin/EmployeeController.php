@@ -232,6 +232,22 @@ class EmployeeController extends Controller
     {
         return $this->belongsTo(Position::class);
     }
+    public function destroy($id)
+    {
+        $employee = Employee::find($id);
+
+        if (!$employee) {
+            return response()->json(['error' => 'Empleado no encontrado'], 404);
+        }
+
+        // Desasocia todos los permisos antes de eliminar
+        $employee->permissions()->detach();
+
+        // Elimina el empleado
+        $employee->delete();
+
+        return response()->json(['message' => 'Empleado eliminado con éxito']);
+    }
 
 
 }

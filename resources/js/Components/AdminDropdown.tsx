@@ -55,9 +55,9 @@ const AdminDropdown: React.FC<AdminDropdownProps> = ({ renderComponent }) => {
                                     className={`${
                                         active ? 'bg-blue-500 text-white' : 'text-gray-900'
                                     } group flex rounded-md items-center w-full px-2 py-2 text-sm`}
-                                    onClick={() => renderComponent('CreatePosition')}
+                                    onClick={() => renderComponent('PositionList')}
                                 >
-                                    Agregar nuevo puesto
+                                    Puestos
                                 </button>
                             )}
                         </Menu.Item>

@@ -12,7 +12,8 @@ import FileManager from './FileSystem/FileManager';
 import AdminDropdown from '@/Components/AdminDropdown';
 import { PermissionsProvider, usePermissions } from '@/contexts/PermissionsContext';
 import { Menu } from '@headlessui/react';
-import CompanyList from "@/Pages/Admin/Company/CompanyList"; // Importar Menu
+import CompanyList from "@/Pages/Admin/Company/CompanyList";
+import PositionList from "@/Pages/Admin/Position/PositionList"; // Importar Menu
 
 const HomeContent: React.FC = () => {
     const { hasPermission } = usePermissions();
@@ -36,8 +37,8 @@ const HomeContent: React.FC = () => {
             case 'CompanyList' :
                 setComponent(<CompanyList/>)
                 break;
-            case 'CreatePosition':
-                setComponent(<CreatePosition />);
+            case 'PositionList':
+                setComponent(<PositionList />);
                 break;
             default:
                 setComponent(null);
@@ -101,9 +102,9 @@ const HomeContent: React.FC = () => {
                                                     className={`${
                                                         active ? 'bg-blue-500 text-white' : 'text-gray-900'
                                                     } group flex rounded-md items-center w-full px-2 py-2 text-sm`}
-                                                    onClick={() => renderComponent('CreatePosition')}
+                                                    onClick={() => renderComponent('PositionList')}
                                                 >
-                                                    Agregar nuevo puesto
+                                                    Puestos
                                                 </button>
                                             )}
                                         </Menu.Item>

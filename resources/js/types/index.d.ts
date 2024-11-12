@@ -48,6 +48,8 @@ export interface Company {
 }
 
 export interface Position {
+    company_name: string;
+    employees_count: number;
     id: number;
     name: string;
     company_id: number;

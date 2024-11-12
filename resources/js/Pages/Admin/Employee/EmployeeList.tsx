@@ -1,6 +1,6 @@
 // src/components/EmployeeList.tsx
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import axios from 'axios';
 import EditEmployee from "@/Pages/Admin/Employee/EditEmployee";
 import CreateEmployee from "@/Pages/Admin/Employee/CreateEmployee";
@@ -15,6 +15,15 @@ const EmployeeList: React.FC = (): React.ReactNode => {
     const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
     const [editModalOpen, setEditModalOpen] = useState(false);
     const [addModalOpen, setAddModalOpen] = useState(false);
+    const [successMessage, setSuccessMessage] = useState<string | null>(null);
+
+    // Referencias para los modales
+    const successModalRef = useRef<HTMLDialogElement>(null);
+    const confirmDeleteRef = useRef<HTMLDialogElement>(null);
+
+    // Estado para el empleado a eliminar y estado de carga durante la eliminación
+    const [employeeToDelete, setEmployeeToDelete] = useState<Employee | null>(null);
+    const [loadingDelete, setLoadingDelete] = useState<boolean>(false);
 
     // Estados para manejar el spinner en el botón "Editar"
     const [loadingEmployeeId, setLoadingEmployeeId] = useState<number | null>(null);
@@ -78,8 +87,39 @@ const EmployeeList: React.FC = (): React.ReactNode => {
             });
     };
 
+    // Función para manejar el clic en "Eliminar"
     const handleDeleteClick = (employee: Employee) => {
-        alert(`Funcionalidad de eliminación para ${employee.first_name} ${employee.last_name_1} está pendiente.`);
+        setEmployeeToDelete(employee);
+        confirmDeleteRef.current?.showModal();
+    };
+
+    // Función para confirmar la eliminación
+    const confirmDelete = () => {
+        if (!employeeToDelete) return;
+
+        setLoadingDelete(true);
+
+        axios.delete(`admin/employees/${employeeToDelete.id}`)
+            .then(() => {
+                setSuccessMessage('¡Empleado eliminado con éxito!');
+                fetchData();  // Recarga la lista de empleados
+                confirmDeleteRef.current?.close();  // Cierra el modal de confirmación
+                successModalRef.current?.showModal();  // Muestra el modal de éxito
+            })
+            .catch((error) => {
+                console.error('Error al eliminar el empleado', error);
+                // Opcional: Puedes manejar errores mostrando un modal o mensaje aquí
+            })
+            .finally(() => {
+                setLoadingDelete(false);
+                setEmployeeToDelete(null);
+            });
+    };
+
+    // Función para cerrar el modal de éxito
+    const handleCloseSuccessModal = () => {
+        successModalRef.current?.close();
+        setSuccessMessage(null); // Resetea el mensaje de éxito
     };
 
     if (loading) {
@@ -151,11 +191,12 @@ const EmployeeList: React.FC = (): React.ReactNode => {
                                 </td>
                                 <td className="border px-4 py-2 text-sm text-base-content">
                                     {position?.name}
-                                    <br />
+                                    <br/>
                                     {company && (
-                                        <span className="mt-1 inline-block bg-secondary text-secondary-content text-xs px-2 py-1 rounded">
-                                                {company.name}
-                                            </span>
+                                        <span
+                                            className="mt-1 inline-block bg-secondary text-secondary-content text-xs px-2 py-1 rounded">
+                                                    {company.name}
+                                                </span>
                                     )}
                                 </td>
                                 <td className="border px-4 py-2 text-sm text-base-content">
@@ -204,7 +245,7 @@ const EmployeeList: React.FC = (): React.ReactNode => {
                 {/* Modal para Agregar Empleado */}
                 {addModalOpen && (
                     <div className="modal modal-open">
-                        <div className="modal-box">
+                        <div className="modal-box relative">
                             <button
                                 className="btn btn-sm btn-circle absolute right-2 top-2"
                                 onClick={() => setAddModalOpen(false)}
@@ -213,17 +254,64 @@ const EmployeeList: React.FC = (): React.ReactNode => {
                             </button>
                             <CreateEmployee
                                 onSuccess={() => {
-                                    setAddModalOpen(false);
-                                    fetchData();
+                                    fetchData();  // Recarga la lista de empleados
+                                    setAddModalOpen(false); // Cierra el modal
                                 }}
                                 onClose={() => setAddModalOpen(false)}
                             />
                         </div>
                     </div>
                 )}
+
+                {/* Modal de Confirmación de Eliminación */}
+                <dialog ref={confirmDeleteRef} className="modal modal-bottom sm:modal-middle">
+                    <form method="dialog" className="modal-box">
+                        <h4 className="font-bold text-center">
+                            {employeeToDelete
+                                ? `¿Estás seguro de eliminar a ${employeeToDelete.first_name} ${employeeToDelete.last_name_1} de la base de datos?`
+                                : '¿Estás seguro de eliminar este empleado de la base de datos?'}
+                        </h4>
+                        <p className="text-justify mt-4">
+                            Esta operación no se puede deshacer.
+                        </p>
+
+                        <div className="modal-action justify-center mt-6">
+                            <button
+                                type="button"
+                                className="btn btn-warning"
+                                onClick={() => confirmDeleteRef.current?.close()}
+                                disabled={loadingDelete}
+                            >
+                                No, cancelar
+                            </button>
+                            <button
+                                type="button"
+                                onClick={confirmDelete}
+                                className={`btn btn-error ${loadingDelete ? 'loading' : ''}`}
+                                disabled={loadingDelete}
+                            >
+                                {loadingDelete ? 'Eliminando...' : 'Sí, eliminar'}
+                            </button>
+                        </div>
+                    </form>
+                </dialog>
+
+                {/* Modal de éxito */}
+                <dialog ref={successModalRef} id="modal_employee_success"
+                        className="modal modal-bottom sm:modal-middle">
+                    <div className="modal-box">
+                        <h3 className="font-bold text-center">Acción Exitosa</h3>
+                        <p className="text-center text-success">{successMessage}</p>
+                        <div className="modal-action justify-center">
+                            <button type="button" className="btn btn-info" onClick={handleCloseSuccessModal}>
+                                Aceptar
+                            </button>
+                        </div>
+                    </div>
+                </dialog>
             </div>
         </div>
-    );
-};
+            );
+            };
 
-export default EmployeeList;
+            export default EmployeeList;
