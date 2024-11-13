@@ -1,41 +1,48 @@
-import {EmployeePageProps} from '@/types';
-import {Button} from '@headlessui/react';
-import React, {useState} from 'react';
+import { EmployeePageProps } from '@/types';
+import { Button } from '@headlessui/react';
+import React, { useState, useEffect } from 'react';
 import EmployeeList from './Admin/Employee/EmployeeList';
 import axios from 'axios';
 import Profile from './Profile/Profile';
-import {Head, usePage} from '@inertiajs/react';
+import { Head, usePage } from '@inertiajs/react';
 import FileManager from './FileSystem/FileManager';
 import AdminDropdown from '@/Components/AdminDropdown';
-import {PermissionsProvider, usePermissions} from '@/contexts/PermissionsContext';
-import {Menu} from '@headlessui/react';
+import { PermissionsProvider, usePermissions } from '@/contexts/PermissionsContext';
+import { Menu } from '@headlessui/react';
 import CompanyList from "@/Pages/Admin/Company/CompanyList";
-import PositionList from "@/Pages/Admin/Position/PositionList"; // Importar Menu
+import PositionList from "@/Pages/Admin/Position/PositionList";
+import { LuFolderOpen } from 'react-icons/lu';
+import { CiUser } from 'react-icons/ci';
+import { IoBusinessOutline } from 'react-icons/io5';
+import { MdOutlineWorkOutline } from 'react-icons/md';
+import { GrGroup } from 'react-icons/gr';
 
 const HomeContent: React.FC = () => {
-    const {hasPermission} = usePermissions();
-    const {auth} = usePage<EmployeePageProps>().props;
+    const { hasPermission } = usePermissions();
+    const { auth } = usePage<EmployeePageProps>().props;
     const employee = auth.user;
 
-    const [component, setComponent] = useState<JSX.Element | null>(null);
+    // Inicializar el componente activo en "FileManager" y mostrarlo por defecto
+    const [component, setComponent] = useState<JSX.Element | null>(<FileManager />);
+    const [activeComponent, setActiveComponent] = useState<string>('FileManager');
 
     const renderComponent = (componentName: string) => {
-        // Renderizar el componente según el nombre recibido
+        setActiveComponent(componentName);
         switch (componentName) {
             case 'Profile':
-                setComponent(<ProfileComponent/>);
+                setComponent(<ProfileComponent />);
                 break;
             case 'FileManager':
-                setComponent(<FileManager/>);
+                setComponent(<FileManager />);
                 break;
             case 'EmployeeList':
-                setComponent(<EmployeeList/>);
+                setComponent(<EmployeeList />);
                 break;
-            case 'CompanyList' :
-                setComponent(<CompanyList/>)
+            case 'CompanyList':
+                setComponent(<CompanyList />);
                 break;
             case 'PositionList':
-                setComponent(<PositionList/>);
+                setComponent(<PositionList />);
                 break;
             default:
                 setComponent(null);
@@ -50,7 +57,7 @@ const HomeContent: React.FC = () => {
 
     return (
         <>
-            <Head title="Inicio"/>
+            <Head title="Inicio" />
             <section className="container mx-auto">
                 <nav className="nav__bar rounded-lg flex items-center justify-between p-4">
                     {/* Menú desplegable para pantallas pequeñas */}
@@ -65,72 +72,87 @@ const HomeContent: React.FC = () => {
                             <Menu.Items
                                 className="absolute left-0 mt-2 w-56 origin-top-left bg-white border border-gray-200 divide-y divide-gray-100 rounded-md shadow-lg focus:outline-none z-20">
                                 <div className="px-1 py-1 ">
-                                    {hasPermission('can_view_company_employees') && (
+                                    {hasPermission('can_view_file_explorer') && (
                                         <Menu.Item>
-                                            {({active}) => (
+                                            {({ active }) => (
                                                 <button
                                                     className={`${
-                                                        active ? 'bg-blue-500 text-white' : 'text-gray-900'
+                                                        activeComponent === 'FileManager'
+                                                            ? 'bg-primary text-white cursor-not-allowed'
+                                                            : active ? 'bg-info text-white' : 'text-gray-900'
+                                                    } group flex rounded-md items-center w-full px-2 py-2 text-sm`}
+                                                    onClick={() => renderComponent('FileManager')}
+                                                    disabled={activeComponent === 'FileManager'}
+                                                >
+                                                    <LuFolderOpen className="mr-2" /> Explorador de Archivos
+                                                </button>
+                                            )}
+                                        </Menu.Item>
+                                    )}
+                                    {hasPermission('can_view_company_employees') && (
+                                        <Menu.Item>
+                                            {({ active }) => (
+                                                <button
+                                                    className={`${
+                                                        activeComponent === 'Profile'
+                                                            ? 'bg-primary text-white cursor-not-allowed'
+                                                            : active ? 'bg-info text-white' : 'text-gray-900'
                                                     } group flex rounded-md items-center w-full px-2 py-2 text-sm`}
                                                     onClick={() => renderComponent('Profile')}
+                                                    disabled={activeComponent === 'Profile'}
                                                 >
-                                                    Perfil
+                                                    <CiUser className="mr-2" /> Perfil
                                                 </button>
                                             )}
                                         </Menu.Item>
                                     )}
                                     {hasPermission('can_create_companies') && (
                                         <Menu.Item>
-                                            {({active}) => (
+                                            {({ active }) => (
                                                 <button
                                                     className={`${
-                                                        active ? 'bg-blue-500 text-white' : 'text-gray-900'
+                                                        activeComponent === 'CompanyList'
+                                                            ? 'bg-primary text-white cursor-not-allowed'
+                                                            : active ? 'bg-info text-white' : 'text-gray-900'
                                                     } group flex rounded-md items-center w-full px-2 py-2 text-sm`}
                                                     onClick={() => renderComponent('CompanyList')}
+                                                    disabled={activeComponent === 'CompanyList'}
                                                 >
-                                                    Empresas
+                                                    <IoBusinessOutline className="mr-2" /> Empresas
                                                 </button>
                                             )}
                                         </Menu.Item>
                                     )}
                                     {hasPermission('can_create_positions') && (
                                         <Menu.Item>
-                                            {({active}) => (
+                                            {({ active }) => (
                                                 <button
                                                     className={`${
-                                                        active ? 'bg-blue-500 text-white' : 'text-gray-900'
+                                                        activeComponent === 'PositionList'
+                                                            ? 'bg-primary text-white cursor-not-allowed'
+                                                            : active ? 'bg-info text-white' : 'text-gray-900'
                                                     } group flex rounded-md items-center w-full px-2 py-2 text-sm`}
                                                     onClick={() => renderComponent('PositionList')}
+                                                    disabled={activeComponent === 'PositionList'}
                                                 >
-                                                    Puestos
+                                                    <MdOutlineWorkOutline className="mr-2" /> Puestos
                                                 </button>
                                             )}
                                         </Menu.Item>
                                     )}
                                     {hasPermission('can_view_all_employees') && (
                                         <Menu.Item>
-                                            {({active}) => (
+                                            {({ active }) => (
                                                 <button
                                                     className={`${
-                                                        active ? 'bg-blue-500 text-white' : 'text-gray-900'
+                                                        activeComponent === 'EmployeeList'
+                                                            ? 'bg-primary text-white cursor-not-allowed'
+                                                            : active ? 'bg-info text-white' : 'text-gray-900'
                                                     } group flex rounded-md items-center w-full px-2 py-2 text-sm`}
                                                     onClick={() => renderComponent('EmployeeList')}
+                                                    disabled={activeComponent === 'EmployeeList'}
                                                 >
-                                                    Empleados
-                                                </button>
-                                            )}
-                                        </Menu.Item>
-                                    )}
-                                    {hasPermission('can_view_file_explorer') && (
-                                        <Menu.Item>
-                                            {({active}) => (
-                                                <button
-                                                    className={`${
-                                                        active ? 'bg-blue-500 text-white' : 'text-gray-900'
-                                                    } group flex rounded-md items-center w-full px-2 py-2 text-sm`}
-                                                    onClick={() => renderComponent('FileManager')}
-                                                >
-                                                    Explorador de archivos
+                                                    <GrGroup className="mr-2" /> Usuarios
                                                 </button>
                                             )}
                                         </Menu.Item>
@@ -144,14 +166,17 @@ const HomeContent: React.FC = () => {
                     <div className="hidden lg:flex space-x-4">
                         {hasPermission('can_view_file_explorer') && (
                             <Button
-                                className="btn btn-ghost nav__bar__button hover:text-black"
+                                className={`btn btn-ghost nav__bar__button hover:text-black ${
+                                    activeComponent === 'FileManager' ? 'bg-primary text-white cursor-not-allowed' : ''
+                                }`}
                                 onClick={() => renderComponent('FileManager')}
+                                disabled={activeComponent === 'FileManager'}
                             >
-                                Explorador de archivos
+                                <LuFolderOpen className="mr-2" /> Explorador de archivos
                             </Button>
                         )}
                         {/* AdminDropdown visible solo en pantallas grandes */}
-                        <AdminDropdown renderComponent={renderComponent}/>
+                        <AdminDropdown renderComponent={renderComponent} />
                     </div>
 
                     {/* Botón de cerrar sesión visible en todas las pantallas */}
@@ -191,7 +216,7 @@ const HomeContent: React.FC = () => {
                 </nav>
 
                 <div className="mt-4">
-                    {component ? component : <FileManager/>}
+                    {component}
                 </div>
             </section>
         </>
@@ -200,15 +225,15 @@ const HomeContent: React.FC = () => {
 
 // Componentes individuales
 const ProfileComponent: React.FC = () => {
-    const {auth} = usePage<EmployeePageProps>().props;
-    return <Profile mustVerifyEmail={false} status="" auth={auth}/>;
+    const { auth } = usePage<EmployeePageProps>().props;
+    return <Profile mustVerifyEmail={false} status="" auth={auth} />;
 };
 
 // Envolviendo el contenido de Home con el Provider de Permisos
 const Home: React.FC = () => {
     return (
         <PermissionsProvider>
-            <HomeContent/>
+            <HomeContent />
         </PermissionsProvider>
     );
 };

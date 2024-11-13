@@ -1,6 +1,12 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Menu } from '@headlessui/react';
 import { usePermissions } from '@/contexts/PermissionsContext';
+import { LuFolderOpen } from 'react-icons/lu';
+import { CiUser } from 'react-icons/ci';
+import { IoBusinessOutline } from 'react-icons/io5';
+import { MdOutlineWorkOutline } from 'react-icons/md';
+import { GrGroup } from 'react-icons/gr';
+import { CgOptions } from 'react-icons/cg';
 
 interface AdminDropdownProps {
     renderComponent: (componentName: string) => void;
@@ -8,6 +14,7 @@ interface AdminDropdownProps {
 
 const AdminDropdown: React.FC<AdminDropdownProps> = ({ renderComponent }) => {
     const { hasPermission } = usePermissions();
+    const [activeComponent, setActiveComponent] = useState<string | null>(null);
 
     const adminPermissions = [
         'can_create_companies',
@@ -20,6 +27,11 @@ const AdminDropdown: React.FC<AdminDropdownProps> = ({ renderComponent }) => {
 
     const hasAdminAccess = adminPermissions.some((perm) => hasPermission(perm));
 
+    const handleClick = (componentName: string) => {
+        setActiveComponent(componentName);
+        renderComponent(componentName);
+    };
+
     if (!hasAdminAccess) {
         return null;
     }
@@ -28,7 +40,7 @@ const AdminDropdown: React.FC<AdminDropdownProps> = ({ renderComponent }) => {
         <Menu as="div" className="relative inline-block text-left">
             <div>
                 <Menu.Button className="btn btn-ghost nav__bar__button">
-                    Panel de Administración
+                    <CgOptions className="mr-2" /> Panel de Administración
                 </Menu.Button>
             </div>
 
@@ -39,11 +51,31 @@ const AdminDropdown: React.FC<AdminDropdownProps> = ({ renderComponent }) => {
                             {({ active }) => (
                                 <button
                                     className={`${
-                                        active ? 'bg-blue-500 text-white' : 'text-gray-900'
+                                        activeComponent === 'Profile'
+                                            ? 'bg-blue-700 text-white cursor-not-allowed'
+                                            : active ? 'bg-blue-500 text-white' : 'text-gray-900'
                                     } group flex rounded-md items-center w-full px-2 py-2 text-sm`}
-                                    onClick={() => renderComponent('Profile')}
+                                    onClick={() => handleClick('Profile')}
+                                    disabled={activeComponent === 'Profile'}
                                 >
-                                    Perfil
+                                    <CiUser className="mr-2" /> Perfil
+                                </button>
+                            )}
+                        </Menu.Item>
+                    )}
+                    {hasPermission('can_create_companies') && (
+                        <Menu.Item>
+                            {({ active }) => (
+                                <button
+                                    className={`${
+                                        activeComponent === 'CompanyList'
+                                            ? 'bg-blue-700 text-white cursor-not-allowed'
+                                            : active ? 'bg-blue-500 text-white' : 'text-gray-900'
+                                    } group flex rounded-md items-center w-full px-2 py-2 text-sm`}
+                                    onClick={() => handleClick('CompanyList')}
+                                    disabled={activeComponent === 'CompanyList'}
+                                >
+                                    <IoBusinessOutline className="mr-2" /> Empresas
                                 </button>
                             )}
                         </Menu.Item>
@@ -53,11 +85,14 @@ const AdminDropdown: React.FC<AdminDropdownProps> = ({ renderComponent }) => {
                             {({ active }) => (
                                 <button
                                     className={`${
-                                        active ? 'bg-blue-500 text-white' : 'text-gray-900'
+                                        activeComponent === 'PositionList'
+                                            ? 'bg-blue-700 text-white cursor-not-allowed'
+                                            : active ? 'bg-blue-500 text-white' : 'text-gray-900'
                                     } group flex rounded-md items-center w-full px-2 py-2 text-sm`}
-                                    onClick={() => renderComponent('PositionList')}
+                                    onClick={() => handleClick('PositionList')}
+                                    disabled={activeComponent === 'PositionList'}
                                 >
-                                    Puestos
+                                    <MdOutlineWorkOutline className="mr-2" /> Puestos
                                 </button>
                             )}
                         </Menu.Item>
@@ -67,27 +102,18 @@ const AdminDropdown: React.FC<AdminDropdownProps> = ({ renderComponent }) => {
                             {({ active }) => (
                                 <button
                                     className={`${
-                                        active ? 'bg-blue-500 text-white' : 'text-gray-900'
+                                        activeComponent === 'EmployeeList'
+                                            ? 'bg-blue-700 text-white cursor-not-allowed'
+                                            : active ? 'bg-blue-500 text-white' : 'text-gray-900'
                                     } group flex rounded-md items-center w-full px-2 py-2 text-sm`}
-                                    onClick={() => renderComponent('EmployeeList')}
+                                    onClick={() => handleClick('EmployeeList')}
+                                    disabled={activeComponent === 'EmployeeList'}
                                 >
-                                    Empleados
+                                    <GrGroup className="mr-2" /> Usuarios
                                 </button>
                             )}
                         </Menu.Item>
                     )}
-                    <Menu.Item>
-                        {({ active }) => (
-                            <button
-                                className={`${
-                                    active ? 'bg-blue-500 text-white' : 'text-gray-900'
-                                } group flex rounded-md items-center w-full px-2 py-2 text-sm`}
-                                onClick={() => renderComponent('CompanyList')}
-                            >
-                                Empresas
-                            </button>
-                        )}
-                    </Menu.Item>
                 </div>
             </Menu.Items>
         </Menu>
