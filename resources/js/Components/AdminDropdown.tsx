@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+// AdminDropdown.tsx
+import React from 'react';
 import { Menu } from '@headlessui/react';
 import { usePermissions } from '@/contexts/PermissionsContext';
 import { LuFolderOpen } from 'react-icons/lu';
@@ -10,11 +11,11 @@ import { CgOptions } from 'react-icons/cg';
 
 interface AdminDropdownProps {
     renderComponent: (componentName: string) => void;
+    activeComponent: string;
 }
 
-const AdminDropdown: React.FC<AdminDropdownProps> = ({ renderComponent }) => {
+const AdminDropdown: React.FC<AdminDropdownProps> = ({ renderComponent, activeComponent }) => {
     const { hasPermission } = usePermissions();
-    const [activeComponent, setActiveComponent] = useState<string | null>(null);
 
     const adminPermissions = [
         'can_create_companies',
@@ -27,19 +28,18 @@ const AdminDropdown: React.FC<AdminDropdownProps> = ({ renderComponent }) => {
 
     const hasAdminAccess = adminPermissions.some((perm) => hasPermission(perm));
 
-    const handleClick = (componentName: string) => {
-        setActiveComponent(componentName);
-        renderComponent(componentName);
-    };
-
     if (!hasAdminAccess) {
         return null;
     }
 
+    const handleClick = (componentName: string) => {
+        renderComponent(componentName);
+    };
+
     return (
         <Menu as="div" className="relative inline-block text-left">
             <div>
-                <Menu.Button className="btn btn-ghost nav__bar__button">
+                <Menu.Button className="btn btn-ghost nav__bar__button flex items-center">
                     <CgOptions className="mr-2" /> Panel de Administración
                 </Menu.Button>
             </div>
@@ -52,8 +52,8 @@ const AdminDropdown: React.FC<AdminDropdownProps> = ({ renderComponent }) => {
                                 <button
                                     className={`${
                                         activeComponent === 'Profile'
-                                            ? 'bg-blue-700 text-white cursor-not-allowed'
-                                            : active ? 'bg-blue-500 text-white' : 'text-gray-900'
+                                            ? 'bg-primary text-white cursor-not-allowed'
+                                            : active ? 'bg-info text-white' : 'text-gray-900'
                                     } group flex rounded-md items-center w-full px-2 py-2 text-sm`}
                                     onClick={() => handleClick('Profile')}
                                     disabled={activeComponent === 'Profile'}
@@ -69,8 +69,8 @@ const AdminDropdown: React.FC<AdminDropdownProps> = ({ renderComponent }) => {
                                 <button
                                     className={`${
                                         activeComponent === 'CompanyList'
-                                            ? 'bg-blue-700 text-white cursor-not-allowed'
-                                            : active ? 'bg-blue-500 text-white' : 'text-gray-900'
+                                            ? 'bg-primary text-white cursor-not-allowed'
+                                            : active ? 'bg-info text-white' : 'text-gray-900'
                                     } group flex rounded-md items-center w-full px-2 py-2 text-sm`}
                                     onClick={() => handleClick('CompanyList')}
                                     disabled={activeComponent === 'CompanyList'}
@@ -86,8 +86,8 @@ const AdminDropdown: React.FC<AdminDropdownProps> = ({ renderComponent }) => {
                                 <button
                                     className={`${
                                         activeComponent === 'PositionList'
-                                            ? 'bg-blue-700 text-white cursor-not-allowed'
-                                            : active ? 'bg-blue-500 text-white' : 'text-gray-900'
+                                            ? 'bg-primary text-white cursor-not-allowed'
+                                            : active ? 'bg-info text-white' : 'text-gray-900'
                                     } group flex rounded-md items-center w-full px-2 py-2 text-sm`}
                                     onClick={() => handleClick('PositionList')}
                                     disabled={activeComponent === 'PositionList'}
@@ -103,8 +103,8 @@ const AdminDropdown: React.FC<AdminDropdownProps> = ({ renderComponent }) => {
                                 <button
                                     className={`${
                                         activeComponent === 'EmployeeList'
-                                            ? 'bg-blue-700 text-white cursor-not-allowed'
-                                            : active ? 'bg-blue-500 text-white' : 'text-gray-900'
+                                            ? 'bg-primary text-white cursor-not-allowed'
+                                            : active ? 'bg-info text-white' : 'text-gray-900'
                                     } group flex rounded-md items-center w-full px-2 py-2 text-sm`}
                                     onClick={() => handleClick('EmployeeList')}
                                     disabled={activeComponent === 'EmployeeList'}

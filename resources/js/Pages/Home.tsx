@@ -1,6 +1,7 @@
+// HomeContent.tsx
 import { EmployeePageProps } from '@/types';
 import { Button } from '@headlessui/react';
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import EmployeeList from './Admin/Employee/EmployeeList';
 import axios from 'axios';
 import Profile from './Profile/Profile';
@@ -57,7 +58,7 @@ const HomeContent: React.FC = () => {
 
     return (
         <>
-            <Head title="Inicio" />
+            <Head title="Explorador de archivos" />
             <section className="container mx-auto">
                 <nav className="nav__bar rounded-lg flex items-center justify-between p-4">
                     {/* Menú desplegable para pantallas pequeñas */}
@@ -176,7 +177,7 @@ const HomeContent: React.FC = () => {
                             </Button>
                         )}
                         {/* AdminDropdown visible solo en pantallas grandes */}
-                        <AdminDropdown renderComponent={renderComponent} />
+                        <AdminDropdown renderComponent={renderComponent} activeComponent={activeComponent} />
                     </div>
 
                     {/* Botón de cerrar sesión visible en todas las pantallas */}
