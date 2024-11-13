@@ -52,7 +52,9 @@ Route::prefix('api')->name('api.')->group(function () {
     Route::post('/positions', [PositionController::class, 'store'])->name('positions.store');
     Route::get('/hierarchylevels', [HierarchyLevelController::class, 'index'])->name('hierarchylevels.index');
     Route::get('/permissions', [PermissionController::class, 'index'])->name('permissions.index');
-    Route::post('/userpermissions', [EmployeePermissionsController::class, 'store'])->name('userpermissions.store');
+    Route::post('/userpermissions', [EmployeePermissionsController::class, 'store'])->middleware('auth:employee');
+
+    Route::delete('/userpermissions/{employee_id}', [EmployeePermissionsController::class, 'destroy'])->middleware('auth:employee');
     Route::get('/employees/{id}/permissions', [EmployeeController::class, 'getPermissions'])->name('employees.permissions');
 });
 

@@ -6,7 +6,7 @@ import EditEmployee from "@/Pages/Admin/Employee/EditEmployee";
 import CreateEmployee from "@/Pages/Admin/Employee/CreateEmployee";
 import { Company, Position, Employee, Permission } from "@/types";
 
-const EmployeeList: React.FC = (): React.ReactNode => {
+const EmployeeList: React.FC = () => {
     const [employees, setEmployees] = useState<Employee[]>([]);
     const [positions, setPositions] = useState<Position[]>([]);
     const [companies, setCompanies] = useState<Company[]>([]);
@@ -104,7 +104,6 @@ const EmployeeList: React.FC = (): React.ReactNode => {
                 setSuccessMessage('¡Usuario eliminado con éxito!');
                 fetchData();  // Recarga la lista de empleados
                 confirmDeleteRef.current?.close();  // Cierra el modal de confirmación
-                successModalRef.current?.showModal();  // Muestra el modal de éxito
             })
             .catch((error) => {
                 console.error('Error al eliminar el usuario', error);
@@ -118,7 +117,6 @@ const EmployeeList: React.FC = (): React.ReactNode => {
 
     // Función para cerrar el modal de éxito
     const handleCloseSuccessModal = () => {
-        successModalRef.current?.close();
         setSuccessMessage(null); // Resetea el mensaje de éxito
     };
 
@@ -191,12 +189,12 @@ const EmployeeList: React.FC = (): React.ReactNode => {
                                 </td>
                                 <td className="border px-4 py-2 text-sm text-base-content">
                                     {position?.name}
-                                    <br/>
+                                    <br />
                                     {company && (
                                         <span
                                             className="mt-1 inline-block bg-secondary text-secondary-content text-xs px-2 py-1 rounded">
-                                                    {company.name}
-                                                </span>
+                                                {company.name}
+                                            </span>
                                     )}
                                 </td>
                                 <td className="border px-4 py-2 text-sm text-base-content">
@@ -227,40 +225,56 @@ const EmployeeList: React.FC = (): React.ReactNode => {
                 </table>
 
                 {/* Modal para Editar Empleado */}
-                {editModalOpen && editingEmployee && editEmployeeData && (
-                    <EditEmployee
-                        employee={editingEmployee}
-                        positions={positions}
-                        companies={companies}
-                        permissions={editEmployeeData.permissions}
-                        employeePermissions={editEmployeeData.employeePermissions}
-                        onClose={() => setEditModalOpen(false)}
-                        onSuccess={() => {
-                            setEditModalOpen(false);
-                            fetchData();
-                        }}
-                    />
+                {editingEmployee && editEmployeeData && (
+                    <>
+                        <input
+                            type="checkbox"
+                            id="edit-employee-modal"
+                            className="modal-toggle"
+                            checked={editModalOpen}
+                            readOnly
+                        />
+                        <label htmlFor="edit-employee-modal" className={`modal cursor-pointer ${editModalOpen ? 'modal-open' : ''}`}>
+                            <label className="modal-box relative" htmlFor="">
+                                <EditEmployee
+                                    employee={editingEmployee}
+                                    positions={positions}
+                                    companies={companies}
+                                    permissions={editEmployeeData.permissions}
+                                    employeePermissions={editEmployeeData.employeePermissions}
+                                    onClose={() => setEditModalOpen(false)}
+                                    onSuccess={() => {
+                                        setEditModalOpen(false);
+                                        fetchData();
+                                    }}
+                                />
+                            </label>
+                        </label>
+                    </>
                 )}
 
                 {/* Modal para Agregar Empleado */}
                 {addModalOpen && (
-                    <div className="modal modal-open">
-                        <div className="modal-box relative">
-                            <button
-                                className="btn btn-sm btn-circle absolute right-2 top-2"
-                                onClick={() => setAddModalOpen(false)}
-                            >
-                                ✕
-                            </button>
-                            <CreateEmployee
-                                onSuccess={() => {
-                                    fetchData();  // Recarga la lista de empleados
-                                    setAddModalOpen(false); // Cierra el modal
-                                }}
-                                onClose={() => setAddModalOpen(false)}
-                            />
-                        </div>
-                    </div>
+                    <>
+                        <input
+                            type="checkbox"
+                            id="add-employee-modal"
+                            className="modal-toggle"
+                            checked={addModalOpen}
+                            readOnly
+                        />
+                        <label htmlFor="add-employee-modal" className={`modal cursor-pointer ${addModalOpen ? 'modal-open' : ''}`}>
+                            <label className="modal-box relative" htmlFor="">
+                                <CreateEmployee
+                                    onSuccess={() => {
+                                        fetchData();  // Recarga la lista de empleados
+                                        setAddModalOpen(false); // Cierra el modal
+                                    }}
+                                    onClose={() => setAddModalOpen(false)}
+                                />
+                            </label>
+                        </label>
+                    </>
                 )}
 
                 {/* Modal de Confirmación de Eliminación */}
@@ -296,19 +310,20 @@ const EmployeeList: React.FC = (): React.ReactNode => {
                     </form>
                 </dialog>
 
-                {/* Modal de éxito */}
-                <dialog ref={successModalRef} id="modal_employee_success"
-                        className="modal modal-bottom sm:modal-middle">
-                    <div className="modal-box">
-                        <h3 className="font-bold text-center">Acción Exitosa</h3>
-                        <p className="text-center text-success">{successMessage}</p>
-                        <div className="modal-action justify-center">
-                            <button type="button" className="btn btn-info" onClick={handleCloseSuccessModal}>
-                                Aceptar
-                            </button>
+                {/* Modal de Éxito */}
+                {successMessage && (
+                    <dialog open className="modal">
+                        <div className="modal-box">
+                            <h3 className="font-bold text-center text-lg">Acción Exitosa</h3>
+                            <p className="text-center py-4 text-green-500">{successMessage}</p>
+                            <div className="modal-action">
+                                <button type="button" className="btn btn-primary" onClick={handleCloseSuccessModal}>
+                                    Aceptar
+                                </button>
+                            </div>
                         </div>
-                    </div>
-                </dialog>
+                    </dialog>
+                )}
             </div>
         </div>
             );

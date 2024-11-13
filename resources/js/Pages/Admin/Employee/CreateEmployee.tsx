@@ -105,20 +105,58 @@ export default function CreateEmployee({ onSuccess, onClose }: CreateEmployeePro
     };
 
     const onSubmit = (data: any) => {
-        axios.post('/admin/employees', data)
+        // Preparar el payload para crear al empleado (excluyendo permisos)
+        const employeePayload = {
+            first_name: data.first_name,
+            last_name_1: data.last_name_1,
+            last_name_2: data.last_name_2,
+            username: data.username,
+            password: data.password,
+            password_confirmation: data.password_confirmation,
+            company_id: Number(data.company_id),
+            position_id: Number(data.position_id),
+        };
+
+        axios.post('/admin/employees', employeePayload)
             .then(response => {
-                setSuccessMessage('¡Usuario registrado con éxito!');
-                reset();
-                setStep(1);
-                handleCloseConfirmModal();
-                handleOpenSuccessModal();
+                const newEmployee = response.data; // Asegúrate de que el backend devuelve el empleado creado con su ID
+
+                if (data.enable_permissions && data.selected_permissions.length > 0) {
+                    // Asignar permisos al nuevo empleado
+                    axios.post('/api/userpermissions', {
+                        employee_id: newEmployee.id,
+                        permissions: data.selected_permissions,
+                    })
+                        .then(() => {
+                            setSuccessMessage('¡Usuario registrado con éxito y permisos asignados!');
+                            reset();
+                            setStep(1);
+                            handleCloseConfirmModal();
+                            handleOpenSuccessModal();
+                        })
+                        .catch(error => {
+                            console.error('Error al asignar permisos', error);
+                            setErrorMessage(error.response?.data?.message || 'Ocurrió un error al asignar permisos.');
+                            handleCloseConfirmModal();
+                            handleOpenErrorModal();
+                        });
+                } else {
+                    // Si no se habilitan permisos, simplemente mostrar éxito
+                    setSuccessMessage('¡Usuario registrado con éxito!');
+                    reset();
+                    setStep(1);
+                    handleCloseConfirmModal();
+                    handleOpenSuccessModal();
+                }
             })
             .catch(error => {
+                console.error('Error al registrar el usuario', error);
                 setErrorMessage(error.response?.data?.message || 'Ocurrió un error al registrar el usuario.');
                 handleCloseConfirmModal();
                 handleOpenErrorModal();
             });
     };
+
 
     // Define las categorías y los permisos asociados
     const permissionCategories: { [key: string]: string[] } = {
@@ -182,25 +220,26 @@ export default function CreateEmployee({ onSuccess, onClose }: CreateEmployeePro
                             />
                             {errors.first_name && <p className="text-red-600">{errors.first_name.message}</p>}
                         </div>
-                        {watchAllFields.first_name && (
-                            <>
-                                {watchAllFields.first_name.length < 3 && (
-                                    <p className="text-red-600">El nombre no debe tener menos de 3 caracteres</p>
-                                )}
-                                {watchAllFields.first_name.length > 50 && (
-                                    <p className="text-red-600">El nombre no debe exceder los 50 caracteres</p>
-                                )}
-                                {watchAllFields.first_name.match(/[^a-zA-ZÀ-ÿ\s]/) && (
-                                    <p className="text-red-600">El nombre solo puede contener letras</p>
-                                )}
-                            </>
-                        )}
 
                         <div className="mt-4">
                             <Controller
                                 name="last_name_1"
                                 control={control}
-                                rules={{ required: 'El primer apellido es obligatorio' }}
+                                rules={{
+                                    required: 'El primer apellido es obligatorio',
+                                    minLength: {
+                                        value: 3,
+                                        message: 'El primer apellido debe tener al menos 3 caracteres'
+                                    },
+                                    maxLength: {
+                                        value: 50,
+                                        message: 'El primer apellido no debe exceder los 50 caracteres'
+                                    },
+                                    pattern: {
+                                        value: /^[a-zA-ZÀ-ÿ\s]+$/,
+                                        message: 'El primer apellido solo puede contener letras y espacios'
+                                    },
+                                }}
                                 render={({ field }) => (
                                     <input
                                         {...field}
@@ -211,27 +250,25 @@ export default function CreateEmployee({ onSuccess, onClose }: CreateEmployeePro
                             />
                             {errors.last_name_1 && <p className="text-red-600">{errors.last_name_1.message}</p>}
                         </div>
-                        {watchAllFields.last_name_1 && (
-                            <>
-                                {watchAllFields.last_name_1.length < 3 && (
-                                    <p className="text-red-600">El primer apellido no debe tener menos de 3 caracteres</p>
-                                )}
-                                {watchAllFields.last_name_1.length > 50 && (
-                                    <p className="text-red-600">El primer apellido no debe exceder los 50 caracteres</p>
-                                )}
-                                {watchAllFields.last_name_1.includes(' ') && (
-                                    <p className="text-red-600">El primer apellido no debe tener espacios</p>
-                                )}
-                                {watchAllFields.last_name_1.match(/[^a-zA-ZÀ-ÿ\s]/) && (
-                                    <p className="text-red-600">El primer apellido solo puede contener letras</p>
-                                )}
-                            </>
-                        )}
 
                         <div className="mt-4">
                             <Controller
                                 name="last_name_2"
                                 control={control}
+                                rules={{
+                                    minLength: {
+                                        value: 3,
+                                        message: 'El segundo apellido debe tener al menos 3 caracteres'
+                                    },
+                                    maxLength: {
+                                        value: 50,
+                                        message: 'El segundo apellido no debe exceder los 50 caracteres'
+                                    },
+                                    pattern: {
+                                        value: /^[a-zA-ZÀ-ÿ\s]+$/,
+                                        message: 'El primer apellido solo puede contener letras y espacios'
+                                    },
+                                }}
                                 render={({ field }) => (
                                     <input
                                         {...field}
@@ -242,22 +279,6 @@ export default function CreateEmployee({ onSuccess, onClose }: CreateEmployeePro
                             />
                             {errors.last_name_2 && <p className="text-red-600">{errors.last_name_2.message}</p>}
                         </div>
-                        {watchAllFields.last_name_2 && (
-                            <>
-                                {watchAllFields.last_name_2.length < 3 && (
-                                    <p className="text-red-600">El segundo apellido no debe tener menos de 3 caracteres</p>
-                                )}
-                                {watchAllFields.last_name_2.length > 50 && (
-                                    <p className="text-red-600">El segundo apellido no debe exceder los 50 caracteres</p>
-                                )}
-                                {watchAllFields.last_name_2.includes(' ') && (
-                                    <p className="text-red-600">El segundo apellido no debe tener espacios</p>
-                                )}
-                                {watchAllFields.last_name_2.match(/[^a-zA-ZÀ-ÿ\s]/) && (
-                                    <p className="text-red-600">El segundo apellido solo puede contener letras</p>
-                                )}
-                            </>
-                        )}
 
                         <div className="mt-4">
                             <Controller

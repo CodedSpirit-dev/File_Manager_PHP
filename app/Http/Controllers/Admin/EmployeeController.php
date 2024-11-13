@@ -183,7 +183,7 @@ class EmployeeController extends Controller
             'first_name' => 'required|string|max:255',
             'last_name_1' => 'required|string|max:255',
             'last_name_2' => 'nullable|string|max:255',
-            'position_id' => 'required|integer|exists:positions,id',
+            'position_id' => 'required|integer|min:0', // Permitir 0
             'username' => 'required|string|unique:employees,username,' . $id . '|max:255',
             'password' => 'nullable|string|min:4|confirmed',
         ]);
@@ -197,7 +197,17 @@ class EmployeeController extends Controller
         $employee->last_name_1 = $request->last_name_1;
         $employee->last_name_2 = $request->last_name_2;
         $employee->username = $request->username;
-        $employee->position_id = $request->position_id;
+
+        // Actualizar position_id solo si no es 0 y existe en la base de datos
+        if ($request->position_id > 0) {
+            $position = Position::find($request->position_id);
+            if ($position) {
+                $employee->position_id = $request->position_id;
+            } else {
+                return response()->json(['error' => 'El puesto seleccionado no existe.'], 422);
+            }
+        }
+        // Si position_id es 0, no se actualiza el puesto (se mantiene el actual)
 
         // Actualizar la contraseña solo si se proporciona
         if ($request->filled('password')) {
