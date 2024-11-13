@@ -6,6 +6,7 @@ import CreatePosition from "@/Pages/Admin/Position/CreatePosition";
 import { Position } from "@/types";
 import { deletePosition, getPositions, getPositionCounts } from "@/Pages/Admin/Position/positionApi";
 import EditPosition from "@/Pages/Admin/Position/EditPosition";
+import {Head} from "@inertiajs/react";
 
 const PositionList: React.FC = () => {
     const [positions, setPositions] = useState<Position[]>([]);
@@ -95,6 +96,7 @@ const PositionList: React.FC = () => {
 
     return (
         <div className="container mx-auto px-4 py-8 bg-base-100">
+            <Head title={'Puestos'} />
             <h2 className="text-3xl font-bold mb-6 text-center text-primary">Lista de Puestos</h2>
             <div className="mb-4 flex justify-end">
                 <button

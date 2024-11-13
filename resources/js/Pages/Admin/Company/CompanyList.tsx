@@ -4,6 +4,7 @@ import EditCompany from "@/Pages/Admin/Company/EditCompany";
 import CreateCompany from "@/Pages/Admin/Company/CreateCompany";
 import { Company } from "@/types";
 import { deleteCompany } from "@/Pages/Admin/Company/companyApi";
+import {Head} from "@inertiajs/react";
 
 const CompanyList: React.FC = (): React.ReactNode => {
     const [companies, setCompanies] = useState<Company[]>([]);
@@ -97,6 +98,7 @@ const CompanyList: React.FC = (): React.ReactNode => {
 
     return (
         <div className="container mx-auto px-4 py-8 bg-base-100">
+            <Head title={'Empresas'} />
             <h2 className="text-3xl font-bold mb-6 text-center text-primary">Lista de Empresas</h2>
             <div className="mb-4 flex justify-end">
                 <button

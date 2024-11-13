@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { createCompany } from "@/Pages/Admin/Company/companyApi";
+import {Head} from "@inertiajs/react";
 
 interface CreateCompanyProps {
     onClose: () => void;

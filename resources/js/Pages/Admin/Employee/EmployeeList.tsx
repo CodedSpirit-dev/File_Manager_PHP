@@ -5,6 +5,7 @@ import axios from 'axios';
 import EditEmployee from "@/Pages/Admin/Employee/EditEmployee";
 import CreateEmployee from "@/Pages/Admin/Employee/CreateEmployee";
 import { Company, Position, Employee, Permission } from "@/types";
+import {Head} from "@inertiajs/react";
 
 const EmployeeList: React.FC = () => {
     const [employees, setEmployees] = useState<Employee[]>([]);
@@ -134,6 +135,7 @@ const EmployeeList: React.FC = () => {
 
     return (
         <div className="container mx-auto px-4 py-8 bg-base-100">
+            <Head title={'Usuarios'} />
             <h2 className="text-3xl font-bold mb-6 text-center text-primary">LISTA DE USUARIOS</h2>
 
             {/* Botón para agregar un nuevo empleado */}
