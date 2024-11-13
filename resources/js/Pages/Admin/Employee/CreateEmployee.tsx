@@ -105,7 +105,7 @@ export default function CreateEmployee({ onSuccess, onClose }: CreateEmployeePro
     };
 
     const onSubmit = (data: any) => {
-        axios.post('/admin/employees/', data)
+        axios.post('/admin/employees', data)
             .then(response => {
                 setSuccessMessage('¡Usuario registrado con éxito!');
                 reset();
