@@ -97,7 +97,7 @@ const PositionList: React.FC = () => {
     return (
         <div className="container mx-auto px-4 py-8 bg-base-100">
             <Head title={'Puestos'} />
-            <h2 className="text-3xl font-bold mb-6 text-center text-primary">Lista de Puestos</h2>
+            <h2 className="text-center">LISTA DE PUESTOS</h2>
             <div className="mb-4 flex justify-end">
                 <button
                     onClick={() => setCreateModalOpen(true)} // Abre el modal de creación

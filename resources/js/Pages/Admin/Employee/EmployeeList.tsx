@@ -59,7 +59,6 @@ const EmployeeList: React.FC = () => {
             .catch((error) => {
                 console.error('Error al cargar los datos para editar el usuario', error);
                 setLoadingEmployeeId(null);
-                // Opcional: Puedes mostrar un mensaje de error al usuario aquí
             });
     };
 
@@ -108,7 +107,6 @@ const EmployeeList: React.FC = () => {
             })
             .catch((error) => {
                 console.error('Error al eliminar el usuario', error);
-                // Opcional: Puedes manejar errores mostrando un modal o mensaje aquí
             })
             .finally(() => {
                 setLoadingDelete(false);
@@ -136,7 +134,7 @@ const EmployeeList: React.FC = () => {
     return (
         <div className="container mx-auto px-4 py-8 bg-base-100">
             <Head title={'Usuarios'} />
-            <h2 className="text-3xl font-bold mb-6 text-center text-primary">LISTA DE USUARIOS</h2>
+            <h2 className="text-center">LISTA DE USUARIOS</h2>
 
             {/* Botón para agregar un nuevo empleado */}
             <div className="flex justify-end mb-4">
@@ -153,10 +151,11 @@ const EmployeeList: React.FC = () => {
                 <table className="table w-full">
                     <thead>
                     <tr className="text-primary-content">
-                        <th className="px-4 py-2 text-left">Nombre</th>
-                        <th className="px-4 py-2 text-left">Fecha de Registro</th>
-                        <th className="px-4 py-2 text-left">Último Inicio de Sesión</th>
-                        <th className="px-4 py-2 text-left">Puesto</th>
+                        <th className="px-4 py-2 text-center">Nombre</th>
+                        <th className="px-4 py-2 text-center">Número Telefónico</th>
+                        <th className="px-4 py-2 text-center">Fecha de Registro</th>
+                        <th className="px-4 py-2 text-center">Último Inicio de Sesión</th>
+                        <th className="px-4 py-2 text-center">Puesto</th>
                         <th className="px-4 py-2 text-left">Acciones</th>
                     </tr>
                     </thead>
@@ -171,14 +170,17 @@ const EmployeeList: React.FC = () => {
                                 <td className="border px-4 py-2 text-sm text-base-content truncate">
                                     {employee.first_name} {employee.last_name_1}
                                 </td>
-                                <td className="border px-4 py-2 text-sm text-base-content">
+                                <td className="border px-4 py-2 text-center text-sm text-base-content">
+                                    {employee.phone_number || 'No disponible'}
+                                </td>
+                                <td className="border px-4 py-2 text-center text-sm text-base-content">
                                     {new Date(employee.registered_at).toLocaleDateString('es-ES', {
                                         day: 'numeric',
                                         month: 'long',
                                         year: 'numeric',
                                     })}
                                 </td>
-                                <td className="border px-4 py-2 text-sm text-base-content">
+                                <td className="border px-4 py-2 text-center text-sm text-base-content">
                                     {employee.last_login_at
                                         ? new Date(employee.last_login_at).toLocaleDateString('es-ES', {
                                             day: 'numeric',
@@ -189,7 +191,7 @@ const EmployeeList: React.FC = () => {
                                         })
                                         : 'No registrado'}
                                 </td>
-                                <td className="border px-4 py-2 text-sm text-base-content">
+                                <td className="border px-4 py-2 text-center text-sm text-base-content">
                                     {position?.name}
                                     <br />
                                     {company && (
@@ -269,8 +271,8 @@ const EmployeeList: React.FC = () => {
                             <label className="modal-box relative" htmlFor="">
                                 <CreateEmployee
                                     onSuccess={() => {
-                                        fetchData();  // Recarga la lista de empleados
-                                        setAddModalOpen(false); // Cierra el modal
+                                        fetchData();
+                                        setAddModalOpen(false);
                                     }}
                                     onClose={() => setAddModalOpen(false)}
                                 />
@@ -328,7 +330,7 @@ const EmployeeList: React.FC = () => {
                 )}
             </div>
         </div>
-            );
-            };
+    );
+};
 
-            export default EmployeeList;
+export default EmployeeList;

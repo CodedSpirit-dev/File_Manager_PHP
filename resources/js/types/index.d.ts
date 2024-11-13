@@ -18,6 +18,7 @@ export type PageProps<
 };
 
 export interface Employee {
+    phone_number: string;
     id: number;
     first_name: string;
     last_name_1: string;
