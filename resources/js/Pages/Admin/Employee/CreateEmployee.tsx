@@ -1,17 +1,17 @@
 // src/components/CreateEmployee.tsx
 
-import React, {useEffect, useRef, useState} from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import axios from 'axios';
-import {useForm, Controller} from 'react-hook-form';
-import {Position, Permission, Company} from '@/types';
+import { useForm, Controller } from 'react-hook-form';
+import { Position, Permission, Company } from '@/types';
 
 interface CreateEmployeeProps {
     onSuccess: () => void; // Callback para notificar al padre
     onClose: () => void;   // Callback para cerrar el modal desde el padre
 }
 
-export default function CreateEmployee({onSuccess, onClose}: CreateEmployeeProps) {
-    const {control, handleSubmit, setValue, watch, getValues, formState: {errors, isValid}, reset} = useForm({
+export default function CreateEmployee({ onSuccess, onClose }: CreateEmployeeProps) {
+    const { control, handleSubmit, setValue, watch, getValues, formState: { errors, isValid }, reset } = useForm({
         mode: 'onChange',
         defaultValues: {
             first_name: '',
@@ -107,14 +107,14 @@ export default function CreateEmployee({onSuccess, onClose}: CreateEmployeeProps
     const onSubmit = (data: any) => {
         axios.post('/admin/employees/', data)
             .then(response => {
-                setSuccessMessage('¡Empleado registrado con éxito!');
+                setSuccessMessage('¡Usuario registrado con éxito!');
                 reset();
                 setStep(1);
                 handleCloseConfirmModal();
                 handleOpenSuccessModal();
             })
             .catch(error => {
-                setErrorMessage(data.message);
+                setErrorMessage(error.response?.data?.message || 'Ocurrió un error al registrar el usuario.');
                 handleCloseConfirmModal();
                 handleOpenErrorModal();
             });
@@ -146,18 +146,18 @@ export default function CreateEmployee({onSuccess, onClose}: CreateEmployeeProps
 
     return (
         <div className={'mt-3'}>
-            <h3 className="">Registro de nuevos empleados</h3>
+            <h3 className="">Registro de nuevos usuarios</h3>
 
             {/* Lista de pasos */}
             <ul className="steps w-full">
-                <li className={`step ${step >= 1 ? 'step-primary' : ''}`}>Datos del empleado</li>
+                <li className={`step ${step >= 1 ? 'step-primary' : ''}`}>Datos del Usuario</li>
                 <li className={`step ${step === 2 ? 'step-primary' : ''}`}>Permisos</li>
             </ul>
 
-            <form className={'form_data_entry'} onSubmit={handleSubmit(onSubmit)}>
+            <form className={'form_data_entry'} onSubmit={handleSubmit(handleOpenConfirmModal)}>
                 {step === 1 && (
                     <>
-                        {/* Paso 1: Datos del Empleado */}
+                        {/* Paso 1: Datos del Usuario */}
                         <div className="mt-4">
                             <Controller
                                 name="first_name"
@@ -172,7 +172,7 @@ export default function CreateEmployee({onSuccess, onClose}: CreateEmployeeProps
                                         message: 'El nombre solo puede contener letras'
                                     }
                                 }}
-                                render={({field}) => (
+                                render={({ field }) => (
                                     <input
                                         {...field}
                                         className="input__data__entry"
@@ -180,6 +180,7 @@ export default function CreateEmployee({onSuccess, onClose}: CreateEmployeeProps
                                     />
                                 )}
                             />
+                            {errors.first_name && <p className="text-red-600">{errors.first_name.message}</p>}
                         </div>
                         {watchAllFields.first_name && (
                             <>
@@ -199,8 +200,8 @@ export default function CreateEmployee({onSuccess, onClose}: CreateEmployeeProps
                             <Controller
                                 name="last_name_1"
                                 control={control}
-                                rules={{required: 'El primer apellido es obligatorio'}}
-                                render={({field}) => (
+                                rules={{ required: 'El primer apellido es obligatorio' }}
+                                render={({ field }) => (
                                     <input
                                         {...field}
                                         className="input__data__entry"
@@ -208,12 +209,12 @@ export default function CreateEmployee({onSuccess, onClose}: CreateEmployeeProps
                                     />
                                 )}
                             />
+                            {errors.last_name_1 && <p className="text-red-600">{errors.last_name_1.message}</p>}
                         </div>
                         {watchAllFields.last_name_1 && (
                             <>
                                 {watchAllFields.last_name_1.length < 3 && (
-                                    <p className="text-red-600">El primer apellido no debe tener menos de 3
-                                        caracteres</p>
+                                    <p className="text-red-600">El primer apellido no debe tener menos de 3 caracteres</p>
                                 )}
                                 {watchAllFields.last_name_1.length > 50 && (
                                     <p className="text-red-600">El primer apellido no debe exceder los 50 caracteres</p>
@@ -231,7 +232,7 @@ export default function CreateEmployee({onSuccess, onClose}: CreateEmployeeProps
                             <Controller
                                 name="last_name_2"
                                 control={control}
-                                render={({field}) => (
+                                render={({ field }) => (
                                     <input
                                         {...field}
                                         className="input__data__entry"
@@ -239,16 +240,15 @@ export default function CreateEmployee({onSuccess, onClose}: CreateEmployeeProps
                                     />
                                 )}
                             />
+                            {errors.last_name_2 && <p className="text-red-600">{errors.last_name_2.message}</p>}
                         </div>
                         {watchAllFields.last_name_2 && (
                             <>
                                 {watchAllFields.last_name_2.length < 3 && (
-                                    <p className="text-red-600">El segundo apellido no debe tener menos de 3
-                                        caracteres</p>
+                                    <p className="text-red-600">El segundo apellido no debe tener menos de 3 caracteres</p>
                                 )}
                                 {watchAllFields.last_name_2.length > 50 && (
-                                    <p className="text-red-600">El segundo apellido no debe exceder los 50
-                                        caracteres</p>
+                                    <p className="text-red-600">El segundo apellido no debe exceder los 50 caracteres</p>
                                 )}
                                 {watchAllFields.last_name_2.includes(' ') && (
                                     <p className="text-red-600">El segundo apellido no debe tener espacios</p>
@@ -266,47 +266,32 @@ export default function CreateEmployee({onSuccess, onClose}: CreateEmployeeProps
                                 rules={{
                                     required: 'El nombre de usuario es obligatorio',
                                     maxLength: {
-                                        value: 18,
-                                        message: 'El nombre de usuario no debe exceder los 18 caracteres'
+                                        value: 50,
+                                        message: 'El nombre de usuario no debe exceder los 50 caracteres'
+                                    },
+                                    pattern: {
+                                        value: /^\S+@\S+\.\S+$/,
+                                        message: 'El nombre de usuario debe ser un email válido'
                                     }
                                 }}
-                                render={({field}) => (
+                                render={({ field }) => (
                                     <input
                                         {...field}
+                                        type="email" // Cambiado a tipo email para mejor UX
                                         className="input__data__entry"
-                                        placeholder="Nombre de usuario (CURP)"
+                                        placeholder="Nombre de usuario (Email)"
                                     />
                                 )}
                             />
                             {errors.username && <p className="text-red-600">{errors.username.message}</p>}
                         </div>
 
-                        {watchAllFields.username && (
-                            <>
-                                {watchAllFields.username.length < 3 && (
-                                    <p className="text-red-600">El nombre de usuario no debe tener menos de 3
-                                        caracteres</p>
-                                )}
-                                {watchAllFields.username.includes(' ') && (
-                                    <p className="text-red-600">El nombre de usuario no debe tener espacios</p>
-                                )}
-                                {watchAllFields.username.length > 18 && (
-                                    <p className="text-red-600">El nombre de usuario no debe exceder los 18
-                                        caracteres</p>
-                                )}
-                                {watchAllFields.username.match(/[^a-zA-Z0-9]/) && (
-                                    <p className="text-red-600">El nombre de usuario solo puede contener letras y
-                                        números</p>
-                                )}
-                            </>
-                        )}
-
                         <div className="mt-4">
                             <Controller
                                 name="company_id"
                                 control={control}
-                                rules={{required: 'La empresa es obligatoria'}}
-                                render={({field}) => (
+                                rules={{ required: 'La empresa es obligatoria' }}
+                                render={({ field }) => (
                                     <select {...field} className="input__data__entry">
                                         <option value="">Seleccione una empresa</option>
                                         {companies.map(company => (
@@ -328,8 +313,8 @@ export default function CreateEmployee({onSuccess, onClose}: CreateEmployeeProps
                             <Controller
                                 name="position_id"
                                 control={control}
-                                rules={{required: 'El puesto es obligatorio'}}
-                                render={({field}) => (
+                                rules={{ required: 'El puesto es obligatorio' }}
+                                render={({ field }) => (
                                     <select {...field} className="input__data__entry"
                                             disabled={watch('company_id') === ''}>
                                         <option value="">Seleccione un puesto</option>
@@ -348,8 +333,14 @@ export default function CreateEmployee({onSuccess, onClose}: CreateEmployeeProps
                             <Controller
                                 name="password"
                                 control={control}
-                                rules={{required: 'La contraseña es obligatoria'}}
-                                render={({field}) => (
+                                rules={{
+                                    required: 'La contraseña es obligatoria',
+                                    minLength: {
+                                        value: 6,
+                                        message: 'La contraseña debe tener al menos 6 caracteres'
+                                    }
+                                }}
+                                render={({ field }) => (
                                     <input
                                         {...field}
                                         type="password"
@@ -370,7 +361,7 @@ export default function CreateEmployee({onSuccess, onClose}: CreateEmployeeProps
                                     validate: value =>
                                         value === getValues('password') || 'Las contraseñas no coinciden'
                                 }}
-                                render={({field}) => (
+                                render={({ field }) => (
                                     <input
                                         {...field}
                                         type="password"
@@ -379,19 +370,19 @@ export default function CreateEmployee({onSuccess, onClose}: CreateEmployeeProps
                                     />
                                 )}
                             />
+                            {errors.password_confirmation && <p className="text-red-600">{errors.password_confirmation.message}</p>}
                         </div>
 
-                        {/* Feedback en tiempo real sobre coincidencia de contraseñas */}
-                        {watchPassword && watchPasswordConfirmation && watchPassword !== watchPasswordConfirmation && (
-                            <p className="text-red-600">Las contraseñas no coinciden</p>
-                        )}
-
                         {/* Botón para avanzar al siguiente paso */}
-                        <div className="mt-4">
+                        <div className="mt-4 flex justify-end">
                             {/* Botón de cerrar */}
-                            <button className="btn btn-cancel" onClick={onClose}>Cancelar</button>
-                            <button type="button" className="btn btn-accept ml-2" onClick={() => setStep(step + 1)}
-                                    disabled={!isValid}>
+                            <button type="button" className="btn btn-cancel" onClick={onClose}>Cancelar</button>
+                            <button
+                                type="button"
+                                className="btn btn-accept ml-2"
+                                onClick={() => setStep(step + 1)}
+                                disabled={!isValid}
+                            >
                                 Siguiente
                             </button>
                         </div>
@@ -408,7 +399,7 @@ export default function CreateEmployee({onSuccess, onClose}: CreateEmployeeProps
                                     name="enable_permissions"
                                     control={control}
                                     defaultValue={false}
-                                    render={({field}) => (
+                                    render={({ field }) => (
                                         <input
                                             type="checkbox"
                                             className="checkbox checkbox-primary"
@@ -425,7 +416,7 @@ export default function CreateEmployee({onSuccess, onClose}: CreateEmployeeProps
                         {watchEnablePermissions && (
                             <div className="mt-6">
                                 <h2 className="mb-3 text-xl text-center font-bold">Permisos</h2>
-                                {groupedPermissions.map(({category, permissions}) => (
+                                {groupedPermissions.map(({ category, permissions }) => (
                                     <div key={category} className="mb-4">
                                         <h3 className="text-lg font-semibold mb-2">{category}</h3>
                                         <div className="grid grid-cols-2 gap-4">
@@ -448,7 +439,7 @@ export default function CreateEmployee({onSuccess, onClose}: CreateEmployeeProps
 
                         {/* Botones para navegar entre pasos */}
                         <div className="mt-4 flex justify-center">
-                            <button className="btn btn-cancel" onClick={onClose}>
+                            <button type="button" className="btn btn-cancel" onClick={onClose}>
                                 Cancelar
                             </button>
                             <button type="button" className="btn-info-mod mx-2" onClick={() => setStep(step - 1)}>
@@ -467,11 +458,11 @@ export default function CreateEmployee({onSuccess, onClose}: CreateEmployeeProps
                 <div className="modal-box">
                     <h4 className="font-bold text-center">
                         ¿Estás seguro de registrar al
-                        empleado <b>{getValues('first_name')} {getValues('last_name_1')}</b>?
+                        usuario <b>{getValues('first_name')} {getValues('last_name_1')}</b>?
                     </h4>
                     <div className="modal-action justify-center">
-                        <button className="btn-cancel" onClick={handleCloseConfirmModal}>No, cancelar</button>
-                        <button className="btn-accept" onClick={handleSubmit(onSubmit)}>Sí, registrar empleado</button>
+                        <button type="button" className="btn-cancel" onClick={handleCloseConfirmModal}>No, cancelar</button>
+                        <button type="button" className="btn-accept" onClick={handleSubmit(onSubmit)}>Sí, registrar usuario</button>
                     </div>
                 </div>
             </dialog>
@@ -479,7 +470,7 @@ export default function CreateEmployee({onSuccess, onClose}: CreateEmployeeProps
             {/* Modal de Éxito */}
             <dialog ref={successModalRef} id="modal_employee_success" className="modal modal-bottom sm:modal-middle">
                 <div className="modal-box">
-                    <h3 className="font-bold text-center">Registro de Empleado</h3>
+                    <h3 className="font-bold text-center">Registro de Usuario</h3>
                     <p className="text-center text-success">{successMessage}</p>
                     <div className="modal-action justify-center">
                         <button type="button" className="btn btn-info" onClick={handleCloseSuccessModal}>Aceptar
@@ -491,7 +482,7 @@ export default function CreateEmployee({onSuccess, onClose}: CreateEmployeeProps
             {/* Modal de Error */}
             <dialog ref={errorModalRef} id="modal_employee_error" className="modal modal-bottom sm:modal-middle">
                 <div className="modal-box">
-                    <h4 className="font-bold text-center">Error al Registrar Empleado</h4>
+                    <h4 className="font-bold text-center">Error al Registrar Usuario</h4>
                     <p className="text-center text-error">{errorMessage}</p>
                     <div className="modal-action justify-center">
                         <button className="btn-accept" onClick={handleCloseErrorModal}>Cerrar</button>
@@ -500,4 +491,4 @@ export default function CreateEmployee({onSuccess, onClose}: CreateEmployeeProps
             </dialog>
         </div>
     );
-}
+};

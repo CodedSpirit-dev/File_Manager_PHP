@@ -56,7 +56,7 @@ const EmployeeList: React.FC = (): React.ReactNode => {
                 setLoadingEmployeeId(null);
             })
             .catch((error) => {
-                console.error('Error al cargar los datos para editar el empleado', error);
+                console.error('Error al cargar los datos para editar el usuario', error);
                 setLoadingEmployeeId(null);
                 // Opcional: Puedes mostrar un mensaje de error al usuario aquí
             });
@@ -101,13 +101,13 @@ const EmployeeList: React.FC = (): React.ReactNode => {
 
         axios.delete(`admin/employees/${employeeToDelete.id}`)
             .then(() => {
-                setSuccessMessage('¡Empleado eliminado con éxito!');
+                setSuccessMessage('¡Usuario eliminado con éxito!');
                 fetchData();  // Recarga la lista de empleados
                 confirmDeleteRef.current?.close();  // Cierra el modal de confirmación
                 successModalRef.current?.showModal();  // Muestra el modal de éxito
             })
             .catch((error) => {
-                console.error('Error al eliminar el empleado', error);
+                console.error('Error al eliminar el usuario', error);
                 // Opcional: Puedes manejar errores mostrando un modal o mensaje aquí
             })
             .finally(() => {
@@ -136,7 +136,7 @@ const EmployeeList: React.FC = (): React.ReactNode => {
 
     return (
         <div className="container mx-auto px-4 py-8 bg-base-100">
-            <h2 className="text-3xl font-bold mb-6 text-center text-primary">Lista de Empleados</h2>
+            <h2 className="text-3xl font-bold mb-6 text-center text-primary">LISTA DE USUARIOS</h2>
 
             {/* Botón para agregar un nuevo empleado */}
             <div className="flex justify-end mb-4">
@@ -144,7 +144,7 @@ const EmployeeList: React.FC = (): React.ReactNode => {
                     onClick={() => setAddModalOpen(true)}
                     className="btn btn-success"
                 >
-                    Agregar Empleado
+                    Agregar usuario
                 </button>
             </div>
 
@@ -269,7 +269,7 @@ const EmployeeList: React.FC = (): React.ReactNode => {
                         <h4 className="font-bold text-center">
                             {employeeToDelete
                                 ? `¿Estás seguro de eliminar a ${employeeToDelete.first_name} ${employeeToDelete.last_name_1} de la base de datos?`
-                                : '¿Estás seguro de eliminar este empleado de la base de datos?'}
+                                : '¿Estás seguro de eliminar este usuario de la base de datos?'}
                         </h4>
                         <p className="text-justify mt-4">
                             Esta operación no se puede deshacer.
