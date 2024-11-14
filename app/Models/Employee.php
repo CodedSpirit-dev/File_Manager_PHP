@@ -15,7 +15,7 @@ class Employee extends Authenticatable
         'first_name',
         'last_name_1',
         'last_name_2',
-        'phone_number', // Nuevo campo de teléfono
+        'phone_number',
         'position_id',
         'username',
         'password',
@@ -29,21 +29,25 @@ class Employee extends Authenticatable
         'password' => 'hashed',
     ];
 
-    // Relación con la tabla 'positions'
+    // Relación con la posición
     public function position()
     {
         return $this->belongsTo(Position::class);
     }
 
-    /**
-     * Relación con los permisos a través de la posición.
-     */
+    // Relación con los permisos a través de la posición
     public function permissions()
     {
-        return $this->position->permissions();
+        return $this->position ? $this->position->permissions() : collect();
     }
 
-    // Relación con la tabla 'companies'
+    // Verifica si el empleado tiene un permiso específico
+    public function hasPermission($permissionName)
+    {
+        return $this->permissions()->where('name', $permissionName)->exists();
+    }
+
+    // Relación con la empresa a través de la posición
     public function company()
     {
         return $this->hasOneThrough(Company::class, Position::class, 'id', 'id', 'position_id', 'company_id');
@@ -55,9 +59,7 @@ class Employee extends Authenticatable
         return $this->hasMany(Log::class, 'user_id');
     }
 
-    /**
-     * Acceso directo al nivel de jerarquía.
-     */
+    // Acceso directo al nivel de jerarquía
     public function getHierarchyAttribute()
     {
         return $this->position->hierarchy_level_detail->level;

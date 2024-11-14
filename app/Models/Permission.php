@@ -31,8 +31,8 @@ class Permission extends Model
     ];
 
     // Relación con PositionPermission
-    public function positionPermissions()
+    public function permissions()
     {
-        return $this->hasMany(PositionPermission::class, 'permission_id', 'id');
+        return $this->belongsToMany(Permission::class, 'position_permissions', 'position_id', 'permission_id');
     }
 }

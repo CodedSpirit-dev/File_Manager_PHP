@@ -14,9 +14,6 @@ use Illuminate\Support\Facades\Validator;
 
 class EmployeeController extends Controller
 {
-    /**
-     * Constructor para aplicar middleware de autenticación y autorización.
-     */
     public function __construct()
     {
         $this->middleware('auth:employee'); // Aplicar middleware al guard 'employee'
@@ -52,26 +49,38 @@ class EmployeeController extends Controller
     }
 
     /**
-     * Mostrar una lista de todos los empleados.
+     * Mostrar una lista de empleados de acuerdo con la jerarquía y empresa del usuario autenticado.
      */
     public function index()
     {
-        $employees = Employee::with('position.company')->get();
+        $employee = Auth::guard('employee')->user();
+
+        if (!$employee) {
+            return response()->json(['error' => 'No autenticado'], 401);
+        }
+
+        // Permiso: Ver a todos los usuarios o ver compañeros de la empresa
+        if (!$employee->hasPermission('can_view_all_users') && !$employee->hasPermission('can_view_company_users')) {
+            return response()->json(['error' => 'Permiso denegado'], 403);
+        }
+
+        if ($employee->hasPermission('can_view_all_users')) {
+            // Si tiene permiso para ver a todos los usuarios
+            $employees = Employee::with('position.company')->get();
+        } else {
+            // Si solo tiene permiso para ver compañeros de la empresa
+            $companyId = $employee->position->company_id;
+            $hierarchyLevel = $employee->position->hierarchy_level;
+
+            $employees = Employee::with('position.company')
+                ->whereHas('position', function ($query) use ($companyId, $hierarchyLevel) {
+                    $query->where('company_id', $companyId)
+                        ->where('hierarchy_level', '>=', $hierarchyLevel);
+                })
+                ->get();
+        }
+
         return response()->json($employees);
-    }
-
-    /**
-     * Mostrar la vista para crear un nuevo empleado.
-     */
-    public function create()
-    {
-        $positions = Position::with('company')->get();
-        $companies = Company::all();
-
-        return inertia('Admin/CreateEmployee', [
-            'positions' => $positions,
-            'companies' => $companies,
-        ]);
     }
 
     /**
@@ -79,6 +88,12 @@ class EmployeeController extends Controller
      */
     public function store(Request $request)
     {
+        $employee = Auth::guard('employee')->user();
+
+        if (!$employee->hasPermission('can_create_users')) {
+            return response()->json(['error' => 'Permiso denegado'], 403);
+        }
+
         $validator = Validator::make($request->all(), [
             'first_name' => 'required|string|max:255',
             'last_name_1' => 'required|string|max:255',
@@ -90,80 +105,27 @@ class EmployeeController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return response()->json([
-                'errors' => $validator->errors(),
-            ], 422);
+            return response()->json(['errors' => $validator->errors()], 422);
         }
 
-        $employee = new Employee();
-        $employee->first_name = $request->first_name;
-        $employee->last_name_1 = $request->last_name_1;
-        $employee->last_name_2 = $request->last_name_2;
-        $employee->phone_number = $request->phone_number;
-        $employee->position_id = $request->position_id;
-        $employee->username = $request->username;
-        $employee->password = Hash::make($request->password);
-        $employee->registered_at = now();
-        $employee->save();
+        $newEmployee = new Employee();
+        $newEmployee->first_name = $request->first_name;
+        $newEmployee->last_name_1 = $request->last_name_1;
+        $newEmployee->last_name_2 = $request->last_name_2;
+        $newEmployee->phone_number = $request->phone_number;
+        $newEmployee->position_id = $request->position_id;
+        $newEmployee->username = $request->username;
+        $newEmployee->password = Hash::make($request->password);
+        $newEmployee->registered_at = now();
+        $newEmployee->save();
 
         Log::create([
-            'user_id' => auth()->id(),
+            'user_id' => $employee->id,
             'transaction_id' => 'create_employee',
-            'description' => "Empleado '{$employee->username}' creado",
+            'description' => "Empleado '{$newEmployee->username}' creado",
         ]);
 
-        return response()->json(['id' => $employee->id]);
-    }
-
-    /**
-     * Obtener la jerarquía del usuario autenticado.
-     */
-    public function getUserHierarchy()
-    {
-        $employee = Auth::guard('employee')->user();
-        if (!$employee) {
-            return response()->json(['error' => 'No autenticado'], 401);
-        }
-
-        $hierarchyLevel = $employee->position->hierarchy_level;
-        $companyName = $employee->position->company->name;
-
-        return response()->json([
-            'hierarchy_level' => $hierarchyLevel,
-            'company_name' => $companyName,
-        ]);
-    }
-
-    /**
-     * Mostrar la vista para editar un empleado específico.
-     */
-    public function edit($id)
-    {
-        $employee = Employee::find($id);
-
-        if (!$employee) {
-            return response()->json(['error' => 'Empleado no encontrado'], 404);
-        }
-
-        $positions = Position::with('company')->get();
-        $companies = Company::all();
-
-        $companyId = $employee->position->company_id;
-
-        return inertia('Admin/EditEmployee', [
-            'employee' => [
-                'id' => $employee->id,
-                'first_name' => $employee->first_name,
-                'last_name_1' => $employee->last_name_1,
-                'last_name_2' => $employee->last_name_2,
-                'phone_number' => $employee->phone_number,
-                'username' => $employee->username,
-                'position_id' => $employee->position_id,
-                'company_id' => $companyId,
-            ],
-            'positions' => $positions,
-            'companies' => $companies,
-        ]);
+        return response()->json(['id' => $newEmployee->id]);
     }
 
     /**
@@ -171,9 +133,15 @@ class EmployeeController extends Controller
      */
     public function update(Request $request, $id)
     {
-        $employee = Employee::find($id);
+        $employee = Auth::guard('employee')->user();
 
-        if (!$employee) {
+        if (!$employee->hasPermission('can_update_users')) {
+            return response()->json(['error' => 'Permiso denegado'], 403);
+        }
+
+        $updateEmployee = Employee::find($id);
+
+        if (!$updateEmployee) {
             return response()->json(['error' => 'Empleado no encontrado'], 404);
         }
 
@@ -191,40 +159,26 @@ class EmployeeController extends Controller
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
-        $employee->first_name = $request->first_name;
-        $employee->last_name_1 = $request->last_name_1;
-        $employee->last_name_2 = $request->last_name_2;
-        $employee->phone_number = $request->phone_number;
-        $employee->username = $request->username;
-        $employee->position_id = $request->position_id;
+        $updateEmployee->first_name = $request->first_name;
+        $updateEmployee->last_name_1 = $request->last_name_1;
+        $updateEmployee->last_name_2 = $request->last_name_2;
+        $updateEmployee->phone_number = $request->phone_number;
+        $updateEmployee->username = $request->username;
+        $updateEmployee->position_id = $request->position_id;
 
         if ($request->filled('password')) {
-            $employee->password = Hash::make($request->password);
+            $updateEmployee->password = Hash::make($request->password);
         }
 
-        $employee->save();
+        $updateEmployee->save();
 
         Log::create([
-            'user_id' => auth()->id(),
+            'user_id' => $employee->id,
             'transaction_id' => 'update_employee',
-            'description' => "Empleado '{$employee->username}' actualizado",
+            'description' => "Empleado '{$updateEmployee->username}' actualizado",
         ]);
 
         return response()->json(['message' => 'Empleado actualizado con éxito']);
-    }
-
-    /**
-     * Obtener los permisos de un empleado específico.
-     */
-    public function getPermissions($id)
-    {
-        $employee = Employee::with('position.permissions')->find($id);
-
-        if (!$employee) {
-            return response()->json(['error' => 'Empleado no encontrado'], 404);
-        }
-
-        return response()->json($employee->position->permissions);
     }
 
     /**
@@ -232,18 +186,24 @@ class EmployeeController extends Controller
      */
     public function destroy($id)
     {
-        $employee = Employee::find($id);
+        $employee = Auth::guard('employee')->user();
 
-        if (!$employee) {
+        if (!$employee->hasPermission('can_delete_users')) {
+            return response()->json(['error' => 'Permiso denegado'], 403);
+        }
+
+        $deleteEmployee = Employee::find($id);
+
+        if (!$deleteEmployee) {
             return response()->json(['error' => 'Empleado no encontrado'], 404);
         }
 
-        $employee->delete();
+        $deleteEmployee->delete();
 
         Log::create([
-            'user_id' => auth()->id(),
+            'user_id' => $employee->id,
             'transaction_id' => 'delete_employee',
-            'description' => "Empleado '{$employee->username}' eliminado",
+            'description' => "Empleado '{$deleteEmployee->username}' eliminado",
         ]);
 
         return response()->json(['message' => 'Empleado eliminado con éxito']);

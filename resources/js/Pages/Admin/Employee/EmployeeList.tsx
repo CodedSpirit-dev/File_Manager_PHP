@@ -1,13 +1,13 @@
-// src/components/EmployeeList.tsx
-
 import React, { useEffect, useState, useRef } from 'react';
 import axios from 'axios';
 import EditEmployee from "@/Pages/Admin/Employee/EditEmployee";
 import CreateEmployee from "@/Pages/Admin/Employee/CreateEmployee";
 import { Company, Position, Employee } from "@/types";
 import { Head } from "@inertiajs/react";
+import { useAuth } from "@/contexts/AuthProvider"; // Importa el contexto de autenticación
 
 const EmployeeList: React.FC = () => {
+    const { hasPermission } = useAuth(); // Obtén la función de verificación de permisos
     const [employees, setEmployees] = useState<Employee[]>([]);
     const [positions, setPositions] = useState<Position[]>([]);
     const [companies, setCompanies] = useState<Company[]>([]);
@@ -36,7 +36,6 @@ const EmployeeList: React.FC = () => {
         const companyId = position ? position.company_id : null;
         const employeeWithCompany = { ...employee, company_id: companyId };
 
-        // Establecer el empleado a editar y abrir el modal
         setEditingEmployee(employeeWithCompany);
         setEditModalOpen(true);
         setLoadingEmployeeId(null);
@@ -82,8 +81,8 @@ const EmployeeList: React.FC = () => {
         axios.delete(`admin/employees/${employeeToDelete.id}`)
             .then(() => {
                 setSuccessMessage('¡Usuario eliminado con éxito!');
-                fetchData();  // Recarga la lista de empleados
-                confirmDeleteRef.current?.close();  // Cierra el modal de confirmación
+                fetchData();
+                confirmDeleteRef.current?.close();
             })
             .catch((error) => {
                 console.error('Error al eliminar el usuario', error);
@@ -97,7 +96,7 @@ const EmployeeList: React.FC = () => {
 
     // Función para cerrar el modal de éxito
     const handleCloseSuccessModal = () => {
-        setSuccessMessage(null); // Resetea el mensaje de éxito
+        setSuccessMessage(null);
     };
 
     if (loading) {
@@ -117,15 +116,17 @@ const EmployeeList: React.FC = () => {
             <Head title={'Usuarios'} />
             <h2 className="text-center">LISTA DE USUARIOS</h2>
 
-            {/* Botón para agregar un nuevo empleado */}
-            <div className="flex justify-end mb-4">
-                <button
-                    onClick={() => setAddModalOpen(true)}
-                    className="btn btn-success"
-                >
-                    Agregar usuario
-                </button>
-            </div>
+            {/* Botón para agregar un nuevo empleado, visible solo si el usuario tiene permiso */}
+            {hasPermission("can_create_users") && (
+                <div className="flex justify-end mb-4">
+                    <button
+                        onClick={() => setAddModalOpen(true)}
+                        className="btn btn-success"
+                    >
+                        Agregar usuario
+                    </button>
+                </div>
+            )}
 
             {/* Tabla de Empleados */}
             <div className="overflow-x-auto">
@@ -137,15 +138,15 @@ const EmployeeList: React.FC = () => {
                         <th className="px-4 py-2 text-center">Fecha de Registro</th>
                         <th className="px-4 py-2 text-center">Último Inicio de Sesión</th>
                         <th className="px-4 py-2 text-center">Puesto</th>
-                        <th className="px-4 py-2 text-left">Acciones</th>
+                        {(hasPermission("can_update_users") || hasPermission("can_delete_users")) && (
+                            <th className="px-4 py-2 text-left">Acciones</th>
+                        )}
                     </tr>
                     </thead>
                     <tbody>
                     {employees.map((employee) => {
                         const position = positions.find((position) => position.id === employee.position_id);
-                        const company = position
-                            ? companies.find((company) => company.id === position.company_id)
-                            : null;
+                        const company = position ? companies.find((company) => company.id === position.company_id) : null;
                         return (
                             <tr key={employee.id} className="hover:bg-base-200">
                                 <td className="border px-4 py-2 text-sm text-base-content truncate">
@@ -178,136 +179,108 @@ const EmployeeList: React.FC = () => {
                                     {company && (
                                         <span
                                             className="mt-1 inline-block bg-secondary text-secondary-content text-xs px-2 py-1 rounded">
-                                                {company.name}
-                                            </span>
+                                            {company.name}
+                                        </span>
                                     )}
                                 </td>
-                                <td className="border px-4 py-2 text-sm text-base-content">
-                                    <div className="flex justify-center space-x-2">
-                                        <button
-                                            onClick={() => handleEditClick(employee)}
-                                            className="btn btn-primary btn-sm"
-                                            disabled={loadingEmployeeId === employee.id}
-                                        >
-                                            {loadingEmployeeId === employee.id ? (
-                                                <span className="loading loading-spinner"></span>
-                                            ) : (
-                                                'Editar'
+                                {(hasPermission("can_update_users") || hasPermission("can_delete_users")) && (
+                                    <td className="border px-4 py-2 text-sm text-base-content">
+                                        <div className="flex justify-center space-x-2">
+                                            {hasPermission("can_update_users") && (
+                                                <button
+                                                    onClick={() => handleEditClick(employee)}
+                                                    className="btn btn-primary btn-sm"
+                                                    disabled={loadingEmployeeId === employee.id}
+                                                >
+                                                    {loadingEmployeeId === employee.id ? (
+                                                        <span className="loading loading-spinner"></span>
+                                                    ) : (
+                                                        'Editar'
+                                                    )}
+                                                </button>
                                             )}
-                                        </button>
-                                        <button
-                                            onClick={() => handleDeleteClick(employee)}
-                                            className="btn btn-error btn-sm text-base-100"
-                                        >
-                                            Eliminar
-                                        </button>
-                                    </div>
-                                </td>
+                                            {hasPermission("can_delete_users") && (
+                                                <button
+                                                    onClick={() => handleDeleteClick(employee)}
+                                                    className="btn btn-error btn-sm text-base-100"
+                                                >
+                                                    Eliminar
+                                                </button>
+                                            )}
+                                        </div>
+                                    </td>
+                                )}
                             </tr>
                         );
                     })}
                     </tbody>
                 </table>
 
-                {/* Modal para Editar Empleado */}
-                {editingEmployee && (
-                    <>
-                        <input
-                            type="checkbox"
-                            id="edit-employee-modal"
-                            className="modal-toggle"
-                            checked={editModalOpen}
-                            readOnly
-                        />
-                        <label htmlFor="edit-employee-modal" className={`modal cursor-pointer ${editModalOpen ? 'modal-open' : ''}`}>
-                            <label className="modal-box relative" htmlFor="">
-                                <EditEmployee
-                                    employee={editingEmployee}
-                                    positions={positions}
-                                    companies={companies}
-                                    onClose={() => setEditModalOpen(false)}
-                                    onSuccess={() => {
-                                        setEditModalOpen(false);
-                                        fetchData();
-                                    }}
-                                />
-                            </label>
-                        </label>
-                    </>
-                )}
-
-                {/* Modal para Agregar Empleado */}
-                {addModalOpen && (
-                    <>
-                        <input
-                            type="checkbox"
-                            id="add-employee-modal"
-                            className="modal-toggle"
-                            checked={addModalOpen}
-                            readOnly
-                        />
-                        <label htmlFor="add-employee-modal" className={`modal cursor-pointer ${addModalOpen ? 'modal-open' : ''}`}>
-                            <label className="modal-box relative" htmlFor="">
-                                <CreateEmployee
-                                    onSuccess={() => {
-                                        fetchData();
-                                        setAddModalOpen(false);
-                                    }}
-                                    onClose={() => setAddModalOpen(false)}
-                                />
-                            </label>
-                        </label>
-                    </>
-                )}
-
-                {/* Modal de Confirmación de Eliminación */}
-                <dialog ref={confirmDeleteRef} className="modal modal-bottom sm:modal-middle">
-                    <form method="dialog" className="modal-box">
-                        <h4 className="font-bold text-center">
-                            {employeeToDelete
-                                ? `¿Estás seguro de eliminar a ${employeeToDelete.first_name} ${employeeToDelete.last_name_1} de la base de datos?`
-                                : '¿Estás seguro de eliminar este usuario de la base de datos?'}
-                        </h4>
-                        <p className="text-justify mt-4">
-                            Esta operación no se puede deshacer.
-                        </p>
-
-                        <div className="modal-action justify-center mt-6">
-                            <button
-                                type="button"
-                                className="btn btn-warning"
-                                onClick={() => confirmDeleteRef.current?.close()}
-                                disabled={loadingDelete}
-                            >
-                                No, cancelar
-                            </button>
-                            <button
-                                type="button"
-                                onClick={confirmDelete}
-                                className={`btn btn-error ${loadingDelete ? 'loading' : ''}`}
-                                disabled={loadingDelete}
-                            >
-                                {loadingDelete ? 'Eliminando...' : 'Sí, eliminar'}
-                            </button>
-                        </div>
-                    </form>
-                </dialog>
-
-                {/* Modal de Éxito */}
-                {successMessage && (
-                    <dialog open className="modal">
-                        <div className="modal-box">
-                            <h3 className="font-bold text-center text-lg">Acción Exitosa</h3>
-                            <p className="text-center py-4 text-green-500">{successMessage}</p>
-                            <div className="modal-action">
-                                <button type="button" className="btn btn-primary" onClick={handleCloseSuccessModal}>
-                                    Aceptar
-                                </button>
-                            </div>
-                        </div>
-                    </dialog>
-                )}
             </div>
+
+            {/* Modales adicionales */}
+            {editingEmployee && (
+                <>
+                    <input
+                        type="checkbox"
+                        id="edit-employee-modal"
+                        className="modal-toggle"
+                        checked={editModalOpen}
+                        readOnly
+                    />
+                    <label htmlFor="edit-employee-modal" className={`modal cursor-pointer ${editModalOpen ? 'modal-open' : ''}`}>
+                        <label className="modal-box relative" htmlFor="">
+                            <EditEmployee
+                                employee={editingEmployee}
+                                positions={positions}
+                                companies={companies}
+                                onClose={() => setEditModalOpen(false)}
+                                onSuccess={() => {
+                                    setEditModalOpen(false);
+                                    fetchData();
+                                }}
+                            />
+                        </label>
+                    </label>
+                </>
+            )}
+
+            {addModalOpen && (
+                <>
+                    <input
+                        type="checkbox"
+                        id="add-employee-modal"
+                        className="modal-toggle"
+                        checked={addModalOpen}
+                        readOnly
+                    />
+                    <label htmlFor="add-employee-modal" className={`modal cursor-pointer ${addModalOpen ? 'modal-open' : ''}`}>
+                        <label className="modal-box relative" htmlFor="">
+                            <CreateEmployee
+                                onSuccess={() => {
+                                    fetchData();
+                                    setAddModalOpen(false);
+                                }}
+                                onClose={() => setAddModalOpen(false)}
+                            />
+                        </label>
+                    </label>
+                </>
+            )}
+
+            {successMessage && (
+                <dialog open className="modal">
+                    <div className="modal-box">
+                        <h3 className="font-bold text-center text-lg">Acción Exitosa</h3>
+                        <p className="text-center py-4 text-green-500">{successMessage}</p>
+                        <div className="modal-action">
+                            <button type="button" className="btn btn-primary" onClick={handleCloseSuccessModal}>
+                                Aceptar
+                            </button>
+                        </div>
+                    </div>
+                </dialog>
+            )}
         </div>
     );
 };
