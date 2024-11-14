@@ -1,21 +1,31 @@
+// src/context/AuthProvider.tsx
+
 import React, { createContext, useState, useEffect, useContext, ReactNode } from 'react';
 import axios from 'axios';
 import { usePage } from '@inertiajs/react';
 import { EmployeePageProps } from '@/types';
-import { User } from '../types';
+import { User } from '@/types';
 
+// Definición de la interfaz Permissions según los permisos específicos
 export interface Permissions {
+    // Permisos para Empresas
     can_create_companies: boolean;
     can_delete_companies: boolean;
     can_update_companies: boolean;
+
+    // Permisos para Puestos
     can_create_positions: boolean;
     can_update_positions: boolean;
     can_delete_positions: boolean;
+
+    // Permisos para Usuarios
     can_create_users: boolean;
     can_delete_users: boolean;
     can_update_users: boolean;
     can_view_company_users: boolean;
     can_view_all_users: boolean;
+
+    // Permisos para Gestión de Archivos y Carpetas
     can_view_file_explorer: boolean;
     can_open_files: boolean;
     can_upload_files_and_folders: boolean;
@@ -31,8 +41,7 @@ interface AuthContextProps {
     user: User | null;
     permissions: Permissions;
     hierarchyLevel: number | null;
-    companyName: string | null;
-    redirectPath: string | null;
+    companyId: number | null;
     hasPermission: (permission: keyof Permissions) => boolean;
     refreshPermissions: () => void;
 }
@@ -64,8 +73,7 @@ const AuthContext = createContext<AuthContextProps>({
     user: null,
     permissions: defaultPermissions,
     hierarchyLevel: null,
-    companyName: null,
-    redirectPath: null,
+    companyId: null,
     hasPermission: () => false,
     refreshPermissions: () => {},
 });
@@ -78,12 +86,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     const { auth } = usePage<EmployeePageProps>().props;
     const [user, setUser] = useState<User | null>(auth.user || null);
     const [permissions, setPermissions] = useState<Permissions>(defaultPermissions);
-    const [hierarchyLevel, setHierarchyLevel] = useState<number | null>(null);
-    const [companyName, setCompanyName] = useState<string | null>(null);
-    const [redirectPath, setRedirectPath] = useState<string | null>(null);
+    const [hierarchyLevel, setHierarchyLevel] = useState<number | null>(auth.user?.position?.hierarchy_level || null);
+    const [companyId, setCompanyId] = useState<number | null>(auth.user?.position?.company_id || null);
 
     useEffect(() => {
         setUser(auth.user || null);
+        setHierarchyLevel(auth.user?.position?.hierarchy_level || null);
+        setCompanyId(auth.user?.position?.company_id || null);
 
         const userPermissions = auth.user?.permissions || [];
         const mappedPermissions: Permissions = { ...defaultPermissions };
@@ -93,36 +102,22 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             }
         });
         setPermissions(mappedPermissions);
-
-        // Fetch hierarchy and company details
-        fetchHierarchyAndCompany();
     }, [auth.user]);
-
-    const fetchHierarchyAndCompany = async () => {
-        try {
-            const response = await axios.get('/filemanager/hierarchy-company');
-            setHierarchyLevel(response.data.hierarchy_level);
-            setCompanyName(response.data.company_name);
-            setRedirectPath(response.data.redirect_path);
-        } catch (error) {
-            console.error('Error fetching hierarchy and company information', error);
-        }
-    };
 
     const refreshPermissions = () => {
         axios.get('/api/permissions')
             .then(response => {
-                const newPermissions = response.data.permissions || [];
-                const updatedPermissions: Permissions = { ...defaultPermissions };
-                newPermissions.forEach((perm: string) => {
-                    if (perm in updatedPermissions) {
-                        updatedPermissions[perm as keyof Permissions] = true;
+                const userPermissions = response.data.permissions || [];
+                const mappedPermissions: Permissions = { ...defaultPermissions };
+                userPermissions.forEach((perm: string) => {
+                    if (perm in mappedPermissions) {
+                        mappedPermissions[perm as keyof Permissions] = true;
                     }
                 });
-                setPermissions(updatedPermissions);
+                setPermissions(mappedPermissions);
             })
             .catch(error => {
-                console.error('Error fetching user permissions', error);
+                console.error('Error al actualizar los permisos', error);
             });
     };
 
@@ -131,7 +126,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     };
 
     return (
-        <AuthContext.Provider value={{ user, permissions, hierarchyLevel, companyName, redirectPath, hasPermission, refreshPermissions }}>
+        <AuthContext.Provider value={{ user, permissions, hierarchyLevel, companyId, hasPermission, refreshPermissions }}>
             {children}
         </AuthContext.Provider>
     );

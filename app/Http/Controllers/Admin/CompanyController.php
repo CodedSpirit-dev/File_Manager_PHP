@@ -18,10 +18,25 @@ class CompanyController extends Controller
      */
     public function index()
     {
-        $companies = Company::withCount('employees')->orderBy("name", "asc")->get();
+        $employee = auth()->user();
+        $hierarchyLevel = $employee->position->hierarchy_level;
+        $companyId = $employee->position->company_id;
+
+        if ($hierarchyLevel === 0) {
+            // Si el usuario tiene jerarquía 0, ver todas las compañías
+            $companies = Company::withCount(['employees', 'positions'])
+                ->orderBy("name", "asc")
+                ->get();
+        } else {
+            // Si el usuario tiene jerarquía mayor a 0, solo ver su compañía
+            $companies = Company::where('id', $companyId)
+                ->withCount(['employees', 'positions'])
+                ->orderBy("name", "asc")
+                ->get();
+        }
+
         return response()->json($companies);
     }
-
     /**
      * Muestra el formulario de registro de compañías.
      *

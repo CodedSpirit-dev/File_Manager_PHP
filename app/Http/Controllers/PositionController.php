@@ -18,8 +18,8 @@ class PositionController extends Controller
      */
     public function index()
     {
-        $positions = Position::with('company')
-            ->withCount('employees')
+        $positions = Position::with(['company', 'permissions']) // Añadido 'permissions'
+        ->withCount('employees')
             ->orderBy('name')
             ->get();
 
@@ -32,6 +32,7 @@ class PositionController extends Controller
                 'company_name' => $position->company->name ?? 'N/A',
                 'employees_count' => $position->employees_count,
                 'hierarchy_level' => $position->hierarchy_level,
+                'permissions' => $position->permissions, // Asegúrate de incluir permisos
             ];
         });
 

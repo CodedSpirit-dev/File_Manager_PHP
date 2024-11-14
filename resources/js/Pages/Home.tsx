@@ -73,7 +73,6 @@ const HomeContent: React.FC = () => {
                             <Menu.Items
                                 className="absolute left-0 mt-2 w-56 origin-top-left bg-white border border-gray-200 divide-y divide-gray-100 rounded-md shadow-lg focus:outline-none z-20">
                                 <div className="px-1 py-1 ">
-                                    {hasPermission('can_view_file_explorer' as keyof Permissions) && (
                                         <Menu.Item>
                                             {({ active }) => (
                                                 <button
@@ -89,8 +88,6 @@ const HomeContent: React.FC = () => {
                                                 </button>
                                             )}
                                         </Menu.Item>
-                                    )}
-                                    {hasPermission('can_view_company_users' as keyof Permissions) && (
                                         <Menu.Item>
                                             {({ active }) => (
                                                 <button
@@ -106,8 +103,6 @@ const HomeContent: React.FC = () => {
                                                 </button>
                                             )}
                                         </Menu.Item>
-                                    )}
-                                    {hasPermission('can_create_companies' as keyof Permissions) && (
                                         <Menu.Item>
                                             {({ active }) => (
                                                 <button
@@ -123,8 +118,6 @@ const HomeContent: React.FC = () => {
                                                 </button>
                                             )}
                                         </Menu.Item>
-                                    )}
-                                    {hasPermission('can_create_positions' as keyof Permissions) && (
                                         <Menu.Item>
                                             {({ active }) => (
                                                 <button
@@ -140,8 +133,6 @@ const HomeContent: React.FC = () => {
                                                 </button>
                                             )}
                                         </Menu.Item>
-                                    )}
-                                    {hasPermission('can_view_all_users' as keyof Permissions) && (
                                         <Menu.Item>
                                             {({ active }) => (
                                                 <button
@@ -157,7 +148,6 @@ const HomeContent: React.FC = () => {
                                                 </button>
                                             )}
                                         </Menu.Item>
-                                    )}
                                 </div>
                             </Menu.Items>
                         </Menu>
@@ -165,7 +155,6 @@ const HomeContent: React.FC = () => {
 
                     {/* Navbar para pantallas grandes */}
                     <div className="hidden lg:flex space-x-4">
-                        {hasPermission('can_view_file_explorer' as keyof Permissions) && (
                             <Button
                                 className={`btn btn-ghost nav__bar__button hover:text-black ${
                                     activeComponent === 'FileManager' ? 'bg-primary text-white cursor-not-allowed' : ''
@@ -175,7 +164,6 @@ const HomeContent: React.FC = () => {
                             >
                                 <LuFolderOpen className="mr-2" /> Explorador de archivos
                             </Button>
-                        )}
                         {/* AdminDropdown visible solo en pantallas grandes */}
                         <AdminDropdown renderComponent={renderComponent} activeComponent={activeComponent} />
                     </div>

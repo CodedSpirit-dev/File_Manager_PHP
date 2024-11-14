@@ -48,15 +48,11 @@ Route::prefix('api')->name('api.')->group(function () {
     Route::get('/employees', [EmployeeController::class, 'index'])->name('employees.index');
     Route::get('/positions', [PositionController::class, 'index'])->name('positions.index');
     Route::post('/positions', [PositionController::class, 'store'])->name('positions.store');
+    Route::patch('/positions/{position}', [PositionController::class, 'update'])->name('positions.update'); // Añadido
     Route::get('/hierarchylevels', [HierarchyLevelController::class, 'index'])->name('hierarchylevels.index');
     Route::get('/permissions', [PermissionController::class, 'index'])->name('permissions.index');
 
-    // **Rutas Eliminadas para EmployeePermissionsController**
-    // Route::post('/userpermissions', [EmployeePermissionsController::class, 'store'])->middleware('auth:employee')->name('userpermissions.store');
-    // Route::delete('/userpermissions/{employee_id}', [EmployeePermissionsController::class, 'destroy'])->middleware('auth:employee')->name('userpermissions.destroy');
-    // Route::get('/employees/{id}/permissions', [EmployeeController::class, 'getPermissions'])->name('employees.permissions');
-
-    // **Nuevas Rutas para PositionPermissionsController**
+    // Rutas para PositionPermissionsController
     Route::post('/positionpermissions', [PositionPermissionsController::class, 'store'])
         ->middleware('auth:employee')
         ->name('positionpermissions.store');
@@ -65,6 +61,7 @@ Route::prefix('api')->name('api.')->group(function () {
         ->middleware('auth:employee')
         ->name('positionpermissions.destroy');
 });
+
 
 // Ruta para el perfil del empleado
 Route::get('/admin/employees/profile', [EmployeeController::class, 'profile'])

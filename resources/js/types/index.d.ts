@@ -1,11 +1,13 @@
 // src/types/index.ts
 
 export interface User {
+    position: ((prevState: (number | null)) => (number | null)) | number | null;
     id: number;
     name: string;
     email: string;
     email_verified_at?: string;
     permissions: string[]; // Asegúrate de que este campo esté presente
+
 }
 
 export type PageProps<
@@ -42,20 +44,23 @@ export type EmployeePageProps<
 };
 
 export interface Company {
+    positions_count: number;
+    positions_count: number;
     id: number;
     name: string;
     employees_count: number;
 }
 
 export interface Position {
-    company_name: string;
-    employees_count: number;
     id: number;
     name: string;
     company_id: number;
+    company_name: string;
+    employees_count: number;
     hierarchy_level: number;
     company: Company;
     hierarchy_level_detail: HierarchyLevel;
+    permissions: Permission[];
 }
 
 export interface HierarchyLevel {
@@ -63,7 +68,8 @@ export interface HierarchyLevel {
     name: string;
 }
 
-interface Permission {
+export interface Permission {
+    id: number;
     name: string;
     description: string;
 }

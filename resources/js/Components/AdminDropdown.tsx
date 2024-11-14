@@ -37,10 +37,6 @@ const AdminDropdown: React.FC<AdminDropdownProps> = ({ renderComponent, activeCo
     // Verifica si el usuario tiene alguno de los permisos de administración
     const hasAdminAccess = adminPermissions.some((perm) => hasPermission(perm));
 
-    if (!hasAdminAccess) {
-        return null; // No renderiza el menú si no tiene acceso
-    }
-
     const handleClick = (componentName: string) => {
         renderComponent(componentName);
     };
@@ -55,7 +51,6 @@ const AdminDropdown: React.FC<AdminDropdownProps> = ({ renderComponent, activeCo
 
             <Menu.Items className="absolute right-0 mt-2 w-56 origin-top-right bg-white border border-gray-200 divide-y divide-gray-100 rounded-md shadow-lg focus:outline-none z-20">
                 <div className="px-1 py-1 ">
-                    {hasPermission('can_view_company_users') && (
                         <Menu.Item>
                             {({ active }) => (
                                 <button
@@ -71,8 +66,6 @@ const AdminDropdown: React.FC<AdminDropdownProps> = ({ renderComponent, activeCo
                                 </button>
                             )}
                         </Menu.Item>
-                    )}
-                    {hasPermission('can_create_companies') && (
                         <Menu.Item>
                             {({ active }) => (
                                 <button
@@ -88,8 +81,6 @@ const AdminDropdown: React.FC<AdminDropdownProps> = ({ renderComponent, activeCo
                                 </button>
                             )}
                         </Menu.Item>
-                    )}
-                    {hasPermission('can_create_positions') && (
                         <Menu.Item>
                             {({ active }) => (
                                 <button
@@ -105,8 +96,6 @@ const AdminDropdown: React.FC<AdminDropdownProps> = ({ renderComponent, activeCo
                                 </button>
                             )}
                         </Menu.Item>
-                    )}
-                    {hasPermission('can_view_all_users') && (
                         <Menu.Item>
                             {({ active }) => (
                                 <button
@@ -122,7 +111,6 @@ const AdminDropdown: React.FC<AdminDropdownProps> = ({ renderComponent, activeCo
                                 </button>
                             )}
                         </Menu.Item>
-                    )}
                 </div>
             </Menu.Items>
         </Menu>

@@ -1,9 +1,9 @@
 // src/Pages/Admin/Position/EditPosition.tsx
 
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useForm, Controller } from 'react-hook-form';
-import { Position } from "@/types";
+import { Position, Permission } from "@/types";
 
 interface EditPositionProps {
     position: Position;
@@ -18,152 +18,202 @@ const EditPosition: React.FC<EditPositionProps> = ({ position, onClose }) => {
         }
     });
 
+    const [step, setStep] = useState(1);
     const [successMessage, setSuccessMessage] = useState('');
     const [errorMessage, setErrorMessage] = useState('');
     const [loading, setLoading] = useState(false);
+    const [availablePermissions, setAvailablePermissions] = useState<Permission[]>([]);
+    const [selectedPermissions, setSelectedPermissions] = useState<number[]>(position.permissions ? position.permissions.map(p => p.id) : []);
 
-    // Refs para los modales
-    const confirmModalRef = useRef<HTMLDialogElement>(null);
-    const successModalRef = useRef<HTMLDialogElement>(null);
-    const errorModalRef = useRef<HTMLDialogElement>(null);
+    // Cargar permisos al iniciar
+    useEffect(() => {
+        axios.get('/api/permissions')
+            .then(response => setAvailablePermissions(response.data))
+            .catch(() => setErrorMessage('Error al cargar los permisos disponibles.'));
+    }, []);
 
-    // Función para manejar la actualización del puesto
-    const onSubmit = async (data: { name: string }) => {
+    // Agrupación de permisos por categoría
+    const permissionCategories: { [key: string]: string[] } = {
+        'Empresas': ['can_create_companies', 'can_delete_companies', 'can_update_companies'],
+        'Puestos': ['can_create_positions', 'can_update_positions', 'can_delete_positions'],
+        'Usuarios': [
+            'can_create_users', 'can_delete_users', 'can_update_users',
+            'can_view_company_users', 'can_view_all_users'
+        ],
+        'Gestión de Archivos y Carpetas': [
+            'can_view_file_explorer', 'can_open_files', 'can_upload_files_and_folders',
+            'can_create_folders', 'can_download_files_and_folders', 'can_copy_files',
+            'can_move_files', 'can_rename_files_and_folders', 'can_delete_files_and_folders'
+        ]
+    };
+
+    const groupedPermissions = Object.keys(permissionCategories).map(category => ({
+        category,
+        permissions: availablePermissions.filter(permission =>
+            permissionCategories[category].includes(permission.name)
+        )
+    }));
+
+    const handlePermissionChange = (permissionId: number) => {
+        setSelectedPermissions(prev =>
+            prev.includes(permissionId) ? prev.filter(id => id !== permissionId) : [...prev, permissionId]
+        );
+    };
+
+    // Realizar la operación de guardar cambios de nombre y permisos al final
+    const handleFinalSubmit = async (data: { name: string }) => {
         setLoading(true);
         try {
-            await axios.put(`/admin/positions/${position.id}`, data);
-            setSuccessMessage('El puesto ha sido actualizado exitosamente.');
-            onClose(true); // Notificar al componente padre que se ha editado
-            confirmModalRef.current?.close(); // Cerrar el modal de confirmación
-            successModalRef.current?.showModal(); // Abrir el modal de éxito
-        } catch (error: any) {
-            if (error.response?.status === 480) {
-                setErrorMessage('La compañía ya tiene un puesto con el mismo nombre.');
+            // Actualizar el nombre de la posición
+            await axios.patch(`/api/positions/${position.id}`, { name: data.name });
+
+            if (selectedPermissions.length > 0) {
+                // Si hay permisos seleccionados, hacer la asignación de permisos
+                await axios.post('/api/positionpermissions', {
+                    position_id: position.id,
+                    permissions: selectedPermissions
+                });
             } else {
-                setErrorMessage('Hubo un error al actualizar el puesto.');
+                // Si no hay permisos seleccionados, eliminar todos los permisos asignados previamente
+                await axios.delete(`/api/positionpermissions/${position.id}`);
             }
-            errorModalRef.current?.showModal(); // Abrir el modal de error
+
+            setSuccessMessage('Puesto y permisos actualizados exitosamente.');
+        } catch (error) {
+            if (axios.isAxiosError(error)) {
+                setErrorMessage(error.response?.data?.message || 'Hubo un error al actualizar el puesto y los permisos.');
+            } else {
+                setErrorMessage('Hubo un error al actualizar el puesto y los permisos.');
+            }
         } finally {
             setLoading(false);
         }
     };
 
-    // Función para abrir el modal de confirmación
-    const handleUpdateClick = () => {
-        confirmModalRef.current?.showModal();
-    };
-
-    // Función para confirmar la actualización
-    const handleConfirmUpdate = () => {
-        handleSubmit(onSubmit)();
-    };
-
-    // Funciones para cerrar los modales de éxito y error
+    // Cierra el modal de éxito y hace el "fetch" de nuevo al componente padre
     const handleCloseSuccessModal = () => {
         setSuccessMessage('');
-        successModalRef.current?.close();
-    };
-
-    const handleCloseErrorModal = () => {
-        setErrorMessage('');
-        errorModalRef.current?.close();
+        onClose(true); // Notifica al componente padre para hacer el fetch
     };
 
     return (
         <div className={'modal-box'}>
-            {/* Formulario para editar el puesto */}
-            <form onSubmit={handleSubmit(onSubmit)}>
-                <h1 className="text-2xl text-center font-bold my-4">Editar Puesto</h1>
+            {/* Barra de pasos */}
+            <ul className="steps w-full">
+                <li className={`step ${step >= 1 ? 'step-primary' : ''}`}>Editar Puesto</li>
+                <li className={`step ${step === 2 ? 'step-primary' : ''}`}>Asignar Permisos</li>
+            </ul>
 
-                <div>
-                    {/* Campo para el nombre del puesto */}
-                    <div className='mt-4'>
-                        <label className='input__data__entry' htmlFor="name">
-                            <Controller
-                                name="name"
-                                control={control}
-                                rules={{
-                                    required: 'El nombre del puesto es obligatorio',
-                                    minLength: {
-                                        value: 3,
-                                        message: 'El nombre debe tener al menos 3 caracteres'
-                                    }
-                                }}
-                                render={({ field }) => (
-                                    <input
-                                        {...field}
-                                        placeholder="Nombre del puesto"
-                                        id="name"
-                                        className="input__data__entry w-full"
-                                    />
-                                )}
-                            />
-                            {errors.name && <p className="text-red-600">{errors.name.message}</p>}
-                        </label>
-                    </div>
-                </div>
+            <form onSubmit={handleSubmit(handleFinalSubmit)}>
+                {step === 1 && (
+                    <>
+                        {/* Paso 1: Edición del nombre del puesto */}
+                        <h1 className="text-2xl text-center font-bold my-4">Editar Puesto</h1>
+                        <div className="mt-4">
+                            <label htmlFor="name">
+                                <Controller
+                                    name="name"
+                                    control={control}
+                                    rules={{
+                                        required: 'El nombre del puesto es obligatorio',
+                                        minLength: {
+                                            value: 3,
+                                            message: 'El nombre debe tener al menos 3 caracteres'
+                                        }
+                                    }}
+                                    render={({ field }) => (
+                                        <input
+                                            {...field}
+                                            placeholder="Nombre del puesto"
+                                            id="name"
+                                            className="input__data__entry w-full"
+                                        />
+                                    )}
+                                />
+                                {errors.name && <p className="text-red-600">{errors.name.message}</p>}
+                            </label>
+                        </div>
+                        <div className="mt-6 flex items-center justify-end space-x-4">
+                            <button type="button" className="btn btn-secondary" onClick={() => onClose(false)}>
+                                Cancelar
+                            </button>
+                            <button
+                                type="button"
+                                className="btn btn-primary"
+                                onClick={() => setStep(2)}
+                                disabled={!isValid}
+                            >
+                                Siguiente
+                            </button>
+                        </div>
+                    </>
+                )}
 
-                {/* Botones para enviar o cancelar */}
-                <div className="mt-6 flex items-center justify-end space-x-4">
-                    <button
-                        type="button"
-                        className="btn btn-secondary"
-                        onClick={() => onClose(false)}
-                    >
-                        Cancelar
-                    </button>
-                    <button
-                        type="button"
-                        className="btn btn-primary"
-                        onClick={handleUpdateClick}
-                        disabled={!isValid || loading}
-                    >
-                        {loading ? <span className="loading loading-spinner"></span> : 'Actualizar puesto'}
-                    </button>
-                </div>
+                {step === 2 && (
+                    <>
+                        {/* Paso 2: Asignación de permisos agrupados por categoría */}
+                        <h2 className="mb-3 text-xl text-center font-bold">Asignar Permisos al Puesto</h2>
+                        <div className="overflow-y-auto max-h-80">
+                            {groupedPermissions.map(({ category, permissions }) => (
+                                <div key={category} className="mb-4">
+                                    <h3 className="text-lg font-semibold mb-2">{category}</h3>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        {permissions.map(permission => (
+                                            <label key={permission.id} className="flex items-center my-2">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={selectedPermissions.includes(permission.id)}
+                                                    onChange={() => handlePermissionChange(permission.id)}
+                                                    className="checkbox checkbox-primary mr-2"
+                                                />
+                                                <span>{permission.description}</span>
+                                            </label>
+                                        ))}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                        <div className="mt-6 flex justify-between">
+                            <button type="button" className="btn-info-mod mx-2" onClick={() => setStep(1)}>
+                                Anterior
+                            </button>
+                            <button type="submit" className="btn btn-success" disabled={loading}>
+                                {loading ? <span className="loading loading-spinner"></span> : 'Guardar'}
+                            </button>
+                        </div>
+                    </>
+                )}
             </form>
 
-            {/* Modal de Confirmación */}
-            <dialog ref={confirmModalRef} className="modal modal-bottom sm:modal-middle">
-                <div className="modal-box">
-                    <h4 className="font-bold text-center">
-                        ¿Estás seguro de actualizar el puesto <b>{position.name}</b>?
-                    </h4>
-                    <div className="modal-action justify-center">
-                        <button className="btn-cancel" onClick={() => confirmModalRef.current?.close()} disabled={loading}>
-                            No, cancelar
-                        </button>
-                        <button className="btn-accept" onClick={handleConfirmUpdate} disabled={loading}>
-                            {loading ? <span className="loading loading-spinner"></span> : 'Sí, actualizar puesto'}
-                        </button>
-                    </div>
-                </div>
-            </dialog>
-
             {/* Modal de Éxito */}
-            <dialog ref={successModalRef} className="modal modal-bottom sm:modal-middle">
-                <div className="modal-box">
-                    <h3 className="font-bold text-center">Actualización de Puesto</h3>
-                    <p className="text-center text-green-600">{successMessage}</p>
-                    <div className="modal-action justify-center">
-                        <button type="button" className="btn btn-info" onClick={handleCloseSuccessModal}>Aceptar</button>
+            {successMessage && (
+                <dialog open className="modal">
+                    <div className="modal-box">
+                        <h3 className="font-bold text-lg">Acción Exitosa</h3>
+                        <p className="py-4">{successMessage}</p>
+                        <div className="modal-action">
+                            <button className="btn btn-primary" onClick={handleCloseSuccessModal}>
+                                Aceptar
+                            </button>
+                        </div>
                     </div>
-                </div>
-            </dialog>
+                </dialog>
+            )}
 
             {/* Modal de Error */}
-            <dialog ref={errorModalRef} className="modal modal-bottom sm:modal-middle">
-                <div className="modal-box">
-                    <h4 className="font-bold text-center">Error al Actualizar Puesto</h4>
-                    <p className="text-center text-error">{errorMessage}</p>
-                    <div className="modal-action justify-center">
-                        <button className="btn btn-error" onClick={handleCloseErrorModal}>Cerrar</button>
+            {errorMessage && (
+                <dialog open className="modal">
+                    <div className="modal-box">
+                        <h3 className="font-bold text-lg text-error">Error</h3>
+                        <p className="py-4">{errorMessage}</p>
+                        <div className="modal-action">
+                            <button className="btn btn-error" onClick={() => setErrorMessage('')}>Cerrar</button>
+                        </div>
                     </div>
-                </div>
-            </dialog>
+                </dialog>
+            )}
         </div>
     );
-
 };
 
 export default EditPosition;

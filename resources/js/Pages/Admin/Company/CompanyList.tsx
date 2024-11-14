@@ -4,9 +4,11 @@ import EditCompany from "@/Pages/Admin/Company/EditCompany";
 import CreateCompany from "@/Pages/Admin/Company/CreateCompany";
 import { Company } from "@/types";
 import { deleteCompany } from "@/Pages/Admin/Company/companyApi";
-import {Head} from "@inertiajs/react";
+import { Head } from "@inertiajs/react";
+import { useAuth } from "@/contexts/AuthProvider";
 
 const CompanyList: React.FC = (): React.ReactNode => {
+    const { hasPermission } = useAuth(); // Obtener función para verificar permisos
     const [companies, setCompanies] = useState<Company[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -81,7 +83,7 @@ const CompanyList: React.FC = (): React.ReactNode => {
 
     const handleCreateSuccess = () => {
         fetchCompanies();
-        setCreateModalOpen(false); // Cierra el modal después de agregar una empresa
+        setCreateModalOpen(false);
     };
 
     if (loading) {
@@ -100,50 +102,69 @@ const CompanyList: React.FC = (): React.ReactNode => {
         <div className="container mx-auto px-4 py-8 bg-base-100">
             <Head title={'Empresas'} />
             <h2 className="text-center">LISTA DE EMPRESAS</h2>
-            <div className="mb-4 flex justify-end">
-                <button
-                    onClick={() => setCreateModalOpen(true)} // Abre el modal de creación
-                    className="btn btn-success"
-                >
-                    Agregar nueva empresa
-                </button>
-            </div>
+
+            {/* Botón de agregar empresa, visible solo si el usuario tiene permiso */}
+            {hasPermission("can_create_companies") && (
+                <div className="mb-4 flex justify-end">
+                    <button
+                        onClick={() => setCreateModalOpen(true)}
+                        className="btn btn-success"
+                    >
+                        Agregar nueva empresa
+                    </button>
+                </div>
+            )}
+
             <div className="overflow-x-auto">
-                <table className="table w-full">
+                <table className="table">
                     <thead>
                     <tr className="text-primary-content">
-                        <th className="px-4 py-2 text-left">Nombre de la Empresa</th>
-                        <th className="px-4 py-2 text-left">Cantidad de Empleados</th>
-                        <th className="px-4 py-2 text-left">Acciones</th>
+                        <th className="px-4 py-2 text-center w-fit">Nombre de la Empresa</th>
+                        <th className="px-4 py-2 text-center w-fit">Cantidad de Puestos</th>
+                        <th className="px-4 py-2 text-center w-fit">Cantidad de Empleados</th>
+                        {/* Encabezado de acciones solo si el usuario tiene permiso */}
+                        {hasPermission("can_update_companies") || hasPermission("can_delete_companies") ? (
+                            <th className="px-4 py-2 text-center w-fit">Acciones</th>
+                        ) : null}
                     </tr>
                     </thead>
                     <tbody>
                     {companies.map(company => (
                         <tr key={company.id} className="hover:bg-base-200">
-                            <td className="border px-4 py-2 text-sm text-base-content truncate">
+                            <td className="border px-4 py-2 text-sm text-base-content truncate max-w-fit">
                                 {company.name}
                             </td>
-                            <td className="border px-4 py-2 text-sm text-base-content">
+                            <td className="border px-4 py-2 text-sm text-base-content text-center max-w-fit">
+                                {company.positions_count ?? 0}
+                            </td>
+                            <td className="border px-4 py-2 text-sm text-base-content text-center max-w-fit">
                                 {company.employees_count ?? 0}
                             </td>
-                            <td className="border px-4 py-2 text-sm text-base-content">
-                                <div className="flex justify-center space-x-2">
-                                    <button
-                                        onClick={() => handleEditClick(company)}
-                                        className={`btn btn-primary btn-sm ${loadingEdit === company.id ? 'loading' : ''}`}
-                                        disabled={loadingEdit === company.id}
-                                    >
-                                        {loadingEdit === company.id ? '' : 'Editar'}
-                                    </button>
-                                    <button
-                                        onClick={() => handleDeleteClick(company)}
-                                        className={`btn btn-error btn-sm text-base-100 ${loadingDelete === company.id ? 'loading' : ''}`}
-                                        disabled={loadingDelete === company.id}
-                                    >
-                                        {loadingDelete === company.id ? '' : 'Eliminar'}
-                                    </button>
-                                </div>
-                            </td>
+                            {/* Condicional para los botones de edición/eliminación */}
+                            {hasPermission("can_update_companies") || hasPermission("can_delete_companies") ? (
+                                <td className="border px-4 py-2 text-sm text-base-content text-center max-w-fit">
+                                    <div className="flex justify-center space-x-2">
+                                        {hasPermission("can_update_companies") && (
+                                            <button
+                                                onClick={() => handleEditClick(company)}
+                                                className={`btn btn-primary btn-sm ${loadingEdit === company.id ? 'loading' : ''}`}
+                                                disabled={loadingEdit === company.id}
+                                            >
+                                                {loadingEdit === company.id ? '' : 'Editar'}
+                                            </button>
+                                        )}
+                                        {hasPermission("can_delete_companies") && (
+                                            <button
+                                                onClick={() => handleDeleteClick(company)}
+                                                className={`btn btn-error btn-sm text-base-100 ${loadingDelete === company.id ? 'loading' : ''}`}
+                                                disabled={loadingDelete === company.id}
+                                            >
+                                                {loadingDelete === company.id ? '' : 'Eliminar'}
+                                            </button>
+                                        )}
+                                    </div>
+                                </td>
+                            ) : null}
                         </tr>
                     ))}
                     </tbody>
