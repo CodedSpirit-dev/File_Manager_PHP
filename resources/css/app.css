@@ -79,6 +79,9 @@
         @apply btn btn-info text-base-100 rounded-md hover:ring-2 transition duration-200 btn-xs sm:btn-xs md:btn-sm lg:btn-md;
     }
 
+    .btn-warning-mod{
+        @apply btn btn-warning text-base-100 rounded-md hover:ring-2 transition duration-200 btn-xs sm:btn-xs md:btn-sm lg:btn-md;
+    }
     .btn-cancel {
         @apply btn btn-error text-base-100 rounded-md hover:ring-2 transition duration-200 btn-xs sm:btn-xs md:btn-sm lg:btn-md;
     }

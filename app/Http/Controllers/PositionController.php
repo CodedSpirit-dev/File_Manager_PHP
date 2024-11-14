@@ -7,23 +7,36 @@ use App\Models\Position;
 use App\Models\Employee;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 
 class PositionController extends Controller
 {
-    /**
-     * Muestra una lista de todas las posiciones con la información de la empresa y el conteo de empleados.
-     *
-     * @return \Illuminate\Http\JsonResponse
-     */
     public function index()
     {
-        $positions = Position::with(['company', 'permissions']) // Añadido 'permissions'
-        ->withCount('employees')
-            ->orderBy('name')
-            ->get();
+        // Obtener el empleado autenticado
+        $employee = auth()->user();
+        $hierarchyLevel = $employee->position->hierarchy_level;
+        $companyId = $employee->position->company_id;
 
-        // Transformar los datos para incluir company_name y employees_count
+        // Condicional basado en la jerarquía del empleado
+        if ($hierarchyLevel === 0) {
+            // Si el usuario tiene jerarquía 0, ver todas las posiciones de todas las empresas
+            $positions = Position::with(['company', 'permissions'])
+                ->withCount('employees')
+                ->orderBy('name')
+                ->get();
+        } else {
+            // Si el usuario tiene jerarquía mayor a 0, ver solo posiciones de su empresa y de jerarquía igual o mayor
+            $positions = Position::with(['company', 'permissions'])
+                ->where('company_id', $companyId)
+                ->where('hierarchy_level', '>=', $hierarchyLevel)
+                ->withCount('employees')
+                ->orderBy('name')
+                ->get();
+        }
+
+        // Transformar los datos de la posición para incluir información adicional
         $positions = $positions->map(function ($position) {
             return [
                 'id' => $position->id,
@@ -32,25 +45,20 @@ class PositionController extends Controller
                 'company_name' => $position->company->name ?? 'N/A',
                 'employees_count' => $position->employees_count,
                 'hierarchy_level' => $position->hierarchy_level,
-                'permissions' => $position->permissions, // Asegúrate de incluir permisos
+                'permissions' => $position->permissions,
             ];
         });
 
         return response()->json($positions);
     }
 
-    /**
-     * Almacena una nueva posición.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\JsonResponse
-     */
+
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
             'company_id' => 'required|integer|exists:companies,id',
-            'hierarchy_level' => 'required|integer'
+            'hierarchy_level' => 'required|integer|min:0'
         ]);
 
         if ($validator->fails()) {
@@ -60,7 +68,6 @@ class PositionController extends Controller
             ], 422);
         }
 
-        // Verificar si la compañía ya tiene un puesto con el mismo nombre
         $positionInCompany = Position::where('name', $request->name)
             ->where('company_id', $request->company_id)
             ->first();
@@ -77,7 +84,6 @@ class PositionController extends Controller
             'hierarchy_level' => $request->hierarchy_level
         ]);
 
-        // Cargar la relación con la empresa para incluir el nombre en la respuesta
         $position->load('company');
 
         return response()->json([
@@ -85,18 +91,11 @@ class PositionController extends Controller
             'name' => $position->name,
             'company_id' => $position->company_id,
             'company_name' => $position->company->name ?? 'N/A',
-            'employees_count' => 0, // Al crearlo, no tiene empleados asociados
+            'employees_count' => 0,
             'hierarchy_level' => $position->hierarchy_level,
         ]);
     }
 
-    /**
-     * Actualiza una posición existente.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  int  $id
-     * @return \Illuminate\Http\JsonResponse
-     */
     public function update(Request $request, $id)
     {
         $position = Position::find($id);
@@ -116,7 +115,6 @@ class PositionController extends Controller
             ], 422);
         }
 
-        // Verificar si la compañía ya tiene un puesto con el mismo nombre, excluyendo el puesto actual
         $positionInCompany = Position::where('name', $request->name)
             ->where('company_id', $position->company_id)
             ->where('id', '!=', $position->id)
@@ -131,7 +129,6 @@ class PositionController extends Controller
         $position->name = $request->name;
         $position->save();
 
-        // Cargar la relación con la empresa para incluir el nombre en la respuesta
         $position->load('company');
 
         return response()->json([
@@ -144,12 +141,6 @@ class PositionController extends Controller
         ]);
     }
 
-    /**
-     * Elimina una posición y reasigna a los empleados.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\JsonResponse
-     */
     public function destroy($id)
     {
         $position = Position::find($id);
@@ -158,21 +149,13 @@ class PositionController extends Controller
             return response()->json(['message' => 'Posición no encontrada.'], 404);
         }
 
-        // Reasignar a los empleados: establecer position_id a null
         Employee::where('position_id', $id)->update(['position_id' => null]);
 
-        // Eliminar la posición
         $position->delete();
 
         return response()->json(['message' => 'Posición eliminada exitosamente.']);
     }
 
-    /**
-     * Obtiene el conteo de empleados asociados a una posición.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\JsonResponse
-     */
     public function counts($id)
     {
         $position = Position::find($id);

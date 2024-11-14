@@ -16,5 +16,3 @@ export const getPositionCounts = async (id: number): Promise<{ employees_count: 
     const response = await axios.get(`/admin/positions/${id}/counts`);
     return response.data;
 };
-
-// Puedes agregar otras funciones como crear, editar, etc.

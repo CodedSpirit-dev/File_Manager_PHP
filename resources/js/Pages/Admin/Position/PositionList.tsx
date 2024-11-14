@@ -1,14 +1,14 @@
-// src/Pages/Admin/Position/PositionList.tsx
-
 import React, { useEffect, useState, useRef } from 'react';
 import axios from 'axios';
 import CreatePosition from "@/Pages/Admin/Position/CreatePosition";
 import { Position } from "@/types";
 import { deletePosition, getPositions, getPositionCounts } from "@/Pages/Admin/Position/positionApi";
 import EditPosition from "@/Pages/Admin/Position/EditPosition";
-import {Head} from "@inertiajs/react";
+import { Head } from "@inertiajs/react";
+import { useAuth } from "@/contexts/AuthProvider";
 
 const PositionList: React.FC = () => {
+    const { hasPermission } = useAuth(); // Obtén la función para verificar permisos
     const [positions, setPositions] = useState<Position[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -23,6 +23,7 @@ const PositionList: React.FC = () => {
     const [positionToDelete, setPositionToDelete] = useState<Position | null>(null);
 
     const [loadingDelete, setLoadingDelete] = useState<number | null>(null);
+    const [loadingData, setLoadingData] = useState<number | null>(null); // Indicador de carga al obtener datos
 
     useEffect(() => {
         fetchPositions();
@@ -46,9 +47,8 @@ const PositionList: React.FC = () => {
     };
 
     const handleDeleteClick = async (position: Position) => {
-        setLoadingDelete(position.id);
+        setLoadingData(position.id); // Indicar que estamos obteniendo datos para este puesto
         try {
-            // Obtener el conteo de empleados asociados a la posición
             const counts = await getPositionCounts(position.id);
             setEmployeesCount(counts.employees_count);
             setPositionToDelete(position);
@@ -56,7 +56,7 @@ const PositionList: React.FC = () => {
         } catch (error) {
             setDeleteError("Error al obtener datos de la posición.");
         } finally {
-            setLoadingDelete(null);
+            setLoadingData(null);
         }
     };
 
@@ -97,23 +97,28 @@ const PositionList: React.FC = () => {
     return (
         <div className="container mx-auto px-4 py-8 bg-base-100">
             <Head title={'Puestos'} />
-            <h2 className="text-center">LISTA DE PUESTOS</h2>
-            <div className="mb-4 flex justify-end">
-                <button
-                    onClick={() => setCreateModalOpen(true)} // Abre el modal de creación
-                    className="btn btn-success"
-                >
-                    Agregar nuevo puesto
-                </button>
-            </div>
+            <h2 className="text-center mb-2">LISTA DE PUESTOS</h2>
+            {hasPermission("can_create_positions") && (
+                <div className="mb-4 flex justify-end">
+                    <button
+                        onClick={() => setCreateModalOpen(true)} // Abre el modal de creación
+                        className="btn btn-success"
+                    >
+                        Agregar nuevo puesto
+                    </button>
+                </div>
+            )}
             <div className="overflow-x-auto">
                 <table className="table w-full">
                     <thead>
                     <tr className="text-primary-content">
-                        <th className="px-4 py-2 text-left">Nombre del Puesto</th>
-                        <th className="px-4 py-2 text-left">Empresa</th>
-                        <th className="px-4 py-2 text-left">Cantidad de Empleados</th>
-                        <th className="px-4 py-2 text-left">Acciones</th>
+                        <th className="px-4 py-2 text-center">Nombre del Puesto</th>
+                        <th className="px-4 py-2 text-center">Empresa</th>
+                        <th className="px-4 py-2 text-center">Nivel de Jerarquía</th> {/* Nueva columna para el nivel de jerarquía */}
+                        <th className="px-4 py-2 text-center">Cantidad de Empleados</th>
+                        {(hasPermission("can_update_positions") || hasPermission("can_delete_positions")) && (
+                            <th className="px-4 py-2 text-left">Acciones</th>
+                        )}
                     </tr>
                     </thead>
                     <tbody>
@@ -122,32 +127,43 @@ const PositionList: React.FC = () => {
                             <td className="border px-4 py-2 text-sm text-base-content truncate">
                                 {position.name}
                             </td>
-                            <td className="border px-4 py-2 text-sm text-base-content truncate">
+                            <td className="border px-4 py-2 text-sm text-base-content truncate text-center">
                                 {position.company_name || 'N/A'}
                             </td>
-                            <td className="border px-4 py-2 text-sm text-base-content">
+                            <td className="border px-4 py-2 text-sm text-base-content text-center"> {/* Nuevo campo para nivel de jerarquía */}
+                                {position.hierarchy_level}
+                            </td>
+                            <td className="border px-4 py-2 text-sm text-base-content text-center">
                                 {position.employees_count ?? 0}
                             </td>
-                            <td className="border px-4 py-2 text-sm text-base-content">
-                                <div className="flex justify-center space-x-2">
-                                    <button
-                                        onClick={() => handleEditClick(position)}
-                                        className={`btn btn-primary btn-sm`}
-                                    >
-                                        Editar
-                                    </button>
-                                    <button
-                                        onClick={() => handleDeleteClick(position)}
-                                        className={`btn btn-error btn-sm text-base-100`}
-                                    >
-                                        Eliminar
-                                    </button>
-                                </div>
-                            </td>
+                            {(hasPermission("can_update_positions") || hasPermission("can_delete_positions")) && (
+                                <td className="border px-4 py-2 text-sm text-base-content">
+                                    <div className="flex justify-center space-x-2">
+                                        {hasPermission("can_update_positions") && (
+                                            <button
+                                                onClick={() => handleEditClick(position)}
+                                                className="btn btn-primary btn-sm"
+                                            >
+                                                Editar
+                                            </button>
+                                        )}
+                                        {hasPermission("can_delete_positions") && (
+                                            <button
+                                                onClick={() => handleDeleteClick(position)}
+                                                className={`btn btn-error btn-sm text-base-100 ${loadingData === position.id ? 'loading' : ''}`}
+                                                disabled={!!loadingData}
+                                            >
+                                                {loadingData === position.id ? '' : 'Eliminar'}
+                                            </button>
+                                        )}
+                                    </div>
+                                </td>
+                            )}
                         </tr>
                     ))}
                     </tbody>
                 </table>
+
 
                 {/* Modal de confirmación de eliminación */}
                 <dialog ref={confirmDeleteRef} className="modal modal-bottom sm:modal-middle">
@@ -156,12 +172,12 @@ const PositionList: React.FC = () => {
                             ¿Estás seguro de eliminar el puesto <b>{positionToDelete?.name}</b> de la base de datos?
                         </h4>
                         <p className="text-justify mt-2">
-                            Se eliminarán <b>{employeesCount}</b> empleados asociados a este puesto. Estos empleados deberán ser reasignados a nuevas empresas y puestos.
+                            <b>{employeesCount}</b> empleados asociados a este puesto deberán ser reasignados a nuevas empresas y puestos.
                         </p>
                         <div className="modal-action justify-center">
                             <button
                                 type="button"
-                                className="btn btn-secondary"
+                                className="btn-warning-mod"
                                 onClick={() => confirmDeleteRef.current?.close()}
                                 disabled={!!loadingDelete}
                             >
@@ -170,7 +186,7 @@ const PositionList: React.FC = () => {
                             <button
                                 type="button"
                                 onClick={confirmDelete}
-                                className={`btn btn-error ${loadingDelete ? 'loading' : ''}`}
+                                className={`btn-cancel ${loadingDelete ? 'loading' : ''}`}
                                 disabled={!!loadingDelete}
                             >
                                 {loadingDelete ? 'Eliminando...' : 'Sí, eliminar'}
@@ -216,6 +232,18 @@ const PositionList: React.FC = () => {
                         </div>
                     </dialog>
                 )}
+                {/* Modal de éxito al eliminar */}
+                {deleteSuccess && (
+                    <dialog open className="modal modal-bottom sm:modal-middle">
+                        <div className="modal-box">
+                            <h3 className="font-bold text-center">Éxito</h3>
+                            <p className="text-center text-green-600">{deleteSuccess}</p>
+                            <div className="modal-action justify-center">
+                                <button className="btn btn-success" onClick={() => setDeleteSuccess(null)}>Cerrar</button>
+                            </div>
+                        </div>
+                    </dialog>
+                )}
 
                 {/* Modal de error al eliminar */}
                 {deleteError && (
@@ -231,7 +259,7 @@ const PositionList: React.FC = () => {
                 )}
             </div>
         </div>
-            );
-            };
+    );
+};
 
-            export default PositionList;
+export default PositionList;

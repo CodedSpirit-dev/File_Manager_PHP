@@ -101,7 +101,7 @@ const CompanyList: React.FC = (): React.ReactNode => {
     return (
         <div className="container mx-auto px-4 py-8 bg-base-100">
             <Head title={'Empresas'} />
-            <h2 className="text-center">LISTA DE EMPRESAS</h2>
+            <h2 className="text-center mb-2">LISTA DE EMPRESAS</h2>
 
             {/* Botón de agregar empresa, visible solo si el usuario tiene permiso */}
             {hasPermission("can_create_companies") && (

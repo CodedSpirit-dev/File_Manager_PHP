@@ -133,13 +133,13 @@ const EditPosition: React.FC<EditPositionProps> = ({ position, onClose }) => {
                                 {errors.name && <p className="text-red-600">{errors.name.message}</p>}
                             </label>
                         </div>
-                        <div className="mt-6 flex items-center justify-end space-x-4">
-                            <button type="button" className="btn btn-secondary" onClick={() => onClose(false)}>
+                        <div className="mt-6 flex items-center">
+                            <button type="button" className="btn-warning-mod mx-2" onClick={() => onClose(false)}>
                                 Cancelar
                             </button>
                             <button
                                 type="button"
-                                className="btn btn-primary"
+                                className="btn-accept mx-2"
                                 onClick={() => setStep(2)}
                                 disabled={!isValid}
                             >
@@ -154,7 +154,7 @@ const EditPosition: React.FC<EditPositionProps> = ({ position, onClose }) => {
                         {/* Paso 2: Asignación de permisos agrupados por categoría */}
                         <h2 className="mb-3 text-xl text-center font-bold">Asignar Permisos al Puesto</h2>
                         <div className="overflow-y-auto max-h-80">
-                            {groupedPermissions.map(({ category, permissions }) => (
+                            {groupedPermissions.map(({category, permissions}) => (
                                 <div key={category} className="mb-4">
                                     <h3 className="text-lg font-semibold mb-2">{category}</h3>
                                     <div className="grid grid-cols-2 gap-4">
@@ -173,11 +173,11 @@ const EditPosition: React.FC<EditPositionProps> = ({ position, onClose }) => {
                                 </div>
                             ))}
                         </div>
-                        <div className="mt-6 flex justify-between">
-                            <button type="button" className="btn-info-mod mx-2" onClick={() => setStep(1)}>
+                        <div className="mt-6 flex">
+                            <button type="button" className="btn-warning-mod mx-2" onClick={() => setStep(1)}>
                                 Anterior
                             </button>
-                            <button type="submit" className="btn btn-success" disabled={loading}>
+                            <button type="submit" className="btn-accept mx-2" disabled={loading}>
                                 {loading ? <span className="loading loading-spinner"></span> : 'Guardar'}
                             </button>
                         </div>
@@ -192,7 +192,7 @@ const EditPosition: React.FC<EditPositionProps> = ({ position, onClose }) => {
                         <h3 className="font-bold text-lg">Acción Exitosa</h3>
                         <p className="py-4">{successMessage}</p>
                         <div className="modal-action">
-                            <button className="btn btn-primary" onClick={handleCloseSuccessModal}>
+                            <button className="btn-accept" onClick={handleCloseSuccessModal}>
                                 Aceptar
                             </button>
                         </div>
@@ -207,7 +207,7 @@ const EditPosition: React.FC<EditPositionProps> = ({ position, onClose }) => {
                         <h3 className="font-bold text-lg text-error">Error</h3>
                         <p className="py-4">{errorMessage}</p>
                         <div className="modal-action">
-                            <button className="btn btn-error" onClick={() => setErrorMessage('')}>Cerrar</button>
+                            <button className="btn-accept" onClick={() => setErrorMessage('')}>Cerrar</button>
                         </div>
                     </div>
                 </dialog>
