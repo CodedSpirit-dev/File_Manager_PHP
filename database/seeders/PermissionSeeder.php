@@ -24,12 +24,12 @@ class PermissionSeeder extends Seeder
             ['name' => 'can_update_positions', 'description' => 'Editar puestos'],
             ['name' => 'can_delete_positions', 'description' => 'Eliminar puestos'],
 
-            // Permisos para Empleados
-            ['name' => 'can_create_employees', 'description' => 'Crear empleados'],
-            ['name' => 'can_delete_employees', 'description' => 'Eliminar empleados'],
-            ['name' => 'can_update_employees', 'description' => 'Modificar empleados'],
-            ['name' => 'can_view_company_employees', 'description' => 'Ver compañeros de la empresa'],
-            ['name' => 'can_view_all_employees', 'description' => 'Ver a todos los empleados'],
+            // Permisos para Usuarios
+            ['name' => 'can_create_users', 'description' => 'Crear usuarios'],
+            ['name' => 'can_delete_users', 'description' => 'Eliminar usuarios'],
+            ['name' => 'can_update_users', 'description' => 'Modificar usuarios'],
+            ['name' => 'can_view_company_users', 'description' => 'Ver compañeros de la empresa'],
+            ['name' => 'can_view_all_users', 'description' => 'Ver a todos los usuarios'],
 
             // Permisos para Gestión de Archivos y Carpetas
             ['name' => 'can_view_file_explorer', 'description' => 'Ver explorador de archivos'],
@@ -42,7 +42,6 @@ class PermissionSeeder extends Seeder
             ['name' => 'can_rename_files_and_folders', 'description' => 'Cambiar nombre de archivos y carpetas'],
             ['name' => 'can_delete_files_and_folders', 'description' => 'Eliminar archivos y carpetas'],
         ];
-
 
         // Insert permissions into the database
         foreach ($permissions as $permission) {

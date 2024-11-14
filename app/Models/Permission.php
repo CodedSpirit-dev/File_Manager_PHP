@@ -2,17 +2,13 @@
 /**
  * Class Permission
  *
- * This model represents a permission entity in the application.
- * It defines the fillable attributes and the relationship with the HierarchyLevel model.
+ * Este modelo representa una entidad de permiso en la aplicación.
+ * Define los atributos rellenables y la relación con el modelo PositionPermission.
  *
  * @package App\Models
  *
- * @property int $hierarchy_level
- * @property bool $can_view
- * @property bool $can_download
- * @property bool $can_view_files
- * @property bool $can_upload_files
- * @property bool $can_create_folders
+ * @property string $name
+ * @property string $description
  *
  * @method static \Illuminate\Database\Eloquent\Builder|Permission newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder|Permission newQuery()
@@ -34,10 +30,9 @@ class Permission extends Model
         'description',
     ];
 
-
-    public function employeePermissions()
+    // Relación con PositionPermission
+    public function positionPermissions()
     {
-        return $this->hasMany(EmployeePermission::class, 'permission_id', 'id');
+        return $this->hasMany(PositionPermission::class, 'permission_id', 'id');
     }
-
 }

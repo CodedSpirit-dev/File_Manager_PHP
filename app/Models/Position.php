@@ -9,8 +9,8 @@ use App\Models\HierarchyLevel;
 /**
  * Class Position
  *
- * This model represents a position entity in the application.
- * It defines the fillable attributes and the relationships with the Company, HierarchyLevel, and Employee models.
+ * Este modelo representa una posición en la aplicación.
+ * Define los atributos rellenables y las relaciones con Company, HierarchyLevel, Employee y Permission.
  *
  * @package App\Models
  *
@@ -32,28 +32,28 @@ class Position extends Model
     protected $table = 'positions';
 
     /**
-     * The primary key associated with the table.
+     * La clave primaria asociada con la tabla.
      *
      * @var string
      */
     protected $primaryKey  = 'id';
 
     /**
-     * Indicates if the IDs are auto-incrementing.
+     * Indica si las claves son auto-incrementales.
      *
      * @var bool
      */
     public $incrementing = true;
 
     /**
-     * The attributes that are mass assignable.
+     * Los atributos que se pueden asignar en masa.
      *
      * @var array<int, string>
      */
     protected $fillable = ['id', 'name', 'company_id', 'hierarchy_level'];
 
     /**
-     * Get the company that owns the position.
+     * Obtener la empresa asociada con la posición.
      *
      * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
      */
@@ -63,7 +63,7 @@ class Position extends Model
     }
 
     /**
-     * Get the hierarchy level detail associated with the position.
+     * Obtener el nivel jerárquico asociado con la posición.
      *
      * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
      */
@@ -73,12 +73,22 @@ class Position extends Model
     }
 
     /**
-     * Get the employees associated with the position.
+     * Obtener los empleados asociados con la posición.
      *
      * @return \Illuminate\Database\Eloquent\Relations\HasMany
      */
     public function employees()
     {
         return $this->hasMany(Employee::class, 'position_id', 'id');
+    }
+
+    /**
+     * Obtener los permisos asociados con la posición.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
+     */
+    public function permissions()
+    {
+        return $this->belongsToMany(Permission::class, 'position_permissions', 'position_id', 'permission_id');
     }
 }

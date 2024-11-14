@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use App\Models\Company;
+use App\Models\Log;
 
 class CompanyController extends Controller
 {
@@ -39,18 +40,19 @@ class CompanyController extends Controller
      */
     public function store(Request $request)
     {
-        $validationRules = [
-            'name' => 'required|string|max:255|unique:companies,name',
-        ];
+        $employee = auth()->user();
 
-        // Mensajes de error personalizados
-        $customMessages = [
+        // Verificar si el empleado tiene permiso para crear empresas
+        if (!$employee->position->permissions()->where('name', 'can_create_companies')->exists()) {
+            return response()->json(['message' => 'No tienes permiso para crear empresas.'], 403);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'name' => 'required|string|max:255|unique:companies,name',
+        ], [
             'name.unique' => 'El nombre de la empresa ya está en uso. Por favor, elige otro.',
             'name.required' => 'El nombre es obligatorio.',
-            // Puedes agregar más mensajes personalizados si lo deseas
-        ];
-
-        $validator = Validator::make($request->all(), $validationRules, $customMessages);
+        ]);
 
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 422);
@@ -67,12 +69,18 @@ class CompanyController extends Controller
             Storage::makeDirectory($companyFolderPath);
         }
 
+        // Registrar en logs la creación de la compañía
+        Log::create([
+            'user_id' => $employee->id,
+            'transaction_id' => 'create_company',
+            'description' => "Creación de la compañía '{$company->name}'",
+        ]);
+
         return response()->json([
             'message' => 'Compañía registrada y carpeta creada exitosamente.',
             'company' => $company,
         ], 201);
     }
-
 
     /**
      * Muestra el formulario para editar una compañía.
@@ -88,7 +96,6 @@ class CompanyController extends Controller
 
     /**
      * Actualiza una compañía en la base de datos.
-     * Solo empleados con jerarquía mayor a 1 pueden editar empresas.
      *
      * @param  \Illuminate\Http\Request  $request
      * @param int $id
@@ -98,37 +105,41 @@ class CompanyController extends Controller
     {
         $employee = auth()->user();
 
-        // Verificar si el empleado tiene jerarquía mayor a 1
-        if ($employee->hierarchy >= 1) {
+        // Verificar si el empleado tiene permiso para actualizar empresas
+        if (!$employee->position->permissions()->where('name', 'can_update_companies')->exists()) {
             return response()->json(['message' => 'No tienes permiso para editar empresas.'], 403);
         }
 
         $company = Company::findOrFail($id);
+        $oldName = $company->name;
 
-        $validationRules = [
+        $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255|unique:companies,name,' . $company->id,
-        ];
-
-        $validator = Validator::make($request->all(), $validationRules);
+        ]);
 
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
-        $oldName = $company->name;
         $company->name = $request->name;
         $company->save();
 
+        // Renombrar carpeta de la compañía si existe
         $oldFolderPath = 'public/' . $oldName;
         $newFolderPath = 'public/' . $company->name;
 
-        // Renombrar carpeta de la compañía si existe
         if (Storage::exists($oldFolderPath)) {
             Storage::move($oldFolderPath, $newFolderPath);
         } else {
-            // Si la carpeta no existe, crearla
             Storage::makeDirectory($newFolderPath);
         }
+
+        // Registrar en logs la actualización de la compañía
+        Log::create([
+            'user_id' => $employee->id,
+            'transaction_id' => 'update_company',
+            'description' => "Actualización de la compañía de '{$oldName}' a '{$company->name}'",
+        ]);
 
         return response()->json([
             'message' => 'Compañía actualizada exitosamente.',
@@ -138,8 +149,6 @@ class CompanyController extends Controller
 
     /**
      * Elimina una compañía de la base de datos.
-     * Solo empleados con jerarquía 0 pueden eliminar empresas.
-     * La empresa SGI no puede ser eliminada.
      *
      * @param int $id
      * @return \Illuminate\Http\JsonResponse
@@ -148,8 +157,8 @@ class CompanyController extends Controller
     {
         $employee = auth()->user();
 
-        // Verificar si el empleado tiene jerarquía 0
-        if ($employee->hierarchy != 0) {
+        // Verificar si el empleado tiene permiso para eliminar empresas
+        if (!$employee->position->permissions()->where('name', 'can_delete_companies')->exists()) {
             return response()->json(['message' => 'No tienes permiso para eliminar empresas.'], 403);
         }
 
@@ -162,12 +171,18 @@ class CompanyController extends Controller
 
         $companyFolderPath = 'public/' . $company->name;
 
-        // Eliminar carpeta de la compañía si existe
         if (Storage::exists($companyFolderPath)) {
             Storage::deleteDirectory($companyFolderPath);
         }
 
         $company->delete();
+
+        // Registrar en logs la eliminación de la compañía
+        Log::create([
+            'user_id' => $employee->id,
+            'transaction_id' => 'delete_company',
+            'description' => "Eliminación de la compañía '{$company->name}'",
+        ]);
 
         return response()->json(['message' => 'Compañía eliminada exitosamente.']);
     }
@@ -178,7 +193,6 @@ class CompanyController extends Controller
             $query->withCount('employees');
         }])->findOrFail($id);
 
-        // Contar todos los empleados asociados a las posiciones de la empresa
         $employeesCount = $company->positions->sum('employees_count');
 
         return response()->json([
@@ -186,5 +200,4 @@ class CompanyController extends Controller
             'employees_count' => $employeesCount,
         ]);
     }
-
 }

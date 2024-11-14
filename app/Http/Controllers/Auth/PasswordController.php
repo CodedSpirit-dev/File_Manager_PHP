@@ -3,17 +3,16 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules\Password;
+use App\Models\Log;
 
 class PasswordController extends Controller
 {
     /**
-     * Update the user's password.
+     * Actualiza la contraseña del usuario.
      */
-
     public function update(Request $request)
     {
         $validated = $request->validate([
@@ -25,11 +24,22 @@ class PasswordController extends Controller
             // Otros mensajes de error personalizados...
         ]);
 
-        $request->user()->update([
+        $user = $request->user();
+
+        // Actualizar la contraseña del usuario
+        $user->update([
             'password' => Hash::make($validated['password']),
+        ]);
+
+        // Registrar el cambio de contraseña en logs
+        Log::create([
+            'user_id' => $user->id,
+            'transaction_id' => 'password_update',
+            'description' => 'Actualización de contraseña',
+            'ip_address' => $request->ip(),
+            'user_agent' => $request->userAgent(),
         ]);
 
         return response()->json(['message' => 'Contraseña actualizada con éxito.'], 200);
     }
-
 }

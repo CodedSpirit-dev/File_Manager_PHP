@@ -4,10 +4,10 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Company;
-use App\Models\Permission;
 use App\Models\Position;
 use Illuminate\Http\Request;
 use App\Models\Employee;
+use App\Models\Log;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
@@ -27,7 +27,6 @@ class EmployeeController extends Controller
      */
     public function show()
     {
-        // Obtener el empleado autenticado
         $employee = Auth::guard('employee')->user();
 
         if (!$employee) {
@@ -37,11 +36,11 @@ class EmployeeController extends Controller
         // Cargar relaciones necesarias
         $employee->load('position.company');
 
-        // Formatear los datos del perfil
         $profileData = [
             'first_name' => $employee->first_name,
             'last_name_1' => $employee->last_name_1,
             'last_name_2' => $employee->last_name_2,
+            'phone_number' => $employee->phone_number,
             'username' => $employee->username,
             'position' => $employee->position ? $employee->position->name : 'Sin asignar',
             'company' => $employee->position && $employee->position->company ? $employee->position->company->name : 'Sin asignar',
@@ -49,7 +48,6 @@ class EmployeeController extends Controller
             'last_login_at' => $employee->last_login_at ? $employee->last_login_at->format('Y-m-d H:i:s') : 'Nunca'
         ];
 
-        // Retornar los datos del perfil como JSON
         return response()->json($profileData);
     }
 
@@ -67,7 +65,6 @@ class EmployeeController extends Controller
      */
     public function create()
     {
-        // Obtener posiciones y empresas para los select en la vista
         $positions = Position::with('company')->get();
         $companies = Company::all();
 
@@ -82,35 +79,39 @@ class EmployeeController extends Controller
      */
     public function store(Request $request)
     {
-        // Validar los datos de entrada
         $validator = Validator::make($request->all(), [
             'first_name' => 'required|string|max:255',
             'last_name_1' => 'required|string|max:255',
             'last_name_2' => 'nullable|string|max:255',
+            'phone_number' => 'required|string|max:15',
             'position_id' => 'required|integer|exists:positions,id',
             'username' => 'required|string|unique:employees,username|max:255',
             'password' => 'required|string|min:4|confirmed',
         ]);
 
-        // Si la validación falla, retornar errores
         if ($validator->fails()) {
             return response()->json([
                 'errors' => $validator->errors(),
             ], 422);
         }
 
-        // Crear un nuevo empleado
         $employee = new Employee();
         $employee->first_name = $request->first_name;
         $employee->last_name_1 = $request->last_name_1;
         $employee->last_name_2 = $request->last_name_2;
+        $employee->phone_number = $request->phone_number;
         $employee->position_id = $request->position_id;
         $employee->username = $request->username;
         $employee->password = Hash::make($request->password);
         $employee->registered_at = now();
         $employee->save();
 
-        // Retornar el ID del empleado creado
+        Log::create([
+            'user_id' => auth()->id(),
+            'transaction_id' => 'create_employee',
+            'description' => "Empleado '{$employee->username}' creado",
+        ]);
+
         return response()->json(['id' => $employee->id]);
     }
 
@@ -138,15 +139,12 @@ class EmployeeController extends Controller
      */
     public function edit($id)
     {
-        // Buscar el empleado por ID
         $employee = Employee::find($id);
 
-        // Verificar si el empleado existe
         if (!$employee) {
             return response()->json(['error' => 'Empleado no encontrado'], 404);
         }
 
-        // Obtener las posiciones y las empresas disponibles
         $positions = Position::with('company')->get();
         $companies = Company::all();
 
@@ -158,6 +156,7 @@ class EmployeeController extends Controller
                 'first_name' => $employee->first_name,
                 'last_name_1' => $employee->last_name_1,
                 'last_name_2' => $employee->last_name_2,
+                'phone_number' => $employee->phone_number,
                 'username' => $employee->username,
                 'position_id' => $employee->position_id,
                 'company_id' => $companyId,
@@ -178,12 +177,12 @@ class EmployeeController extends Controller
             return response()->json(['error' => 'Empleado no encontrado'], 404);
         }
 
-        // Validación
         $validator = Validator::make($request->all(), [
             'first_name' => 'required|string|max:255',
             'last_name_1' => 'required|string|max:255',
             'last_name_2' => 'nullable|string|max:255',
-            'position_id' => 'required|integer|min:0', // Permitir 0
+            'phone_number' => 'required|string|max:15',
+            'position_id' => 'required|integer|exists:positions,id',
             'username' => 'required|string|unique:employees,username,' . $id . '|max:255',
             'password' => 'nullable|string|min:4|confirmed',
         ]);
@@ -192,29 +191,24 @@ class EmployeeController extends Controller
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
-        // Actualizar los campos del empleado
         $employee->first_name = $request->first_name;
         $employee->last_name_1 = $request->last_name_1;
         $employee->last_name_2 = $request->last_name_2;
+        $employee->phone_number = $request->phone_number;
         $employee->username = $request->username;
+        $employee->position_id = $request->position_id;
 
-        // Actualizar position_id solo si no es 0 y existe en la base de datos
-        if ($request->position_id > 0) {
-            $position = Position::find($request->position_id);
-            if ($position) {
-                $employee->position_id = $request->position_id;
-            } else {
-                return response()->json(['error' => 'El puesto seleccionado no existe.'], 422);
-            }
-        }
-        // Si position_id es 0, no se actualiza el puesto (se mantiene el actual)
-
-        // Actualizar la contraseña solo si se proporciona
         if ($request->filled('password')) {
             $employee->password = Hash::make($request->password);
         }
 
         $employee->save();
+
+        Log::create([
+            'user_id' => auth()->id(),
+            'transaction_id' => 'update_employee',
+            'description' => "Empleado '{$employee->username}' actualizado",
+        ]);
 
         return response()->json(['message' => 'Empleado actualizado con éxito']);
     }
@@ -224,24 +218,18 @@ class EmployeeController extends Controller
      */
     public function getPermissions($id)
     {
-        $employee = Employee::with('permissions')->find($id);
+        $employee = Employee::with('position.permissions')->find($id);
 
         if (!$employee) {
             return response()->json(['error' => 'Empleado no encontrado'], 404);
         }
 
-        return response()->json($employee->permissions);
+        return response()->json($employee->position->permissions);
     }
 
-    public function permissions()
-    {
-        return $this->belongsToMany(Permission::class, 'employee_permissions', 'employee_id', 'permission_id');
-    }
-
-    public function position()
-    {
-        return $this->belongsTo(Position::class);
-    }
+    /**
+     * Eliminar un empleado.
+     */
     public function destroy($id)
     {
         $employee = Employee::find($id);
@@ -250,14 +238,14 @@ class EmployeeController extends Controller
             return response()->json(['error' => 'Empleado no encontrado'], 404);
         }
 
-        // Desasocia todos los permisos antes de eliminar
-        $employee->permissions()->detach();
-
-        // Elimina el empleado
         $employee->delete();
+
+        Log::create([
+            'user_id' => auth()->id(),
+            'transaction_id' => 'delete_employee',
+            'description' => "Empleado '{$employee->username}' eliminado",
+        ]);
 
         return response()->json(['message' => 'Empleado eliminado con éxito']);
     }
-
-
 }

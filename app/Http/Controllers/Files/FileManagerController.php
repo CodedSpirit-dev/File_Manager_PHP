@@ -16,9 +16,6 @@ class FileManagerController extends Controller
     /**
      * Constructor para aplicar middleware de autenticación.
      */
-    /**
-     * Constructor para aplicar middleware de autenticación.
-     */
     public function __construct()
     {
         $this->middleware('auth:employee'); // Usar el guard 'employee'
@@ -57,8 +54,6 @@ class FileManagerController extends Controller
             'redirect_path' => $path,
         ]);
     }
-
-
 
     /**
      * Muestra la lista de carpetas y archivos en una ruta específica.
@@ -109,7 +104,7 @@ class FileManagerController extends Controller
     {
         $employee = Auth::guard('employee')->user();
 
-        if (!$employee->hasPermission('can_upload_files_and_folders')) {
+        if (!$this->hasPermission('can_upload_files_and_folders')) {
             return response()->json(['error' => 'No tienes permiso para subir archivos.'], 403);
         }
 
@@ -132,6 +127,10 @@ class FileManagerController extends Controller
             $file = $request->file('file');
             $originalName = $file->getClientOriginalName();
             $filePath = $file->storeAs($path, $originalName, 'local');
+
+            // Registrar log
+            $this->registerLog($employee->id, 'upload_file', "Archivo subido: $originalName a $path", $request);
+
             return response()->json(['message' => 'Archivo subido exitosamente.', 'path' => $filePath]);
         }
 
@@ -146,8 +145,8 @@ class FileManagerController extends Controller
         $employee = Auth::guard('employee')->user();
 
         if (
-            !$employee->hasPermission('can_upload_files_and_folders') ||
-            !$employee->hasPermission('can_create_folders')
+            !$this->hasPermission('can_upload_files_and_folders') ||
+            !$this->hasPermission('can_create_folders')
         ) {
             return response()->json(['error' => 'No tienes permiso para crear archivos o carpetas.'], 403);
         }
@@ -173,6 +172,9 @@ class FileManagerController extends Controller
             $file->storeAs($path, $relativePath, 'local');
         }
 
+        // Registrar log
+        $this->registerLog($employee->id, 'upload_directory', "Carpeta subida a $path", $request);
+
         return response()->json(['message' => 'Carpeta subida exitosamente.', 'path' => $path]);
     }
 
@@ -184,8 +186,8 @@ class FileManagerController extends Controller
         $employee = Auth::guard('employee')->user();
 
         if (
-            !$employee->hasPermission('can_upload_files_and_folders') ||
-            !$employee->hasPermission('can_create_folders')
+            !$this->hasPermission('can_upload_files_and_folders') ||
+            !$this->hasPermission('can_create_folders')
         ) {
             return response()->json(['error' => 'No tienes permiso para subir carpetas.'], 403);
         }
@@ -216,6 +218,10 @@ class FileManagerController extends Controller
                     $zip->extractTo(Storage::disk('local')->path($path));
                     $zip->close();
                     Storage::disk('local')->delete($zipPath);
+
+                    // Registrar log
+                    $this->registerLog($employee->id, 'upload_folder', "Carpeta subida y extraída: {$file->getClientOriginalName()} a $path", $request);
+
                     return response()->json(['message' => 'Carpeta subida y extraída exitosamente.']);
                 } else {
                     return response()->json(['error' => 'No se pudo abrir el archivo zip.'], 400);
@@ -231,14 +237,11 @@ class FileManagerController extends Controller
     /**
      * Elimina un archivo específico en una ruta dada.
      */
-    /**
-     * Elimina un archivo específico en una ruta dada.
-     */
     public function delete(Request $request)
     {
         $employee = Auth::guard('employee')->user();
 
-        if (!$employee->hasPermission('can_delete_files_and_folders')) {
+        if (!$this->hasPermission('can_delete_files_and_folders')) {
             return response()->json(['error' => 'No tienes permiso para eliminar archivos.'], 403);
         }
 
@@ -266,6 +269,9 @@ class FileManagerController extends Controller
 
         Storage::disk('local')->delete($filePath);
 
+        // Registrar log
+        $this->registerLog($employee->id, 'delete_file', "Archivo eliminado: $filename de $path", $request);
+
         return response()->json(['message' => 'Archivo eliminado exitosamente.']);
     }
 
@@ -276,7 +282,7 @@ class FileManagerController extends Controller
     {
         $employee = Auth::guard('employee')->user();
 
-        if (!$employee->hasPermission('can_delete_files_and_folders')) {
+        if (!$this->hasPermission('can_delete_files_and_folders')) {
             return response()->json(['error' => 'No tienes permiso para eliminar carpetas.'], 403);
         }
 
@@ -304,9 +310,11 @@ class FileManagerController extends Controller
 
         Storage::disk('local')->deleteDirectory($folderPath);
 
+        // Registrar log
+        $this->registerLog($employee->id, 'delete_folder', "Carpeta eliminada: $folderName de $path", $request);
+
         return response()->json(['message' => 'Carpeta eliminada exitosamente.']);
     }
-
 
     /**
      * Crea una nueva carpeta en una ruta específica.
@@ -315,7 +323,7 @@ class FileManagerController extends Controller
     {
         $employee = Auth::guard('employee')->user();
 
-        if (!$employee->hasPermission('can_create_folders')) {
+        if (!$this->hasPermission('can_create_folders')) {
             return response()->json(['error' => 'No tienes permiso para crear carpetas.'], 403);
         }
 
@@ -343,6 +351,9 @@ class FileManagerController extends Controller
 
         Storage::disk('local')->makeDirectory($newFolderPath);
 
+        // Registrar log
+        $this->registerLog($employee->id, 'create_folder', "Carpeta creada: $folderName en $path", $request);
+
         return response()->json(['message' => 'Carpeta creada exitosamente.', 'path' => $newFolderPath]);
     }
 
@@ -353,7 +364,7 @@ class FileManagerController extends Controller
     {
         $employee = Auth::guard('employee')->user();
 
-        if (!$employee->hasPermission('can_rename_files_and_folders')) {
+        if (!$this->hasPermission('can_rename_files_and_folders')) {
             return response()->json(['error' => 'No tienes permiso para editar carpetas.'], 403);
         }
 
@@ -374,6 +385,7 @@ class FileManagerController extends Controller
         $newFolderName = $request->input('new_folder_name');
         $path = $this->normalizePath($request->input('path'));
 
+        // Validar la ruta para prevenir ataques de Path Traversal
         if (!$this->isValidPath($path)) {
             return response()->json(['error' => 'Ruta inválida.'], 400);
         }
@@ -391,6 +403,9 @@ class FileManagerController extends Controller
 
         Storage::disk('local')->move($oldPath, $newPath);
 
+        // Registrar log
+        $this->registerLog($employee->id, 'rename_folder', "Carpeta renombrada de $oldFolderName a $newFolderName en $path", $request);
+
         return response()->json([
             'message' => 'Carpeta renombrada exitosamente.',
             'old_path' => $oldPath,
@@ -405,7 +420,10 @@ class FileManagerController extends Controller
     {
         $employee = Auth::guard('employee')->user();
 
-        if (!$employee->hasPermission('can_view_file_explorer') || !$employee->hasPermission('can_open_files')) {
+        if (
+            !$this->hasPermission('can_view_file_explorer') ||
+            !$this->hasPermission('can_open_files')
+        ) {
             return response()->json(['error' => 'No tienes permiso para ver archivos.'], 403);
         }
 
@@ -433,6 +451,9 @@ class FileManagerController extends Controller
 
         $fullPath = Storage::disk('local')->path($filePath);
         $mimeType = mime_content_type($fullPath);
+
+        // Registrar log
+        $this->registerLog($employee->id, 'view_file', "Archivo visto: $filename en $path", $request);
 
         return response()->file($fullPath, [
             'Content-Type' => $mimeType,
@@ -462,6 +483,10 @@ class FileManagerController extends Controller
             return response()->json(['error' => 'El archivo no existe.'], 404);
         }
 
+        // Registrar log
+        $employee = Auth::guard('employee')->user();
+        $this->registerLog($employee->id, 'get_public_file', "Archivo público accedido: $filename en $path", $request);
+
         return response()->file(Storage::disk('local')->path($filePath), [
             'Content-Disposition' => 'inline; filename="' . $filename . '"',
         ]);
@@ -475,7 +500,7 @@ class FileManagerController extends Controller
         $employee = Auth::guard('employee')->user();
 
         // Verificar permisos
-        if (!$employee->hasPermission('can_download_files_and_folders')) {
+        if (!$this->hasPermission('can_download_files_and_folders')) {
             return response()->json(['error' => 'No tienes permiso para descargar archivos.'], 403);
         }
 
@@ -490,7 +515,7 @@ class FileManagerController extends Controller
         }
 
         $filename = $request->input('filename');
-        $path = $request->input('path');
+        $path = $this->normalizePath($request->input('path'));
 
         // Validar la ruta para prevenir ataques de Path Traversal
         if (!$this->isValidPath($path)) {
@@ -503,6 +528,9 @@ class FileManagerController extends Controller
             return response()->json(['error' => 'El archivo no existe.'], 404);
         }
 
+        // Registrar log
+        $this->registerLog($employee->id, 'download_file', "Archivo descargado: $filename de $path", $request);
+
         return Storage::disk('local')->download($filePath, $filename);
     }
 
@@ -513,7 +541,7 @@ class FileManagerController extends Controller
     {
         $employee = Auth::guard('employee')->user();
 
-        if (!$employee->hasPermission('can_copy_files')) {
+        if (!$this->hasPermission('can_copy_files')) {
             return response()->json(['error' => 'No tienes permiso para copiar archivos.'], 403);
         }
 
@@ -548,14 +576,20 @@ class FileManagerController extends Controller
 
         Storage::disk('local')->copy($sourceFilePath, $targetFilePath);
 
+        // Registrar log
+        $this->registerLog($employee->id, 'copy_file', "Archivo copiado: $filename de $sourcePath a $targetPath", $request);
+
         return response()->json(['message' => 'Archivo copiado exitosamente.', 'path' => $targetFilePath]);
     }
 
+    /**
+     * Copia múltiples archivos a otra carpeta.
+     */
     public function copyFiles(Request $request)
     {
         $employee = Auth::guard('employee')->user();
 
-        if (!$employee->hasPermission('can_copy_files')) {
+        if (!$this->hasPermission('can_copy_files')) {
             return response()->json(['error' => 'No tienes permiso para copiar archivos.'], 403);
         }
 
@@ -594,6 +628,9 @@ class FileManagerController extends Controller
             }
 
             Storage::disk('local')->copy($sourceFilePath, $targetFilePath);
+
+            // Registrar log por cada archivo copiado
+            $this->registerLog($employee->id, 'copy_file', "Archivo copiado: $filename de $sourcePath a $targetPath", $request);
         }
 
         if (!empty($errors)) {
@@ -603,7 +640,6 @@ class FileManagerController extends Controller
         return response()->json(['message' => 'Archivos copiados exitosamente.']);
     }
 
-
     /**
      * Mueve un archivo a otra carpeta.
      */
@@ -611,7 +647,7 @@ class FileManagerController extends Controller
     {
         $employee = Auth::guard('employee')->user();
 
-        if (!$employee->hasPermission('can_move_files')) {
+        if (!$this->hasPermission('can_move_files')) {
             return response()->json(['error' => 'No tienes permiso para mover archivos.'], 403);
         }
 
@@ -646,6 +682,9 @@ class FileManagerController extends Controller
 
         Storage::disk('local')->move($sourceFilePath, $targetFilePath);
 
+        // Registrar log
+        $this->registerLog($employee->id, 'move_file', "Archivo movido: $filename de $sourcePath a $targetPath", $request);
+
         return response()->json(['message' => 'Archivo movido exitosamente.', 'path' => $targetFilePath]);
     }
 
@@ -657,7 +696,7 @@ class FileManagerController extends Controller
         $employee = Auth::guard('employee')->user();
 
         // Verificar permisos
-        if (!$employee->hasPermission('can_rename_files_and_folders')) {
+        if (!$this->hasPermission('can_rename_files_and_folders')) {
             return response()->json(['error' => 'No tienes permiso para renombrar archivos.'], 403);
         }
 
@@ -674,7 +713,7 @@ class FileManagerController extends Controller
 
         $oldFilename = $request->input('old_filename');
         $newFilename = $request->input('new_filename');
-        $path = $request->input('path');
+        $path = $this->normalizePath($request->input('path'));
 
         // Validar la ruta para prevenir ataques de Path Traversal
         if (!$this->isValidPath($path)) {
@@ -695,6 +734,9 @@ class FileManagerController extends Controller
         // Renombrar el archivo
         Storage::disk('local')->move($oldFilePath, $newFilePath);
 
+        // Registrar log
+        $this->registerLog($employee->id, 'rename_file', "Archivo renombrado de $oldFilename a $newFilename en $path", $request);
+
         return response()->json(['message' => 'Archivo renombrado exitosamente.', 'path' => $newFilePath]);
     }
 
@@ -706,7 +748,7 @@ class FileManagerController extends Controller
         $employee = Auth::guard('employee')->user();
 
         // Verificar permisos
-        if (!$employee->hasPermission('can_download_files_and_folders')) {
+        if (!$this->hasPermission('can_download_files_and_folders')) {
             return response()->json(['error' => 'No tienes permiso para descargar carpetas.'], 403);
         }
 
@@ -721,7 +763,7 @@ class FileManagerController extends Controller
         }
 
         $folderName = $request->input('folder_name');
-        $path = $request->input('path');
+        $path = $this->normalizePath($request->input('path'));
 
         // Validar la ruta para prevenir ataques de Path Traversal
         if (!$this->isValidPath($path)) {
@@ -776,6 +818,9 @@ class FileManagerController extends Controller
                 return response()->json(['error' => 'Error al crear el archivo ZIP.'], 500);
             }
 
+            // Registrar log
+            $this->registerLog($employee->id, 'download_folder', "Carpeta descargada como ZIP: $folderName de $path", $request);
+
             // Descargar el archivo ZIP
             return response()->download($temporaryZipPath, $zipFileName)->deleteFileAfterSend(true);
         } else {
@@ -791,7 +836,7 @@ class FileManagerController extends Controller
         $employee = Auth::guard('employee')->user();
 
         // Verificar permisos
-        if (!$employee->hasPermission('can_view_file_explorer')) {
+        if (!$this->hasPermission('can_view_file_explorer')) {
             return response()->json(['error' => 'No tienes permiso para ver archivos.'], 403);
         }
 
@@ -800,6 +845,9 @@ class FileManagerController extends Controller
 
         // Obtener el árbol de archivos y carpetas
         $tree = $this->getDirectoryTree($rootPath);
+
+        // Registrar log
+        $this->registerLog($employee->id, 'view_files_tree', "Árbol de archivos y carpetas visualizado desde $rootPath", $request);
 
         return response()->json($tree);
     }
@@ -834,7 +882,6 @@ class FileManagerController extends Controller
         return $items;
     }
 
-
     /**
      * Validar que la ruta proporcionada no contenga patrones de Path Traversal.
      */
@@ -842,5 +889,53 @@ class FileManagerController extends Controller
     {
         // Evitar rutas que suban a directorios superiores
         return !Str::contains($path, ['..', './', '../']);
+    }
+
+    /**
+     * Verifica si el empleado tiene el permiso especificado.
+     *
+     * @param string $permission
+     * @return bool
+     */
+    private function hasPermission(string $permission): bool
+    {
+        $employee = Auth::guard('employee')->user();
+
+        // Asegúrate de que la relación 'permissions' esté cargada
+        if (!$employee->relationLoaded('permissions')) {
+            $employee->load('permissions');
+        }
+
+        return $employee->permissions->contains('name', $permission);
+    }
+
+
+    /**
+     * Registra una acción en la tabla de logs.
+     *
+     * @param int $userId
+     * @param string $action
+     * @param string $description
+     * @param \Illuminate\Http\Request $request
+     * @return void
+     */
+    private function registerLog(int $userId, string $action, string $description, Request $request): void
+    {
+        // Genera un transaction_id único, por ejemplo usando Str::uuid()
+        $transactionId = Str::uuid()->toString();
+
+        // Obtiene la dirección IP y el agente de usuario
+        $ipAddress = $request->ip();
+        $userAgent = $request->header('User-Agent');
+
+        // Inserta el log en la base de datos sin 'description_id'
+        \DB::table('logs')->insert([
+            'user_id' => $userId,
+            'transaction_id' => $transactionId,
+            'description' => $description,
+            'date' => now(),
+            'ip_address' => $ipAddress,
+            'user_agent' => $userAgent,
+        ]);
     }
 }

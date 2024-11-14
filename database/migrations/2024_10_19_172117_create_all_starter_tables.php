@@ -53,6 +53,7 @@ class CreateAllStarterTables extends Migration
             $table->string('first_name');
             $table->string('last_name_1');
             $table->string('last_name_2')->nullable();
+            $table->string('phone_number')->nullable(); // Nuevo campo de teléfono
             $table->unsignedInteger('position_id')->nullable();
             $table->string('username')->unique();
             $table->string('password');
@@ -72,15 +73,29 @@ class CreateAllStarterTables extends Migration
             $table->timestamps();
         });
 
-        // Tabla pivote para permisos de empleados
-        Schema::create('employee_permissions', function (Blueprint $table) {
-            $table->unsignedInteger('employee_id'); // ID del empleado
+        // Tabla pivote para permisos de posiciones
+        Schema::create('position_permissions', function (Blueprint $table) {
+            $table->unsignedInteger('position_id'); // ID de la posición
             $table->unsignedInteger('permission_id'); // ID del permiso
 
-            $table->foreign('employee_id')->references('id')->on('employees')->onDelete('cascade');
+            $table->foreign('position_id')->references('id')->on('positions')->onDelete('cascade');
             $table->foreign('permission_id')->references('id')->on('permissions')->onDelete('cascade');
 
-            $table->primary(['employee_id', 'permission_id']);
+            $table->primary(['position_id', 'permission_id']);
+        });
+
+        // Tabla para logs de transacciones
+        Schema::create('logs', function (Blueprint $table) {
+            $table->increments('id');
+            $table->unsignedInteger('user_id')->nullable(); // ID del usuario, ahora nullable
+            $table->string('transaction_id'); // Identificador de la transacción
+            $table->text('description')->nullable(); // Descripción detallada
+            $table->timestamp('date')->default(DB::raw('CURRENT_TIMESTAMP')); // Fecha y hora de la transacción
+            $table->string('ip_address')->nullable(); // Dirección IP
+            $table->string('user_agent')->nullable(); // Información del agente de usuario
+
+            // Relación con el empleado
+            $table->foreign('user_id')->references('id')->on('employees')->onDelete('cascade');
         });
     }
 
@@ -93,7 +108,8 @@ class CreateAllStarterTables extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('employee_permissions');
+        Schema::dropIfExists('logs');
+        Schema::dropIfExists('position_permissions');
         Schema::dropIfExists('permissions');
         Schema::dropIfExists('employees');
         Schema::dropIfExists('positions');

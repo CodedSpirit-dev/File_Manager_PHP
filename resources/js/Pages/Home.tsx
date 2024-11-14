@@ -1,25 +1,25 @@
 // HomeContent.tsx
-import { EmployeePageProps } from '@/types';
-import { Button } from '@headlessui/react';
 import React, { useState } from 'react';
-import EmployeeList from './Admin/Employee/EmployeeList';
-import axios from 'axios';
-import Profile from './Profile/Profile';
 import { Head, usePage } from '@inertiajs/react';
-import FileManager from './FileSystem/FileManager';
-import AdminDropdown from '@/Components/AdminDropdown';
-import { PermissionsProvider, usePermissions } from '@/contexts/PermissionsContext';
-import { Menu } from '@headlessui/react';
-import CompanyList from "@/Pages/Admin/Company/CompanyList";
-import PositionList from "@/Pages/Admin/Position/PositionList";
+import { Button, Menu } from '@headlessui/react';
+import axios from 'axios';
 import { LuFolderOpen } from 'react-icons/lu';
 import { CiUser } from 'react-icons/ci';
 import { IoBusinessOutline } from 'react-icons/io5';
 import { MdOutlineWorkOutline } from 'react-icons/md';
 import { GrGroup } from 'react-icons/gr';
 
+import { AuthProvider, useAuth, Permissions } from '@/contexts/AuthProvider';
+import AdminDropdown from '@/Components/AdminDropdown';
+import EmployeeList from './Admin/Employee/EmployeeList';
+import CompanyList from './Admin/Company/CompanyList';
+import PositionList from './Admin/Position/PositionList';
+import Profile from './Profile/Profile';
+import FileManager from './FileSystem/FileManager';
+import { EmployeePageProps } from '@/types';
+
 const HomeContent: React.FC = () => {
-    const { hasPermission } = usePermissions();
+    const { hasPermission } = useAuth();
     const { auth } = usePage<EmployeePageProps>().props;
     const employee = auth.user;
 
@@ -73,7 +73,7 @@ const HomeContent: React.FC = () => {
                             <Menu.Items
                                 className="absolute left-0 mt-2 w-56 origin-top-left bg-white border border-gray-200 divide-y divide-gray-100 rounded-md shadow-lg focus:outline-none z-20">
                                 <div className="px-1 py-1 ">
-                                    {hasPermission('can_view_file_explorer') && (
+                                    {hasPermission('can_view_file_explorer' as keyof Permissions) && (
                                         <Menu.Item>
                                             {({ active }) => (
                                                 <button
@@ -90,7 +90,7 @@ const HomeContent: React.FC = () => {
                                             )}
                                         </Menu.Item>
                                     )}
-                                    {hasPermission('can_view_company_employees') && (
+                                    {hasPermission('can_view_company_users' as keyof Permissions) && (
                                         <Menu.Item>
                                             {({ active }) => (
                                                 <button
@@ -107,7 +107,7 @@ const HomeContent: React.FC = () => {
                                             )}
                                         </Menu.Item>
                                     )}
-                                    {hasPermission('can_create_companies') && (
+                                    {hasPermission('can_create_companies' as keyof Permissions) && (
                                         <Menu.Item>
                                             {({ active }) => (
                                                 <button
@@ -124,7 +124,7 @@ const HomeContent: React.FC = () => {
                                             )}
                                         </Menu.Item>
                                     )}
-                                    {hasPermission('can_create_positions') && (
+                                    {hasPermission('can_create_positions' as keyof Permissions) && (
                                         <Menu.Item>
                                             {({ active }) => (
                                                 <button
@@ -141,7 +141,7 @@ const HomeContent: React.FC = () => {
                                             )}
                                         </Menu.Item>
                                     )}
-                                    {hasPermission('can_view_all_employees') && (
+                                    {hasPermission('can_view_all_users' as keyof Permissions) && (
                                         <Menu.Item>
                                             {({ active }) => (
                                                 <button
@@ -165,7 +165,7 @@ const HomeContent: React.FC = () => {
 
                     {/* Navbar para pantallas grandes */}
                     <div className="hidden lg:flex space-x-4">
-                        {hasPermission('can_view_file_explorer') && (
+                        {hasPermission('can_view_file_explorer' as keyof Permissions) && (
                             <Button
                                 className={`btn btn-ghost nav__bar__button hover:text-black ${
                                     activeComponent === 'FileManager' ? 'bg-primary text-white cursor-not-allowed' : ''
@@ -230,12 +230,12 @@ const ProfileComponent: React.FC = () => {
     return <Profile mustVerifyEmail={false} status="" auth={auth} />;
 };
 
-// Envolviendo el contenido de Home con el Provider de Permisos
+// Envolviendo el contenido de Home con el Provider de Autenticación
 const Home: React.FC = () => {
     return (
-        <PermissionsProvider>
+        <AuthProvider>
             <HomeContent />
-        </PermissionsProvider>
+        </AuthProvider>
     );
 };
 

@@ -4,8 +4,8 @@ import React, { useEffect, useState, useRef } from 'react';
 import axios from 'axios';
 import EditEmployee from "@/Pages/Admin/Employee/EditEmployee";
 import CreateEmployee from "@/Pages/Admin/Employee/CreateEmployee";
-import { Company, Position, Employee, Permission } from "@/types";
-import {Head} from "@inertiajs/react";
+import { Company, Position, Employee } from "@/types";
+import { Head } from "@inertiajs/react";
 
 const EmployeeList: React.FC = () => {
     const [employees, setEmployees] = useState<Employee[]>([]);
@@ -28,10 +28,6 @@ const EmployeeList: React.FC = () => {
 
     // Estados para manejar el spinner en el botón "Editar"
     const [loadingEmployeeId, setLoadingEmployeeId] = useState<number | null>(null);
-    const [editEmployeeData, setEditEmployeeData] = useState<{
-        permissions: Permission[];
-        employeePermissions: Permission[];
-    } | null>(null);
 
     // Función para manejar el clic en "Editar"
     const handleEditClick = (employee: Employee) => {
@@ -40,26 +36,10 @@ const EmployeeList: React.FC = () => {
         const companyId = position ? position.company_id : null;
         const employeeWithCompany = { ...employee, company_id: companyId };
 
-        // Realizar llamadas a la API para obtener permisos y permisos del empleado
-        Promise.all([
-            axios.get('/api/permissions'),
-            axios.get(`/api/employees/${employee.id}/permissions`),
-        ])
-            .then(([permissionsResponse, employeePermissionsResponse]) => {
-                const permissions = permissionsResponse.data;
-                const employeePermissions = employeePermissionsResponse.data;
-                setEditingEmployee(employeeWithCompany);
-                setEditEmployeeData({
-                    permissions,
-                    employeePermissions,
-                });
-                setEditModalOpen(true);
-                setLoadingEmployeeId(null);
-            })
-            .catch((error) => {
-                console.error('Error al cargar los datos para editar el usuario', error);
-                setLoadingEmployeeId(null);
-            });
+        // Establecer el empleado a editar y abrir el modal
+        setEditingEmployee(employeeWithCompany);
+        setEditModalOpen(true);
+        setLoadingEmployeeId(null);
     };
 
     // Función para obtener los datos iniciales
@@ -69,17 +49,17 @@ const EmployeeList: React.FC = () => {
 
     const fetchData = () => {
         setLoading(true);
-        Promise.all([
+        axios.all([
             axios.get('admin/employees'),
             axios.get('api/positions'),
             axios.get('admin/companies'),
         ])
-            .then(([employeeResponse, positionsResponse, companiesResponse]) => {
+            .then(axios.spread((employeeResponse, positionsResponse, companiesResponse) => {
                 setEmployees(employeeResponse.data);
                 setPositions(positionsResponse.data);
                 setCompanies(companiesResponse.data);
                 setLoading(false);
-            })
+            }))
             .catch((error) => {
                 console.error('Error al cargar los datos', error);
                 setError('Error al cargar los datos');
@@ -107,6 +87,7 @@ const EmployeeList: React.FC = () => {
             })
             .catch((error) => {
                 console.error('Error al eliminar el usuario', error);
+                setError('Ocurrió un error al eliminar el usuario.');
             })
             .finally(() => {
                 setLoadingDelete(false);
@@ -229,7 +210,7 @@ const EmployeeList: React.FC = () => {
                 </table>
 
                 {/* Modal para Editar Empleado */}
-                {editingEmployee && editEmployeeData && (
+                {editingEmployee && (
                     <>
                         <input
                             type="checkbox"
@@ -244,8 +225,6 @@ const EmployeeList: React.FC = () => {
                                     employee={editingEmployee}
                                     positions={positions}
                                     companies={companies}
-                                    permissions={editEmployeeData.permissions}
-                                    employeePermissions={editEmployeeData.employeePermissions}
                                     onClose={() => setEditModalOpen(false)}
                                     onSuccess={() => {
                                         setEditModalOpen(false);

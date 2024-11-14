@@ -1,5 +1,6 @@
+// resources/js/Pages/Auth/Login.tsx
 import React from 'react';
-import axios from 'axios';
+import axios from '../../axiosConfig';
 import { useForm } from 'react-hook-form';
 import { Head, Link } from '@inertiajs/react';
 
@@ -30,7 +31,7 @@ export default function Login({
 
     const onSubmit = async (data: LoginFormInputs) => {
         try {
-            await axios.post('/login', data, { withCredentials: true });
+            await axios.post('/login', data);
             window.location.href = '/';
         } catch (error: any) {
             if (error.response && error.response.status === 422) {

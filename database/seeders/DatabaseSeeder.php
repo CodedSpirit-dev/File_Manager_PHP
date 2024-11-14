@@ -13,20 +13,21 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // User::factory(10)->create();
-
+        // Creación de un usuario de prueba
         User::factory()->create([
             'name' => 'Test User',
             'email' => 'test@example.com',
         ]);
 
+        // Llamada a los seeders específicos
         $this->call([
             CompanySeeder::class,
             HierarchyLevelSeeder::class,
             PositionSeeder::class,
             PermissionSeeder::class,
             EmployeeSeeder::class,
-            EmployeePermissionSeeder::class,
+            PositionPermissionSeeder::class, // Seeder actualizado para permisos de posición
+            LogSeeder::class, // Nuevo seeder para la tabla de logs
         ]);
     }
 }

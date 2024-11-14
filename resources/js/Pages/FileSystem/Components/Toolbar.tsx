@@ -1,3 +1,5 @@
+// src/components/FileManagerToolbar.tsx
+
 import React, { useState } from 'react';
 import {
     FcPlus,
@@ -12,9 +14,10 @@ import {
 } from "react-icons/bs";
 import { MdOutlineDeleteOutline, MdOutlineDriveFileMove } from "react-icons/md";
 import { IoClose, IoChevronBackOutline } from "react-icons/io5";
-import {BiExtension, BiSolidExtension} from 'react-icons/bi';
+import { BiExtension, BiSolidExtension } from 'react-icons/bi';
 import { Menu } from '@headlessui/react';
-import { usePermissions } from '@/contexts/PermissionsContext';
+import { useAuth } from "@/contexts/AuthProvider";
+import { Permissions } from "@/contexts/AuthProvider";
 
 interface SortPayload {
     criteria: 'name' | 'type';
@@ -64,7 +67,7 @@ const FileManagerToolbar: React.FC<FileManagerToolbarProps> = ({
                                                                    canGoBack,
                                                                    selectedItemsCount,
                                                                }) => {
-    const { hasPermission: checkPermission } = usePermissions();
+    const { hasPermission } = useAuth();
 
     const [sortConfigIndex, setSortConfigIndex] = useState<number>(0);
 
@@ -82,18 +85,14 @@ const FileManagerToolbar: React.FC<FileManagerToolbarProps> = ({
         onSort({ criteria: newSortConfig.criteria, order: newSortConfig.order });
     };
 
-
-    const canCreateFolder = checkPermission('can_create_folders');
-    const canUploadFolder = checkPermission('can_upload_folders');
-    const canUploadFile = checkPermission('can_upload_files_and_folders');
-
-    const canDownload = checkPermission('can_download_files_and_folders');
-    const canCopy = checkPermission('can_copy_files');
-    const canRename = checkPermission('can_rename_files_and_folders');
-    const canMove = checkPermission('can_move_files');
-    const canDelete = checkPermission('can_delete_files_and_folders');
-
-    const canSort = true;
+    // Verificación de permisos utilizando `keyof Permissions` para evitar errores de tipo
+    const canCreateFolder = hasPermission('can_create_folders' as keyof Permissions);
+    const canUploadFile = hasPermission('can_upload_files_and_folders' as keyof Permissions);
+    const canDownload = hasPermission('can_download_files_and_folders' as keyof Permissions);
+    const canCopy = hasPermission('can_copy_files' as keyof Permissions);
+    const canRename = hasPermission('can_rename_files_and_folders' as keyof Permissions);
+    const canMove = hasPermission('can_move_files' as keyof Permissions);
+    const canDelete = hasPermission('can_delete_files_and_folders' as keyof Permissions);
 
     return (
         <>
@@ -110,7 +109,7 @@ const FileManagerToolbar: React.FC<FileManagerToolbarProps> = ({
                         </button>
                     )}
 
-                    {(canCreateFolder || canUploadFolder || canUploadFile) && (
+                    {(canCreateFolder || canUploadFile) && (
                         <Menu as="div" className="relative inline-block text-left">
                             <div>
                                 <Menu.Button className="btn btn-outline flex items-center space-x-2 hover:text-primary-content">
@@ -130,19 +129,6 @@ const FileManagerToolbar: React.FC<FileManagerToolbarProps> = ({
                                                 >
                                                     <TbFolderPlus className="w-5 h-5 mr-2" />
                                                     Crear carpeta
-                                                </button>
-                                            )}
-                                        </Menu.Item>
-                                    )}
-                                    {canUploadFolder && (
-                                        <Menu.Item>
-                                            {({ active }) => (
-                                                <button
-                                                    onClick={onUploadFolder}
-                                                    className={`${active ? 'bg-blue-500 text-white' : 'text-gray-900'} group flex rounded-md items-center w-full px-2 py-2 text-sm`}
-                                                >
-                                                    <TbFolderUp className="w-5 h-5 mr-2" />
-                                                    Subir carpeta
                                                 </button>
                                             )}
                                         </Menu.Item>
@@ -237,17 +223,14 @@ const FileManagerToolbar: React.FC<FileManagerToolbarProps> = ({
                         </Menu>
                     )}
 
-                    {canSort && (
-                        <button
-                            onClick={handleSortToggle}
-                            className="btn btn-outline flex items-center space-x-2 hover:text-primary-content ml-2"
-                            aria-label={`Ordenar por ${sortConfigs[sortConfigIndex].criteria}`}
-                        >
-                            {React.createElement(sortConfigs[sortConfigIndex].icon, { className: 'w-5 h-5' })}
-                            <span className="hidden sm:inline">{sortConfigs[sortConfigIndex].label}</span>
-                        </button>
-                    )}
-
+                    <button
+                        onClick={handleSortToggle}
+                        className="btn btn-outline flex items-center space-x-2 hover:text-primary-content ml-2"
+                        aria-label={`Ordenar por ${sortConfigs[sortConfigIndex].criteria}`}
+                    >
+                        {React.createElement(sortConfigs[sortConfigIndex].icon, { className: 'w-5 h-5' })}
+                        <span className="hidden sm:inline">{sortConfigs[sortConfigIndex].label}</span>
+                    </button>
                 </div>
             </div>
 
@@ -298,6 +281,7 @@ const FileManagerToolbar: React.FC<FileManagerToolbarProps> = ({
             )}
         </>
     );
+
 };
 
 export default FileManagerToolbar;

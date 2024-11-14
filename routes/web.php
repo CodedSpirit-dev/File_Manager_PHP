@@ -3,10 +3,10 @@
 use App\Http\Controllers\Admin\CompanyController;
 use App\Http\Controllers\Admin\EmployeeController;
 use App\Http\Controllers\DirectorioController;
-use App\Http\Controllers\EmployeePermissionsController;
 use App\Http\Controllers\HierarchyLevelController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\PositionController;
+use App\Http\Controllers\PositionPermissionsController; // Añadido
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -43,8 +43,6 @@ Route::get('/login', [AuthenticatedSessionController::class, 'create'])->name('l
 Route::post('/login', [AuthenticatedSessionController::class, 'store'])->name('login.submit');
 Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout');
 
-
-
 // Grupo de rutas API
 Route::prefix('api')->name('api.')->group(function () {
     Route::get('/employees', [EmployeeController::class, 'index'])->name('employees.index');
@@ -52,14 +50,26 @@ Route::prefix('api')->name('api.')->group(function () {
     Route::post('/positions', [PositionController::class, 'store'])->name('positions.store');
     Route::get('/hierarchylevels', [HierarchyLevelController::class, 'index'])->name('hierarchylevels.index');
     Route::get('/permissions', [PermissionController::class, 'index'])->name('permissions.index');
-    Route::post('/userpermissions', [EmployeePermissionsController::class, 'store'])->middleware('auth:employee');
 
-    Route::delete('/userpermissions/{employee_id}', [EmployeePermissionsController::class, 'destroy'])->middleware('auth:employee');
-    Route::get('/employees/{id}/permissions', [EmployeeController::class, 'getPermissions'])->name('employees.permissions');
+    // **Rutas Eliminadas para EmployeePermissionsController**
+    // Route::post('/userpermissions', [EmployeePermissionsController::class, 'store'])->middleware('auth:employee')->name('userpermissions.store');
+    // Route::delete('/userpermissions/{employee_id}', [EmployeePermissionsController::class, 'destroy'])->middleware('auth:employee')->name('userpermissions.destroy');
+    // Route::get('/employees/{id}/permissions', [EmployeeController::class, 'getPermissions'])->name('employees.permissions');
+
+    // **Nuevas Rutas para PositionPermissionsController**
+    Route::post('/positionpermissions', [PositionPermissionsController::class, 'store'])
+        ->middleware('auth:employee')
+        ->name('positionpermissions.store');
+
+    Route::delete('/positionpermissions/{position_id}', [PositionPermissionsController::class, 'destroy'])
+        ->middleware('auth:employee')
+        ->name('positionpermissions.destroy');
 });
 
 // Ruta para el perfil del empleado
-Route::get('/admin/employees/profile', [EmployeeController::class, 'profile'])->middleware('auth:employee')->name('admin.employees.profile');
+Route::get('/admin/employees/profile', [EmployeeController::class, 'profile'])
+    ->middleware('auth:employee')
+    ->name('admin.employees.profile');
 
 // Ruta para obtener la jerarquía del usuario
 Route::middleware('auth:employee')->get('/user/hierarchy', [EmployeeController::class, 'getUserHierarchy'])->name('user.hierarchy');

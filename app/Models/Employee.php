@@ -15,6 +15,7 @@ class Employee extends Authenticatable
         'first_name',
         'last_name_1',
         'last_name_2',
+        'phone_number', // Nuevo campo de teléfono
         'position_id',
         'username',
         'password',
@@ -34,15 +35,24 @@ class Employee extends Authenticatable
         return $this->belongsTo(Position::class);
     }
 
+    /**
+     * Relación con los permisos a través de la posición.
+     */
+    public function permissions()
+    {
+        return $this->position->permissions();
+    }
+
     // Relación con la tabla 'companies'
     public function company()
     {
         return $this->hasOneThrough(Company::class, Position::class, 'id', 'id', 'position_id', 'company_id');
     }
 
-    public function permissions()
+    // Relación con la tabla 'logs'
+    public function logs()
     {
-        return $this->belongsToMany(Permission::class, 'employee_permissions', 'employee_id', 'permission_id');
+        return $this->hasMany(Log::class, 'user_id');
     }
 
     /**
@@ -52,17 +62,4 @@ class Employee extends Authenticatable
     {
         return $this->position->hierarchy_level_detail->level;
     }
-
-    /**
-     * Verifica si el empleado tiene un permiso específico.
-     *
-     * @param string $permissionName
-     * @return bool
-     */
-    public function hasPermission(string $permissionName): bool
-    {
-        return $this->permissions()->where('name', $permissionName)->exists();
-    }
-
-
 }
