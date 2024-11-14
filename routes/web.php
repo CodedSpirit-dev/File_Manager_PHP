@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\CompanyController;
 use App\Http\Controllers\Admin\EmployeeController;
+use App\Http\Controllers\Admin\LogController;
 use App\Http\Controllers\DirectorioController;
 use App\Http\Controllers\HierarchyLevelController;
 use App\Http\Controllers\PermissionController;
@@ -60,6 +61,9 @@ Route::prefix('api')->name('api.')->group(function () {
     Route::delete('/positionpermissions/{position_id}', [PositionPermissionsController::class, 'destroy'])
         ->middleware('auth:employee')
         ->name('positionpermissions.destroy');
+
+    //Logs
+    Route::get('/logs', [LogController::class, 'index'])->name('logs.index');
 });
 
 

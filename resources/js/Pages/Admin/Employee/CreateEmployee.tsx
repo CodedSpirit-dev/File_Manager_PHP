@@ -244,11 +244,11 @@ export default function CreateEmployee({ onSuccess, onClose }: CreateEmployeePro
                                     message: 'El número de teléfono no debe exceder los 15 caracteres'
                                 },
                                 pattern: {
-                                    value: /^[0-9+\-()\s]+$/,
-                                    message: 'El número de teléfono contiene caracteres inválidos'
+                                    value: /^\+((52|1)[\s\-]?)?(\(?\d{2,3}\)?[\s\-]?)?(\d{3}[\s\-]?\d{2,4}[\s\-]?\d{4})$/,
+                                    message: 'El número de teléfono debe ser un número válido de México o EE. UU.'
                                 }
                             }}
-                            render={({ field }) => (
+                        render={({ field }) => (
                                 <input
                                     {...field}
                                     type="text"

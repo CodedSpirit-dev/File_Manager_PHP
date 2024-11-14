@@ -8,14 +8,16 @@ import { CiUser } from 'react-icons/ci';
 import { IoBusinessOutline } from 'react-icons/io5';
 import { MdOutlineWorkOutline } from 'react-icons/md';
 import { GrGroup } from 'react-icons/gr';
+import { RiArchiveDrawerLine } from 'react-icons/ri';
 
-import { AuthProvider, useAuth, Permissions } from '@/contexts/AuthProvider';
+import { AuthProvider, useAuth } from '@/contexts/AuthProvider';
 import AdminDropdown from '@/Components/AdminDropdown';
 import EmployeeList from './Admin/Employee/EmployeeList';
 import CompanyList from './Admin/Company/CompanyList';
 import PositionList from './Admin/Position/PositionList';
 import Profile from './Profile/Profile';
 import FileManager from './FileSystem/FileManager';
+import LogList from './Admin/Log/LogList'; // Importa el componente LogList
 import { EmployeePageProps } from '@/types';
 
 const HomeContent: React.FC = () => {
@@ -45,6 +47,9 @@ const HomeContent: React.FC = () => {
             case 'PositionList':
                 setComponent(<PositionList />);
                 break;
+            case 'LogList': // Caso para mostrar LogList
+                setComponent(<LogList />);
+                break;
             default:
                 setComponent(null);
         }
@@ -73,81 +78,99 @@ const HomeContent: React.FC = () => {
                             <Menu.Items
                                 className="absolute left-0 mt-2 w-56 origin-top-left bg-white border border-gray-200 divide-y divide-gray-100 rounded-md shadow-lg focus:outline-none z-20">
                                 <div className="px-1 py-1 ">
+                                    <Menu.Item>
+                                        {({ active }) => (
+                                            <button
+                                                className={`${
+                                                    activeComponent === 'FileManager'
+                                                        ? 'bg-primary text-white cursor-not-allowed'
+                                                        : active ? 'bg-info text-white' : 'text-gray-900'
+                                                } group flex rounded-md items-center w-full px-2 py-2 text-sm`}
+                                                onClick={() => renderComponent('FileManager')}
+                                                disabled={activeComponent === 'FileManager'}
+                                            >
+                                                <LuFolderOpen className="mr-2" /> Explorador de Archivos
+                                            </button>
+                                        )}
+                                    </Menu.Item>
+                                    <Menu.Item>
+                                        {({ active }) => (
+                                            <button
+                                                className={`${
+                                                    activeComponent === 'Profile'
+                                                        ? 'bg-primary text-white cursor-not-allowed'
+                                                        : active ? 'bg-info text-white' : 'text-gray-900'
+                                                } group flex rounded-md items-center w-full px-2 py-2 text-sm`}
+                                                onClick={() => renderComponent('Profile')}
+                                                disabled={activeComponent === 'Profile'}
+                                            >
+                                                <CiUser className="mr-2" /> Perfil
+                                            </button>
+                                        )}
+                                    </Menu.Item>
+                                    <Menu.Item>
+                                        {({ active }) => (
+                                            <button
+                                                className={`${
+                                                    activeComponent === 'CompanyList'
+                                                        ? 'bg-primary text-white cursor-not-allowed'
+                                                        : active ? 'bg-info text-white' : 'text-gray-900'
+                                                } group flex rounded-md items-center w-full px-2 py-2 text-sm`}
+                                                onClick={() => renderComponent('CompanyList')}
+                                                disabled={activeComponent === 'CompanyList'}
+                                            >
+                                                <IoBusinessOutline className="mr-2" /> Empresas
+                                            </button>
+                                        )}
+                                    </Menu.Item>
+                                    <Menu.Item>
+                                        {({ active }) => (
+                                            <button
+                                                className={`${
+                                                    activeComponent === 'PositionList'
+                                                        ? 'bg-primary text-white cursor-not-allowed'
+                                                        : active ? 'bg-info text-white' : 'text-gray-900'
+                                                } group flex rounded-md items-center w-full px-2 py-2 text-sm`}
+                                                onClick={() => renderComponent('PositionList')}
+                                                disabled={activeComponent === 'PositionList'}
+                                            >
+                                                <MdOutlineWorkOutline className="mr-2" /> Puestos
+                                            </button>
+                                        )}
+                                    </Menu.Item>
+                                    <Menu.Item>
+                                        {({ active }) => (
+                                            <button
+                                                className={`${
+                                                    activeComponent === 'EmployeeList'
+                                                        ? 'bg-primary text-white cursor-not-allowed'
+                                                        : active ? 'bg-info text-white' : 'text-gray-900'
+                                                } group flex rounded-md items-center w-full px-2 py-2 text-sm`}
+                                                onClick={() => renderComponent('EmployeeList')}
+                                                disabled={activeComponent === 'EmployeeList'}
+                                            >
+                                                <GrGroup className="mr-2" /> Usuarios
+                                            </button>
+                                        )}
+                                    </Menu.Item>
+                                    {/* Botón de Logs solo visible para usuarios de jerarquía 0 */}
+                                    {employee.position?.hierarchy_level === 0 && (
                                         <Menu.Item>
                                             {({ active }) => (
                                                 <button
                                                     className={`${
-                                                        activeComponent === 'FileManager'
+                                                        activeComponent === 'LogList'
                                                             ? 'bg-primary text-white cursor-not-allowed'
                                                             : active ? 'bg-info text-white' : 'text-gray-900'
                                                     } group flex rounded-md items-center w-full px-2 py-2 text-sm`}
-                                                    onClick={() => renderComponent('FileManager')}
-                                                    disabled={activeComponent === 'FileManager'}
+                                                    onClick={() => renderComponent('LogList')}
+                                                    disabled={activeComponent === 'LogList'}
                                                 >
-                                                    <LuFolderOpen className="mr-2" /> Explorador de Archivos
+                                                    <RiArchiveDrawerLine className="mr-2" /> Logs
                                                 </button>
                                             )}
                                         </Menu.Item>
-                                        <Menu.Item>
-                                            {({ active }) => (
-                                                <button
-                                                    className={`${
-                                                        activeComponent === 'Profile'
-                                                            ? 'bg-primary text-white cursor-not-allowed'
-                                                            : active ? 'bg-info text-white' : 'text-gray-900'
-                                                    } group flex rounded-md items-center w-full px-2 py-2 text-sm`}
-                                                    onClick={() => renderComponent('Profile')}
-                                                    disabled={activeComponent === 'Profile'}
-                                                >
-                                                    <CiUser className="mr-2" /> Perfil
-                                                </button>
-                                            )}
-                                        </Menu.Item>
-                                        <Menu.Item>
-                                            {({ active }) => (
-                                                <button
-                                                    className={`${
-                                                        activeComponent === 'CompanyList'
-                                                            ? 'bg-primary text-white cursor-not-allowed'
-                                                            : active ? 'bg-info text-white' : 'text-gray-900'
-                                                    } group flex rounded-md items-center w-full px-2 py-2 text-sm`}
-                                                    onClick={() => renderComponent('CompanyList')}
-                                                    disabled={activeComponent === 'CompanyList'}
-                                                >
-                                                    <IoBusinessOutline className="mr-2" /> Empresas
-                                                </button>
-                                            )}
-                                        </Menu.Item>
-                                        <Menu.Item>
-                                            {({ active }) => (
-                                                <button
-                                                    className={`${
-                                                        activeComponent === 'PositionList'
-                                                            ? 'bg-primary text-white cursor-not-allowed'
-                                                            : active ? 'bg-info text-white' : 'text-gray-900'
-                                                    } group flex rounded-md items-center w-full px-2 py-2 text-sm`}
-                                                    onClick={() => renderComponent('PositionList')}
-                                                    disabled={activeComponent === 'PositionList'}
-                                                >
-                                                    <MdOutlineWorkOutline className="mr-2" /> Puestos
-                                                </button>
-                                            )}
-                                        </Menu.Item>
-                                        <Menu.Item>
-                                            {({ active }) => (
-                                                <button
-                                                    className={`${
-                                                        activeComponent === 'EmployeeList'
-                                                            ? 'bg-primary text-white cursor-not-allowed'
-                                                            : active ? 'bg-info text-white' : 'text-gray-900'
-                                                    } group flex rounded-md items-center w-full px-2 py-2 text-sm`}
-                                                    onClick={() => renderComponent('EmployeeList')}
-                                                    disabled={activeComponent === 'EmployeeList'}
-                                                >
-                                                    <GrGroup className="mr-2" /> Usuarios
-                                                </button>
-                                            )}
-                                        </Menu.Item>
+                                    )}
                                 </div>
                             </Menu.Items>
                         </Menu>
@@ -155,17 +178,29 @@ const HomeContent: React.FC = () => {
 
                     {/* Navbar para pantallas grandes */}
                     <div className="hidden lg:flex space-x-4">
-                            <Button
-                                className={`btn btn-ghost nav__bar__button hover:text-black ${
-                                    activeComponent === 'FileManager' ? 'bg-primary text-white cursor-not-allowed' : ''
-                                }`}
-                                onClick={() => renderComponent('FileManager')}
-                                disabled={activeComponent === 'FileManager'}
-                            >
-                                <LuFolderOpen className="mr-2" /> Explorador de archivos
-                            </Button>
+                        <Button
+                            className={`btn btn-ghost nav__bar__button hover:text-black ${
+                                activeComponent === 'FileManager' ? 'bg-primary text-white cursor-not-allowed' : ''
+                            }`}
+                            onClick={() => renderComponent('FileManager')}
+                            disabled={activeComponent === 'FileManager'}
+                        >
+                            <LuFolderOpen className="mr-2" /> Explorador de archivos
+                        </Button>
                         {/* AdminDropdown visible solo en pantallas grandes */}
                         <AdminDropdown renderComponent={renderComponent} activeComponent={activeComponent} />
+                        {/* Botón de Logs solo visible para usuarios de jerarquía 0 */}
+                        {employee.position?.hierarchy_level === 0 && (
+                            <Button
+                                className={`btn btn-ghost nav__bar__button hover:text-black ${
+                                    activeComponent === 'LogList' ? 'bg-primary text-white cursor-not-allowed' : ''
+                                }`}
+                                onClick={() => renderComponent('LogList')}
+                                disabled={activeComponent === 'LogList'}
+                            >
+                                <RiArchiveDrawerLine className="mr-2" /> Logs
+                            </Button>
+                        )}
                     </div>
 
                     {/* Botón de cerrar sesión visible en todas las pantallas */}

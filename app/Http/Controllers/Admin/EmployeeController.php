@@ -59,16 +59,16 @@ class EmployeeController extends Controller
             return response()->json(['error' => 'No autenticado'], 401);
         }
 
-        // Permiso: Ver a todos los usuarios o ver compañeros de la empresa
-        if (!$employee->hasPermission('can_view_all_users') && !$employee->hasPermission('can_view_company_users')) {
+        // Verificar si el empleado tiene permiso para ver compañeros de la empresa
+        if (!$employee->hasPermission('can_view_company_users')) {
             return response()->json(['error' => 'Permiso denegado'], 403);
         }
 
-        if ($employee->hasPermission('can_view_all_users')) {
-            // Si tiene permiso para ver a todos los usuarios
+        // Si el nivel de jerarquía es 0, obtener todos los empleados sin restricciones
+        if ($employee->position->hierarchy_level === 0) {
             $employees = Employee::with('position.company')->get();
         } else {
-            // Si solo tiene permiso para ver compañeros de la empresa
+            // Filtrar empleados solo dentro de la misma empresa y jerarquía igual o menor
             $companyId = $employee->position->company_id;
             $hierarchyLevel = $employee->position->hierarchy_level;
 
@@ -82,6 +82,8 @@ class EmployeeController extends Controller
 
         return response()->json($employees);
     }
+
+
 
     /**
      * Almacenar un nuevo empleado en la base de datos.
@@ -139,10 +141,20 @@ class EmployeeController extends Controller
             return response()->json(['error' => 'Permiso denegado'], 403);
         }
 
+        // No permitir que el empleado edite a sí mismo
+        if ($employee->id == $id) {
+            return response()->json(['error' => 'No se puede editar a sí mismo'], 403);
+        }
+
         $updateEmployee = Employee::find($id);
 
         if (!$updateEmployee) {
             return response()->json(['error' => 'Empleado no encontrado'], 404);
+        }
+
+        // No permitir editar empleados con la misma jerarquía o jerarquía menor, excepto si el nivel de jerarquía es 0
+        if ($employee->position->hierarchy_level !== 0 && $updateEmployee->position->hierarchy_level <= $employee->position->hierarchy_level) {
+            return response()->json(['error' => 'No tiene permiso para editar a este empleado'], 403);
         }
 
         $validator = Validator::make($request->all(), [
@@ -181,6 +193,7 @@ class EmployeeController extends Controller
         return response()->json(['message' => 'Empleado actualizado con éxito']);
     }
 
+
     /**
      * Eliminar un empleado.
      */
@@ -188,14 +201,26 @@ class EmployeeController extends Controller
     {
         $employee = Auth::guard('employee')->user();
 
+        // Verificar el permiso para eliminar usuarios
         if (!$employee->hasPermission('can_delete_users')) {
             return response()->json(['error' => 'Permiso denegado'], 403);
         }
 
         $deleteEmployee = Employee::find($id);
 
+        // Verificar si el empleado a eliminar existe
         if (!$deleteEmployee) {
             return response()->json(['error' => 'Empleado no encontrado'], 404);
+        }
+
+        // Impedir que el usuario se elimine a sí mismo
+        if ($employee->id === $deleteEmployee->id) {
+            return response()->json(['error' => 'No puedes eliminar tu propio perfil'], 403);
+        }
+
+        // Verificar jerarquía: el usuario solo puede eliminar empleados de jerarquía inferior
+        if ($deleteEmployee->position->hierarchy_level <= $employee->position->hierarchy_level) {
+            return response()->json(['error' => 'No tienes permisos para eliminar este empleado debido a la jerarquía'], 403);
         }
 
         $deleteEmployee->delete();
@@ -208,4 +233,5 @@ class EmployeeController extends Controller
 
         return response()->json(['message' => 'Empleado eliminado con éxito']);
     }
+
 }

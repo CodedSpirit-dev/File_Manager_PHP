@@ -914,24 +914,21 @@ class FileManagerController extends Controller
      * Registra una acción en la tabla de logs.
      *
      * @param int $userId
-     * @param string $action
+     * @param string $transactionId Nombre de la acción (e.g., "upload_file")
      * @param string $description
      * @param \Illuminate\Http\Request $request
      * @return void
      */
-    private function registerLog(int $userId, string $action, string $description, Request $request): void
+    private function registerLog(int $userId, string $transactionId, string $description, Request $request): void
     {
-        // Genera un transaction_id único, por ejemplo usando Str::uuid()
-        $transactionId = Str::uuid()->toString();
-
         // Obtiene la dirección IP y el agente de usuario
         $ipAddress = $request->ip();
         $userAgent = $request->header('User-Agent');
 
-        // Inserta el log en la base de datos sin 'description_id'
+        // Inserta el log en la base de datos
         \DB::table('logs')->insert([
             'user_id' => $userId,
-            'transaction_id' => $transactionId,
+            'transaction_id' => $transactionId, // Ahora es el nombre de la acción
             'description' => $description,
             'date' => now(),
             'ip_address' => $ipAddress,
