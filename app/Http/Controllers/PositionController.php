@@ -321,10 +321,6 @@ class PositionController extends Controller
      */
     public function counts($id, Request $request)
     {
-        // Verificar permisos
-        if (!$this->hasPermission('can_view_employee_counts')) {
-            return response()->json(['error' => 'No tienes permiso para ver conteos de empleados.'], 403);
-        }
 
         $position = Position::find($id);
 
