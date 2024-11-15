@@ -22,7 +22,7 @@ class EmployeeSeeder extends Seeder
                 'last_name_1' => 'admin',
                 'last_name_2' => 'admin',
                 'position_id' => 1,  // Asume que el puesto Admin tiene ID 1 en la tabla positions
-                'username' => 'VSP',
+                'username' => 'vsp@gmail.com',
                 'password' => Hash::make('admin123'), // Encripta la contraseña
                 'registered_at' => Carbon::now()->toDateString(),
                 'created_at' => Carbon::now(),

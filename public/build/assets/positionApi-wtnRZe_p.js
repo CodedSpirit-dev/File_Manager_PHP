@@ -1,1 +1,0 @@
-import{a as t}from"./app-Dbza6AWq.js";const e=async()=>(await t.get("/admin/positions")).data,i=async s=>{await t.delete(`/admin/positions/${s}`)},a=async s=>(await t.get(`/admin/positions/${s}/counts`)).data;export{i as deletePosition,a as getPositionCounts,e as getPositions};

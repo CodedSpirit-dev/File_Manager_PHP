@@ -17,7 +17,7 @@ class CompanySeeder extends Seeder
         $companies = [
             [
                 'id' => 1,
-                'name' => 'SGI',
+                'name' => 'VSP',
                 'created_at' => Carbon::now(),
                 'updated_at' => Carbon::now(),
             ],

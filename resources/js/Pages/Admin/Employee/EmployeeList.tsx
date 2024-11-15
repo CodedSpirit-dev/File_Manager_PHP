@@ -1,3 +1,5 @@
+// src/components/EmployeeList.tsx
+
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import EditEmployee from "@/Pages/Admin/Employee/EditEmployee";
@@ -5,6 +7,7 @@ import CreateEmployee from "@/Pages/Admin/Employee/CreateEmployee";
 import { Company, Position, Employee } from "@/types";
 import { Head } from "@inertiajs/react";
 import { useAuth } from "@/contexts/AuthProvider"; // Importa el contexto de autenticación
+import CompanyBadge from "@/Pages/Admin/CompanyBadge";
 
 const EmployeeList: React.FC = () => {
     const {hasPermission} = useAuth(); // Obtén la función de verificación de permisos
@@ -161,6 +164,8 @@ const EmployeeList: React.FC = () => {
                     {employees.map((employee) => {
                         const position = positions.find((position) => position.id === employee.position_id);
                         const company = position ? companies.find((company) => company.id === position.company_id) : null;
+                        const companyName = company ? company.name : null;
+
                         return (
                             <tr key={employee.id} className="hover:bg-base-200">
                                 <td className="border px-4 py-2 text-sm text-base-content truncate">
@@ -191,10 +196,7 @@ const EmployeeList: React.FC = () => {
                                     {position?.name}
                                     <br/>
                                     {company && (
-                                        <span
-                                            className="mt-1 inline-block bg-secondary text-secondary-content text-xs px-2 py-1 rounded">
-                                            {company.name}
-                                        </span>
+                                        <CompanyBadge companyName={company.name}/>
                                     )}
                                 </td>
                                 {(hasPermission("can_update_users") || hasPermission("can_delete_users")) && (
@@ -229,7 +231,6 @@ const EmployeeList: React.FC = () => {
                     })}
                     </tbody>
                 </table>
-
             </div>
 
             {/* Modal de Confirmación de Eliminación */}
@@ -237,8 +238,10 @@ const EmployeeList: React.FC = () => {
                 <dialog open className={`modal modal-open`}>
                     <form method="dialog" className="modal-box">
                         <h3 className="font-bold text-lg">Confirmar Eliminación</h3>
-                        <p className="py-4">¿Estás seguro de que deseas eliminar al
-                            empleado <strong>{employeeToDelete.first_name} {employeeToDelete.last_name_1}</strong>?</p>
+                        <p className="py-4">
+                            ¿Estás seguro de que deseas eliminar al
+                            empleado <strong>{employeeToDelete.first_name} {employeeToDelete.last_name_1}</strong>?
+                        </p>
                         {isDeleteLoading ? (
                             <div className="flex justify-center">
                                 <span className="loading loading-spinner loading-md"></span>

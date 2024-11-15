@@ -21,6 +21,8 @@ export default {
                 dicatho: '#0096dd',
                 pachinos: '#df7a1c',
                 cepac: '#2c3691',
+                vsp: '#d30009',
+                penitencia: '#fec63e'
             },
         },
     },

@@ -905,6 +905,8 @@ const FileManager: React.FC = () => {
         'Dicatho': 'bg-dicatho',
         'Pachinos': 'bg-pachinos',
         'CEPAC': 'bg-cepac',
+        'VSP': 'bg-vsp',
+        'La Penitencia': 'bg-penitencia',
     };
 // Mapeo de nombres de empresas a clases de Tailwind CSS y color de texto
     const companyStyles: {
@@ -916,6 +918,8 @@ const FileManager: React.FC = () => {
         'Dicatho': { backgroundClass: 'bg-dicatho', textColor: 'text-white' },
         'Pachinos': { backgroundClass: 'bg-pachinos', textColor: 'text-white' },
         'CEPAC': { backgroundClass: 'bg-cepac', textColor: 'text-white' },
+        'VSP': { backgroundClass: 'bg-vsp', textColor: 'text-white' },
+        'La Penitencia': { backgroundClass: 'bg-penitencia', textColor: 'text-black' },
     };
 
 
@@ -935,11 +939,6 @@ const FileManager: React.FC = () => {
         return { backgroundClass: 'bg-white', textColor: 'text-black' }; // Valores por defecto
     };
 
-    // Función para obtener la clase de fondo para un elemento
-    const getItemBackgroundClass = (item: Item): string => {
-        const companyName = getCompanyNameFromPath(item.path);
-        return companyName && companyBackgroundClasses[companyName] ? companyBackgroundClasses[companyName] : 'bg-white';
-    };
 
     return (
         <>
