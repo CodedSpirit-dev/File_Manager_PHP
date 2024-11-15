@@ -299,3 +299,16 @@
         border: none;
     }
 }
+@layer utilities {
+    .bg-dicatho {
+        background-color: #0096dd;
+    }
+
+    .bg-pachinos {
+        background-color: #df7a1c;
+    }
+
+    .bg-cepac {
+        background-color: #2c3691;
+    }
+}

@@ -1,6 +1,6 @@
 // src/components/FileManager/FileManager.tsx
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import FileManagerToolbar from './Components/Toolbar';
 import Modal from './Components/Modal';
 import FileViewerModal from "@/Pages/FileSystem/Components/FileViewerModal";
@@ -134,6 +134,32 @@ const FileManager: React.FC = () => {
     // Estados de progreso para las operaciones de subida y eliminación
     const [uploadProgress, setUploadProgress] = useState<{ total: number; completed: number } | null>(null);
     const [deleteProgress, setDeleteProgress] = useState<{ total: number; completed: number } | null>(null);
+
+    // Definir mapeo de colores
+    const companyColors: { [key: string]: string } = {
+        'Dicatho': '#0096dd',
+        'Pachinos': '#df7a1c',
+        'CEPAC': '#99a3ff',
+    };
+
+    // Función para obtener el color de fondo basado en la empresa
+    const getBackgroundColor = (): string => {
+        return companyColors[companyName || ''] || '#ffffff'; // Fallback a blanco si no coincide
+    };
+
+    // Función para obtener la clase de Tailwind basada en la empresa
+    const getBackgroundColorClass = (): string => {
+        switch (companyName) {
+            case 'Dicatho':
+                return 'bg-dicatho';
+            case 'Pachinos':
+                return 'bg-pachinos';
+            case 'CEPAC':
+                return 'bg-cepac';
+            default:
+                return 'bg-white';
+        }
+    };
 
     // Estado para el progreso de la operación
     const [operationProgress, setOperationProgress] = useState<{
@@ -871,6 +897,50 @@ const FileManager: React.FC = () => {
     // Determinar si se puede ir atrás
     const canGoBack = currentPath !== `public/${companyName}` || hierarchyLevel <= 1;
 
+    // Memorizar el color de fondo para optimizar el rendimiento
+    const backgroundColorClass = useMemo(() => getBackgroundColorClass(), [companyName]);
+
+    // Mapeo de nombres de empresas a clases de Tailwind CSS
+    const companyBackgroundClasses: { [key: string]: string } = {
+        'Dicatho': 'bg-dicatho',
+        'Pachinos': 'bg-pachinos',
+        'CEPAC': 'bg-cepac',
+    };
+// Mapeo de nombres de empresas a clases de Tailwind CSS y color de texto
+    const companyStyles: {
+        [key: string]: {
+            backgroundClass: string;
+            textColor: string;
+        }
+    } = {
+        'Dicatho': { backgroundClass: 'bg-dicatho', textColor: 'text-white' },
+        'Pachinos': { backgroundClass: 'bg-pachinos', textColor: 'text-white' },
+        'CEPAC': { backgroundClass: 'bg-cepac', textColor: 'text-white' },
+    };
+
+
+// Función para extraer el nombre de la empresa desde el path
+    const getCompanyNameFromPath = (path: string): string | null => {
+        const segments = path.split('/');
+        // Suponiendo que el nombre de la empresa está en el segundo segmento, por ejemplo, 'public/Pachinos'
+        return segments.length > 1 ? segments[1] : null;
+    };
+
+// Función para obtener las clases de fondo y texto para un elemento
+    const getItemStyles = (item: Item): { backgroundClass: string; textColor: string } => {
+        const companyName = getCompanyNameFromPath(item.path);
+        if (companyName && companyStyles[companyName]) {
+            return companyStyles[companyName];
+        }
+        return { backgroundClass: 'bg-white', textColor: 'text-black' }; // Valores por defecto
+    };
+
+    // Función para obtener la clase de fondo para un elemento
+    const getItemBackgroundClass = (item: Item): string => {
+        const companyName = getCompanyNameFromPath(item.path);
+        return companyName && companyBackgroundClasses[companyName] ? companyBackgroundClasses[companyName] : 'bg-white';
+    };
+
     return (
         <>
             {hierarchyLevel !== null && companyName && !loading && (
@@ -1016,63 +1086,76 @@ const FileManager: React.FC = () => {
                         <p className="text-center text-gray-500">No hay archivos o carpetas disponibles.</p>
                     ) : (
                         <ul className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-4">
-                            {items.map((item) => (
-                                <li
-                                    key={item.path} // Usa path único
-                                    className={`p-4 border rounded-lg cursor-pointer flex flex-col items-center relative ${
-                                        selectedItems.includes(item.path) ? 'bg-blue-100' : 'bg-white'
-                                    } hover:bg-gray-200 transition-colors duration-200`}
-                                    onClick={(e) => handleSelectItem(item.path, e)}
-                                    onDoubleClick={() => handleDoubleClickItem(item)}
-                                >
-                                    <span className="text-4xl">
-                                        {item.type === 'folder' ? <FaFolder /> : getFileIcon(item.name)}
-                                    </span>
-                                    <span className="mt-2 text-center truncate w-full">{item.name}</span>
+                            {items.map((item) => {
+                                const { backgroundClass, textColor } = getItemStyles(item);
+                                const isSelected = selectedItems.includes(item.path);
 
-                                    {/* Indicador de Selección */}
-                                    {selectedItems.includes(item.path) && (
-                                        <span className="absolute top-2 right-2 bg-blue-500 text-white rounded-full w-5 h-5 flex items-center justify-center">
-                                            ✓
-                                        </span>
-                                    )}
-                                </li>
-                            ))}
+                                return (
+                                    <li
+                                        key={item.path} // Usa path único
+                                        className={`p-4 border rounded-lg cursor-pointer flex flex-col items-center relative ${
+                                            isSelected ? 'bg-blue-100' : backgroundClass
+                                        } hover:bg-gray-200 transition-colors duration-200`}
+                                        onClick={(e) => handleSelectItem(item.path, e)}
+                                        onDoubleClick={() => handleDoubleClickItem(item)}
+                                    >
+                        <span className={`text-4xl ${isSelected ? 'text-black' : textColor}`}>
+                            {item.type === 'folder' ? <FaFolder /> : getFileIcon(item.name)}
+                        </span>
+                                        <span className={`mt-2 text-center truncate w-full ${isSelected ? 'text-black' : textColor}`}>
+                            {item.name}
+                        </span>
+
+                                        {/* Indicador de Selección */}
+                                        {isSelected && (
+                                            <span className="absolute top-2 right-2 bg-blue-500 text-white rounded-full w-5 h-5 flex items-center justify-center">
+                                ✓
+                            </span>
+                                        )}
+                                    </li>
+                                );
+                            })}
                         </ul>
                     )}
                 </div>
-            </div>
+        </div>
 
-            {/* Modal de Estado (Éxito/Error) */}
+    {/* Modal de Estado (Éxito/Error) */
+    }
+    <Modal
+        isOpen={modalOpen}
+        title={modalTitle}
+        onClose={() => setModalOpen(false)}
+    >
+        <p>{modalMessage}</p>
+        <div className="flex justify-end mt-4">
+            <button className="btn" onClick={() => setModalOpen(false)}>Aceptar</button>
+        </div>
+    </Modal>
+
+    {/* Modal de Progreso (Copiar/Moviendo) */
+    }
+    {
+        operationProgress && (
             <Modal
-                isOpen={modalOpen}
-                title={modalTitle}
-                onClose={() => setModalOpen(false)}
+                isOpen={true}
+                title={operationProgress.type === 'copy' ? 'Copiando Archivos' : 'Moviendo Archivos'}
+                onClose={() => { /* No permitir cerrar */
+                }}
+                canClose={false} // No permitir cerrar durante la operación
             >
-                <p>{modalMessage}</p>
-                <div className="flex justify-end mt-4">
-                    <button className="btn" onClick={() => setModalOpen(false)}>Aceptar</button>
+                <div className="flex flex-col items-center space-y-4">
+                    <span className="loading loading-spinner loading-lg text-primary"></span>
+                    <p>
+                        {operationProgress.type === 'copy' ? 'Copiando' : 'Moviendo'} {operationProgress.completed} de {operationProgress.total} archivos.
+                    </p>
                 </div>
             </Modal>
-
-            {/* Modal de Progreso (Copiar/Moviendo) */}
-            {operationProgress && (
-                <Modal
-                    isOpen={true}
-                    title={operationProgress.type === 'copy' ? 'Copiando Archivos' : 'Moviendo Archivos'}
-                    onClose={() => { /* No permitir cerrar */ }}
-                    canClose={false} // No permitir cerrar durante la operación
-                >
-                    <div className="flex flex-col items-center space-y-4">
-                        <span className="loading loading-spinner loading-lg text-primary"></span>
-                        <p>
-                            {operationProgress.type === 'copy' ? 'Copiando' : 'Moviendo'} {operationProgress.completed} de {operationProgress.total} archivos.
-                        </p>
-                    </div>
-                </Modal>
-            )}
-        </>
-    );
+        )
+    }
+</>
+)
+    ;
 
 };
 

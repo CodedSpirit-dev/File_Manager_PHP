@@ -17,6 +17,11 @@ export default {
                 serif:[' Josefin Slab ','Merriweather','Playfair Display','Roboto Slab', ...defaultTheme.fontFamily.serif],
                 mono: ['ui-monospace', 'SFMono-Regular', ...defaultTheme.fontFamily.mono],
             },
+            colors: {
+                dicatho: '#0096dd',
+                pachinos: '#df7a1c',
+                cepac: '#2c3691',
+            },
         },
     },
 
