@@ -50,14 +50,13 @@ export const uploadFile = async (file: File, path: string, overwrite: boolean = 
         throw error;
     }
 };
-
 /**
  * Subir una carpeta como directorio.
  * @param {FileList} files - Lista de archivos a subir.
  * @param {string} path - Ruta donde se subirá la carpeta.
  * @returns {Promise<Object>} - Respuesta del servidor.
  */
-export const uploadDirectory = async (files: FileList, path: string): Promise<any> => {
+export const uploadDirectory = async (files: FileList, path: string, overwrite: boolean = false): Promise<any> => {
     try {
         const formData = new FormData();
         Array.from(files).forEach(file => {
@@ -65,6 +64,7 @@ export const uploadDirectory = async (files: FileList, path: string): Promise<an
             formData.append('files[]', file, file.webkitRelativePath);
         });
         formData.append('path', path); // Agregar el campo path
+        formData.append('overwrite', overwrite ? '1' : '0');
 
         const response = await axios.post(`${FILEMANAGER_PREFIX}/folders/upload-directory`, formData, {
             headers: {
@@ -78,6 +78,8 @@ export const uploadDirectory = async (files: FileList, path: string): Promise<an
         throw error;
     }
 };
+
+
 
 /**
  * Eliminar un archivo.

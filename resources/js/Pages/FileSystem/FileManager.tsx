@@ -176,14 +176,15 @@ const FileManager: React.FC = () => {
     useEffect(() => {
         const initializeData = async () => {
             try {
-                // Ejecutar ambas funciones en paralelo
-                await Promise.all([
-                    fetchHierarchyAndCompany(),
-                    fetchFilesTree()
-                ]);
+                // Primero obtener la jerarquía y el nombre de la empresa
+                await fetchHierarchyAndCompany();
 
-                // Actualiza los items actuales después de haber obtenido el árbol y la ruta
+                // Luego obtener el árbol de archivos
+                await fetchFilesTree();
+
+                // Ahora actualizar los items actuales con el currentPath actualizado
                 updateCurrentItems(fileTree, currentPath);
+
                 setSelectedItems([]);
             } catch (error) {
                 console.error("Error al inicializar datos:", error);
@@ -194,13 +195,13 @@ const FileManager: React.FC = () => {
 
         initializeData();
     }, []);
-
     // Este useEffect se encargará de actualizar los elementos cuando cambien `fileTree` o `currentPath`
     useEffect(() => {
-        if (fileTree.length > 0) {
+        if (fileTree.length > 0 && currentPath) {
             updateCurrentItems(fileTree, currentPath);
         }
     }, [fileTree, currentPath]);
+
 
     const fetchHierarchyAndCompany = async () => {
         try {
@@ -484,6 +485,7 @@ const FileManager: React.FC = () => {
         const folderInput = document.createElement('input');
         folderInput.type = 'file';
         (folderInput as any).webkitdirectory = true;
+        folderInput.multiple = true;
         folderInput.onchange = async () => {
             if (folderInput.files && folderInput.files.length > 0) {
                 const totalFiles = folderInput.files.length;
@@ -493,11 +495,27 @@ const FileManager: React.FC = () => {
                 setUploadProgress({ total: totalFiles, completed: 0 });
 
                 try {
-                    await uploadDirectory(folderInput.files, currentPath);
-                    completedFiles = totalFiles;
-                    setUploadProgress({ total: totalFiles, completed: completedFiles });
-                    showModal('Éxito', 'Carpeta subida exitosamente.', 'success');
-                    fetchFilesTree(); // Refrescar el árbol
+                    // Verificar conflictos
+                    const existingItemNames = items.map(item => item.name);
+                    const uploadFileNames = Array.from(folderInput.files).map(file => {
+                        const parts = file.webkitRelativePath.split('/');
+                        return parts[parts.length - 1]; // Obtener el nombre del archivo
+                    });
+                    const conflictingFiles = uploadFileNames.filter(name => existingItemNames.includes(name));
+
+                    if (conflictingFiles.length > 0) {
+                        // Hay conflictos
+                        setConflictFiles(conflictingFiles);
+                        setFilesToUpload(folderInput.files); // Guardar los archivos para subir después
+                        setConflictAction('uploadDirectory');
+                        setIsConflictModalOpen(true);
+                    } else {
+                        await uploadDirectory(folderInput.files, currentPath);
+                        completedFiles = totalFiles;
+                        setUploadProgress({ total: totalFiles, completed: completedFiles });
+                        showModal('Éxito', 'Carpeta subida exitosamente.', 'success');
+                        fetchFilesTree(); // Refrescar el árbol
+                    }
                 } catch (error) {
                     showModal('Error', 'Error al subir la carpeta.', 'error');
                 } finally {
@@ -806,6 +824,8 @@ const FileManager: React.FC = () => {
     const handleConfirmOverwrite = async () => {
         if (conflictAction === 'upload' && filesToUpload) {
             await uploadFiles(Array.from(filesToUpload), true); // overwrite = true
+        } else if (conflictAction === 'uploadDirectory' && filesToUpload) {
+            await uploadDirectory(filesToUpload, currentPath, true); // Añadir overwrite = true
         } else if (conflictAction === 'copy' && copySource) {
             const { items: itemsToCopy, path } = copySource;
             await copyFilesAction(itemsToCopy, path, currentPath, true); // overwrite = true
@@ -819,6 +839,7 @@ const FileManager: React.FC = () => {
         setConflictAction(null);
         setFilesToUpload(null);
     };
+
 
     const handleCancelOverwrite = () => {
         // Restablecer estados de conflicto

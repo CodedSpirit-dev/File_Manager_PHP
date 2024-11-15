@@ -232,23 +232,20 @@ class FileManagerController extends Controller
 
 
     /**
-     * Sube una carpeta como un directorio.
+     * Sube una carpeta completa, incluyendo subcarpetas y archivos.
      */
     public function uploadDirectory(Request $request)
     {
         $employee = Auth::guard('employee')->user();
 
-        if (
-            !$this->hasPermission('can_upload_files_and_folders') ||
-            !$this->hasPermission('can_create_folders')
-        ) {
-            return response()->json(['error' => 'No tienes permiso para crear archivos o carpetas.'], 403);
+        if (!$this->hasPermission('can_upload_files_and_folders')) {
+            return response()->json(['error' => 'No tienes permiso para subir carpetas.'], 403);
         }
 
         $validator = Validator::make($request->all(), [
-            'files' => 'required|array',
             'files.*' => 'required|file|max:10240',
             'path' => 'required|string',
+            'overwrite' => 'nullable|boolean',
         ]);
 
         if ($validator->fails()) {
@@ -256,20 +253,55 @@ class FileManagerController extends Controller
         }
 
         $path = $this->normalizePath($request->input('path'));
+        $overwrite = $request->input('overwrite', false);
 
         if (!$this->isValidPath($path)) {
             return response()->json(['error' => 'Ruta inválida.'], 400);
         }
 
-        foreach ($request->file('files') as $file) {
-            $relativePath = $file->getClientOriginalName();
-            $file->storeAs($path, $relativePath, 'local');
+        if ($request->hasFile('files')) {
+            $files = $request->file('files');
+            foreach ($files as $file) {
+                // Obtener la ruta relativa del archivo
+                $relativePath = $file->getClientOriginalName();
+
+                // En caso de que se envíe 'files[]' en lugar de 'files[0]', usar 'getClientOriginalName' no devolverá el path completo.
+                // Por lo tanto, necesitamos obtener el nombre original del archivo incluyendo su ruta relativa.
+
+                $fullPath = $file->getClientOriginalName(); // Esto incluye el webkitRelativePath
+                $destinationPath = $this->normalizePath($path . '/' . $fullPath);
+
+                if (!$this->isValidPath($destinationPath)) {
+                    return response()->json(['error' => 'Ruta inválida en uno de los archivos.'], 400);
+                }
+
+                // Verificar si el archivo ya existe
+                if (!$overwrite && Storage::disk('local')->exists($destinationPath)) {
+                    return response()->json(['error' => "El archivo '$fullPath' ya existe."], 400);
+                }
+
+                // Si overwrite es true y el archivo existe, eliminarlo
+                if ($overwrite && Storage::disk('local')->exists($destinationPath)) {
+                    Storage::disk('local')->delete($destinationPath);
+                }
+
+                // Crear los directorios necesarios
+                $directory = pathinfo($destinationPath, PATHINFO_DIRNAME);
+                if (!Storage::disk('local')->exists($directory)) {
+                    Storage::disk('local')->makeDirectory($directory, 0755, true);
+                }
+
+                // Almacenar el archivo en la ruta correcta
+                Storage::disk('local')->putFileAs($directory, $file, $file->getClientOriginalName());
+            }
+
+            // Registrar log
+            $this->registerLog($employee->id, 'upload_directory', "Carpeta subida a $path", $request);
+
+            return response()->json(['message' => 'Carpeta subida exitosamente.']);
         }
 
-        // Registrar log
-        $this->registerLog($employee->id, 'upload_directory', "Carpeta subida a $path", $request);
-
-        return response()->json(['message' => 'Carpeta subida exitosamente.', 'path' => $path]);
+        return response()->json(['error' => 'No se proporcionaron archivos.'], 400);
     }
 
     /**
