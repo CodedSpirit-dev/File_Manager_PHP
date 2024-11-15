@@ -1,13 +1,13 @@
-// resources/js/Pages/Auth/Login.tsx
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import axios from '../../axiosConfig';
 import { useForm } from 'react-hook-form';
 import { Head, Link } from '@inertiajs/react';
+import { useAuth } from '@/contexts/AuthProvider';
+import logo from '@/assets/cepac-01.png';
 
 interface LoginFormInputs {
     username: string;
     password: string;
-    remember: boolean;
 }
 
 export default function Login({
@@ -17,19 +17,37 @@ export default function Login({
     status?: string;
     canResetPassword: boolean;
 }) {
+    const { user, hasPermission } = useAuth(); // Extract 'user'
+    const isAuthenticated = user !== null; // Derive 'isAuthenticated'
+
     const {
         register,
         handleSubmit,
         setError,
+        setFocus, // Extracted from useForm
         formState: { errors, isValid },
     } = useForm<LoginFormInputs>({
-        mode: 'onChange', // Validación en tiempo real
+        mode: 'onChange',
         defaultValues: {
-            remember: true, // Checkbox marcado por defecto
+            username: '',
+            password: '',
         },
     });
 
+    const [isSubmitting, setIsSubmitting] = useState(false); // State to handle loading
+
+    useEffect(() => {
+        if (isAuthenticated) {
+            // Redirect authenticated user to the home page
+            window.location.href = '/';
+        } else {
+            // Focus the email field when the component mounts
+            setFocus('username');
+        }
+    }, [isAuthenticated, setFocus]);
+
     const onSubmit = async (data: LoginFormInputs) => {
+        setIsSubmitting(true); // Start loading state
         try {
             await axios.post('/login', data);
             window.location.href = '/';
@@ -44,7 +62,6 @@ export default function Login({
                         });
                     });
                 } else {
-                    // En caso de que haya un mensaje de error general
                     setError('username', {
                         type: 'server',
                         message: error.response.data.message || 'Error en el inicio de sesión',
@@ -52,7 +69,10 @@ export default function Login({
                 }
             } else {
                 console.error(error);
+                // You can add a general error message here if desired
             }
+        } finally {
+            setIsSubmitting(false); // End loading state
         }
     };
 
@@ -71,20 +91,29 @@ export default function Login({
                     className="container__25 bg-white p-6 rounded-md shadow-md mx-4 md:mx-0"
                     onSubmit={handleSubmit(onSubmit)}
                 >
+                    {/* Logo */}
+                    <div className="flex justify-center mb-4">
+                        <img src={logo} alt="Logo" className="h-20 w-auto" />
+                    </div>
+
                     <h2 className="text-2xl font-bold mb-6 text-center">Iniciar sesión</h2>
 
                     <div>
                         <label htmlFor="username" className="block text-sm font-medium text-gray-700">
-                            Nombre de usuario
+                            Correo Electrónico
                         </label>
 
                         <input
                             id="username"
-                            type="text"
-                            autoComplete="username"
+                            type="email"
+                            autoComplete="email"
                             className="input__data__entry"
                             {...register('username', {
-                                required: 'El nombre de usuario es requerido',
+                                required: 'El correo electrónico es requerido',
+                                pattern: {
+                                    value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+                                    message: 'El correo electrónico no es válido',
+                                },
                             })}
                         />
 
@@ -113,20 +142,6 @@ export default function Login({
                         )}
                     </div>
 
-                    <div className="mt-4 block">
-                        {/* Checkbox estándar */}
-                        <label className="flex items-center">
-                            <input
-                                type="checkbox"
-                                className="form-checkbox h-5 w-5 text-indigo-600"
-                                {...register('remember')}
-                            />
-                            <span className="ml-2 text-sm text-gray-600">
-                                Recuérdame
-                            </span>
-                        </label>
-                    </div>
-
                     <div className="mt-6 flex items-center justify-between">
                         {canResetPassword && (
                             <Link
@@ -139,9 +154,12 @@ export default function Login({
 
                         <button
                             type="submit"
-                            className="btn btn-primary"
-                            disabled={!isValid}
+                            className="btn btn-block btn-primary flex items-center justify-center"
+                            disabled={!isValid || isSubmitting}
                         >
+                            {isSubmitting ? (
+                                <span className="loading loading-spinner loading-xs mr-2"></span>
+                            ) : null}
                             Iniciar sesión
                         </button>
                     </div>

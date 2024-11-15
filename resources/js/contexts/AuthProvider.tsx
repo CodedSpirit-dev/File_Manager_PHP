@@ -1,8 +1,8 @@
+// resources/js/contexts/AuthProvider.tsx
 import React, { createContext, useState, useEffect, useContext, ReactNode } from 'react';
 import axios from 'axios';
 import { usePage } from '@inertiajs/react';
-import { EmployeePageProps } from '@/types';
-import { User } from '../types';
+import { EmployeePageProps, User } from '@/types'; // Asegúrate de que estas importaciones sean correctas
 
 export interface Permissions {
     can_create_companies: boolean;
@@ -75,7 +75,7 @@ interface AuthProviderProps {
 }
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
-    const { auth } = usePage<EmployeePageProps>().props;
+    const { auth } = usePage<EmployeePageProps>().props; // Asegúrate de que `EmployeePageProps` incluye `auth`
     const [user, setUser] = useState<User | null>(auth.user || null);
     const [permissions, setPermissions] = useState<Permissions>(defaultPermissions);
     const [hierarchyLevel, setHierarchyLevel] = useState<number | null>(null);
