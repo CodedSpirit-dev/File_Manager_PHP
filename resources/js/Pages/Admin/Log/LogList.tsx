@@ -3,16 +3,26 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import LogToolbar from './LogToolbar';
+// @ts-ignore
+import UAParser from 'ua-parser-js';
 
 interface Log {
     id: number;
-    user_id: number | null; // Actualizado para permitir null
+    user_id: number | null;
     transaction_id: string;
     description: string;
     date: string;
     ip_address: string | null;
     user_agent: string | null;
-    user_name?: string;
+    user_name: string;
+}
+
+interface ParsedUserAgent {
+    browser: string;
+    browserVersion: string;
+    os: string;
+    osVersion: string;
+    device: string;
 }
 
 const LogList: React.FC = () => {
@@ -21,7 +31,7 @@ const LogList: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
-    // State for Toolbar
+    // State para el Toolbar
     const [searchQuery, setSearchQuery] = useState('');
     const [transactionFilter, setTransactionFilter] = useState('');
 
@@ -62,6 +72,37 @@ const LogList: React.FC = () => {
         }
     };
 
+    const parseUserAgent = (userAgent: string | null): ParsedUserAgent => {
+        if (!userAgent) {
+            return {
+                browser: 'N/A',
+                browserVersion: '',
+                os: 'N/A',
+                osVersion: '',
+                device: 'N/A',
+            };
+        }
+
+        const parser = new UAParser(userAgent);
+        const result = parser.getResult();
+
+        const browser = result.browser.name || 'N/A';
+        const browserVersion = result.browser.version || '';
+        const os = result.os.name || 'N/A';
+        const osVersion = result.os.version || '';
+        const device = result.device.type
+            ? `${result.device.vendor || ''} ${result.device.model || ''} (${result.device.type})`.trim()
+            : 'Desktop';
+
+        return {
+            browser,
+            browserVersion,
+            os,
+            osVersion,
+            device,
+        };
+    };
+
     const applyFilters = () => {
         let updatedLogs = [...logs];
 
@@ -88,11 +129,9 @@ const LogList: React.FC = () => {
             let bValue: any;
 
             if (sortConfig.key === 'user_name') {
-                // Usar 'user_name' o 'user_id' como fallback
-                aValue = a.user_name ? a.user_name.toLowerCase() : (a.user_id !== null && a.user_id !== undefined ? a.user_id.toString() : '');
-                bValue = b.user_name ? b.user_name.toLowerCase() : (b.user_id !== null && b.user_id !== undefined ? b.user_id.toString() : '');
-                aValue = aValue.toLowerCase();
-                bValue = bValue.toLowerCase();
+                // Usar 'user_name'
+                aValue = a.user_name ? a.user_name.toLowerCase() : '';
+                bValue = b.user_name ? b.user_name.toLowerCase() : '';
             } else if (sortConfig.key === 'date') {
                 // Convertir a objetos Date para comparar
                 aValue = new Date(a.date);
@@ -186,34 +225,46 @@ const LogList: React.FC = () => {
                             Fecha y Hora {sortConfig.key === 'date' ? (sortConfig.direction === 'asc' ? '↑' : '↓') : ''}
                         </th>
                         <th className="px-4 py-2 text-center">IP Address</th>
-                        <th className="px-4 py-2 text-center">User Agent</th>
+                        <th className="px-4 py-2 text-center">Navegador</th>
+                        <th className="px-4 py-2 text-center">Sistema Operativo</th>
+                        <th className="px-4 py-2 text-center">Dispositivo</th>
                     </tr>
                     </thead>
                     <tbody>
                     {filteredLogs.length > 0 ? (
-                        filteredLogs.map((log) => (
-                            <tr key={log.id} className="hover:bg-base-200">
-                                <td className="border px-4 py-2 text-center">{log.id}</td>
-                                <td className="border px-4 py-2 text-center">{log.user_name || log.user_id}</td>
-                                <td className="border px-4 py-2 text-center">{log.transaction_id}</td>
-                                <td className="border px-4 py-2 text-center">{log.description}</td>
-                                <td className="border px-4 py-2 text-center">
-                                    {new Date(log.date).toLocaleString('es-ES', {
-                                        day: 'numeric',
-                                        month: 'long',
-                                        year: 'numeric',
-                                        hour: '2-digit',
-                                        minute: '2-digit',
-                                        second: '2-digit',
-                                    })}
-                                </td>
-                                <td className="border px-4 py-2 text-center">{log.ip_address || 'N/A'}</td>
-                                <td className="border px-4 py-2 text-center">{log.user_agent || 'N/A'}</td>
-                            </tr>
-                        ))
+                        filteredLogs.map((log) => {
+                            const parsedUA = parseUserAgent(log.user_agent);
+
+                            return (
+                                <tr key={log.id} className="hover:bg-base-200">
+                                    <td className="border px-4 py-2 text-center">{log.id}</td>
+                                    <td className="border px-4 py-2 text-center">{log.user_name || 'N/A'}</td>
+                                    <td className="border px-4 py-2 text-center">{log.transaction_id}</td>
+                                    <td className="border px-4 py-2 text-center">{log.description}</td>
+                                    <td className="border px-4 py-2 text-center">
+                                        {new Date(log.date).toLocaleString('es-ES', {
+                                            day: 'numeric',
+                                            month: 'long',
+                                            year: 'numeric',
+                                            hour: '2-digit',
+                                            minute: '2-digit',
+                                            second: '2-digit',
+                                        })}
+                                    </td>
+                                    <td className="border px-4 py-2 text-center">{log.ip_address || 'N/A'}</td>
+                                    <td className="border px-4 py-2 text-center">
+                                        {parsedUA.browser} {parsedUA.browserVersion}
+                                    </td>
+                                    <td className="border px-4 py-2 text-center">
+                                        {parsedUA.os} {parsedUA.osVersion}
+                                    </td>
+                                    <td className="border px-4 py-2 text-center">{parsedUA.device}</td>
+                                </tr>
+                            );
+                        })
                     ) : (
                         <tr>
-                            <td colSpan={7} className="text-center py-4">
+                            <td colSpan={9} className="text-center py-4">
                                 No hay registros para mostrar.
                             </td>
                         </tr>

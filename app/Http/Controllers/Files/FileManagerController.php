@@ -930,7 +930,7 @@ class FileManagerController extends Controller
         $tree = $this->getDirectoryTree($rootPath);
 
         // Registrar log
-        $this->registerLog($employee->id, 'view_files_tree', "Árbol de archivos y carpetas visualizado desde $rootPath", $request);
+        //$this->registerLog($employee->id, 'view_files_tree', "Árbol de archivos y carpetas visualizado desde $rootPath", $request);
 
         return response()->json($tree);
     }
@@ -997,12 +997,12 @@ class FileManagerController extends Controller
      * Registra una acción en la tabla de logs.
      *
      * @param int $userId
-     * @param string $action Nombre de la acción (e.g., "view_files_tree")
+     * @param string $transaction_idNombre de la acción (e.g., "view_files_tree")
      * @param string $description Descripción detallada de la acción
      * @param \Illuminate\Http\Request $request
      * @return void
      */
-    private function registerLog(int $userId, string $action, string $description, Request $request): void
+    private function registerLog(int $userId, string $transaction_id, string $description, Request $request): void
     {
         // Obtener la dirección IP y el agente de usuario
         $ipAddress = $request->ip();
@@ -1011,7 +1011,7 @@ class FileManagerController extends Controller
         // Inserta el log en la base de datos
         \DB::table('logs')->insert([
             'user_id' => $userId,
-            'action' => $action, // Asegúrate de que el campo 'action' exista en tu tabla 'logs'
+            'transaction_id' => $transaction_id, // Asegúrate de que el campo 'action' exista en tu tabla 'logs'
             'description' => $description,
             'date' => now(),
             'ip_address' => $ipAddress,
