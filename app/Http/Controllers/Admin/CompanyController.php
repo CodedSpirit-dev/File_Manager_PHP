@@ -37,6 +37,7 @@ class CompanyController extends Controller
 
         return response()->json($companies);
     }
+
     /**
      * Muestra el formulario de registro de compañías.
      *
@@ -89,6 +90,9 @@ class CompanyController extends Controller
             'user_id' => $employee->id,
             'transaction_id' => 'create_company',
             'description' => "Creación de la compañía '{$company->name}'",
+            'date' => now(),
+            'ip_address' => $request->ip(),
+            'user_agent' => $request->header('User-Agent'),
         ]);
 
         return response()->json([
@@ -154,6 +158,9 @@ class CompanyController extends Controller
             'user_id' => $employee->id,
             'transaction_id' => 'update_company',
             'description' => "Actualización de la compañía de '{$oldName}' a '{$company->name}'",
+            'date' => now(),
+            'ip_address' => $request->ip(),
+            'user_agent' => $request->header('User-Agent'),
         ]);
 
         return response()->json([
@@ -197,11 +204,20 @@ class CompanyController extends Controller
             'user_id' => $employee->id,
             'transaction_id' => 'delete_company',
             'description' => "Eliminación de la compañía '{$company->name}'",
+            'date' => now(),
+            'ip_address' => request()->ip(), // Usando helper global
+            'user_agent' => request()->header('User-Agent'),
         ]);
 
         return response()->json(['message' => 'Compañía eliminada exitosamente.']);
     }
 
+    /**
+     * Obtiene los conteos de posiciones y empleados para una compañía específica.
+     *
+     * @param int $id
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function getCounts($id)
     {
         $company = Company::withCount('positions')->with(['positions' => function ($query) {

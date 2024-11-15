@@ -29,7 +29,6 @@ class PermissionSeeder extends Seeder
             ['name' => 'can_delete_users', 'description' => 'Eliminar usuarios'],
             ['name' => 'can_update_users', 'description' => 'Modificar usuarios'],
             ['name' => 'can_view_company_users', 'description' => 'Ver compañeros de la empresa'],
-            ['name' => 'can_view_all_users', 'description' => 'Ver a todos los usuarios'],
 
             // Permisos para Gestión de Archivos y Carpetas
             ['name' => 'can_view_file_explorer', 'description' => 'Ver explorador de archivos'],

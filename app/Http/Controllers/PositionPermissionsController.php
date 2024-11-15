@@ -82,9 +82,9 @@ class PositionPermissionsController extends Controller
         // Esto eliminará los permisos anteriores y asignará los nuevos
         $position->permissions()->sync($permissions);
 
-        // Obtener los nombres de los permisos asignados para la descripción
-        $permissionNames = Permission::whereIn('id', $permissions)->pluck('name')->toArray();
-        $permissionList = implode(', ', $permissionNames);
+        // Obtener las descripciones de los permisos asignados para la descripción
+        $permissionDescriptions = Permission::whereIn('id', $permissions)->pluck('description')->toArray();
+        $permissionList = implode(', ', $permissionDescriptions);
 
         // Registrar log
         $transaction_id = 'assign_permissions_position';
@@ -111,7 +111,7 @@ class PositionPermissionsController extends Controller
         $position = Position::findOrFail($position_id);
 
         // Obtener los permisos antes de desasignarlos para la descripción
-        $previousPermissions = $position->permissions()->pluck('name')->toArray();
+        $previousPermissions = $position->permissions()->pluck('description')->toArray();
         $previousPermissionList = implode(', ', $previousPermissions);
 
         // Desasignar todos los permisos

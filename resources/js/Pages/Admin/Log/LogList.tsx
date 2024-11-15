@@ -3,6 +3,8 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import LogToolbar from './LogToolbar';
+import LogDetailsModal from './LogDetailsModal';
+import { permissionDescriptions} from "@/Pages/utils/PermissionMapping";
 // @ts-ignore
 import UAParser from 'ua-parser-js';
 
@@ -15,6 +17,11 @@ interface Log {
     ip_address: string | null;
     user_agent: string | null;
     user_name: string;
+    browser?: string;
+    browserVersion?: string;
+    os?: string;
+    osVersion?: string;
+    device?: string;
 }
 
 interface ParsedUserAgent {
@@ -24,6 +31,11 @@ interface ParsedUserAgent {
     osVersion: string;
     device: string;
 }
+
+const truncateText = (text: string, maxLength: number): string => {
+    if (text.length <= maxLength) return text;
+    return text.substring(0, maxLength) + '...';
+};
 
 const LogList: React.FC = () => {
     const [logs, setLogs] = useState<Log[]>([]);
@@ -43,6 +55,10 @@ const LogList: React.FC = () => {
 
     // Opciones de filtro de transacción
     const [transactionOptions, setTransactionOptions] = useState<string[]>([]);
+
+    // State para el Modal
+    const [selectedLog, setSelectedLog] = useState<Log | null>(null);
+    const [isModalOpen, setIsModalOpen] = useState(false);
 
     useEffect(() => {
         fetchLogs();
@@ -163,6 +179,16 @@ const LogList: React.FC = () => {
         }));
     };
 
+    const openModal = (log: Log) => {
+        setSelectedLog(log);
+        setIsModalOpen(true);
+    };
+
+    const closeModal = () => {
+        setSelectedLog(null);
+        setIsModalOpen(false);
+    };
+
     if (loading) {
         return (
             <div className="flex justify-center items-center h-screen bg-base-100">
@@ -224,10 +250,7 @@ const LogList: React.FC = () => {
                         >
                             Fecha y Hora {sortConfig.key === 'date' ? (sortConfig.direction === 'asc' ? '↑' : '↓') : ''}
                         </th>
-                        <th className="px-4 py-2 text-center">IP Address</th>
-                        <th className="px-4 py-2 text-center">Navegador</th>
-                        <th className="px-4 py-2 text-center">Sistema Operativo</th>
-                        <th className="px-4 py-2 text-center">Dispositivo</th>
+                        <th className="px-4 py-2 text-center">Acciones</th>
                     </tr>
                     </thead>
                     <tbody>
@@ -240,7 +263,9 @@ const LogList: React.FC = () => {
                                     <td className="border px-4 py-2 text-center">{log.id}</td>
                                     <td className="border px-4 py-2 text-center">{log.user_name || 'N/A'}</td>
                                     <td className="border px-4 py-2 text-center">{log.transaction_id}</td>
-                                    <td className="border px-4 py-2 text-center">{log.description}</td>
+                                    <td className="border px-4 py-2 text-center" title={log.description}>
+                                        {truncateText(log.description, 80)}
+                                    </td>
                                     <td className="border px-4 py-2 text-center">
                                         {new Date(log.date).toLocaleString('es-ES', {
                                             day: 'numeric',
@@ -251,20 +276,20 @@ const LogList: React.FC = () => {
                                             second: '2-digit',
                                         })}
                                     </td>
-                                    <td className="border px-4 py-2 text-center">{log.ip_address || 'N/A'}</td>
                                     <td className="border px-4 py-2 text-center">
-                                        {parsedUA.browser} {parsedUA.browserVersion}
+                                        <button
+                                            className="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600"
+                                            onClick={() => openModal(log)}
+                                        >
+                                            Ver Detalles
+                                        </button>
                                     </td>
-                                    <td className="border px-4 py-2 text-center">
-                                        {parsedUA.os} {parsedUA.osVersion}
-                                    </td>
-                                    <td className="border px-4 py-2 text-center">{parsedUA.device}</td>
                                 </tr>
                             );
                         })
                     ) : (
                         <tr>
-                            <td colSpan={9} className="text-center py-4">
+                            <td colSpan={6} className="text-center py-4">
                                 No hay registros para mostrar.
                             </td>
                         </tr>
@@ -272,6 +297,13 @@ const LogList: React.FC = () => {
                     </tbody>
                 </table>
             </div>
+
+            {/* Modal de Detalles */}
+            <LogDetailsModal
+                log={selectedLog}
+                isOpen={isModalOpen}
+                onClose={closeModal}
+            />
         </div>
     );
 

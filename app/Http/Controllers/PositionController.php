@@ -126,7 +126,6 @@ class PositionController extends Controller
             ];
         });
 
-
         return response()->json($positions);
     }
 
@@ -147,6 +146,10 @@ class PositionController extends Controller
             'name' => 'required|string|max:255',
             'company_id' => 'required|integer|exists:companies,id',
             'hierarchy_level' => 'required|integer|min:0'
+        ], [
+            'name.unique' => 'La compañía ya tiene un puesto con el mismo nombre.',
+            'company_id.exists' => 'La compañía especificada no existe.',
+            'hierarchy_level.min' => 'El nivel de jerarquía debe ser al menos 0.',
         ]);
 
         if ($validator->fails()) {
@@ -210,9 +213,15 @@ class PositionController extends Controller
             return response()->json(['message' => 'Posición no encontrada.'], 404);
         }
 
+        // Validar solo los campos presentes
         $validator = Validator::make($request->all(), [
-            'name' => 'required|string|max:255',
-            'hierarchy_level' => 'required|integer|min:0' // Si deseas permitir actualizar el nivel de jerarquía
+            'name' => 'sometimes|required|string|max:255',
+            'company_id' => 'sometimes|required|integer|exists:companies,id',
+            'hierarchy_level' => 'sometimes|required|integer|min:0'
+        ], [
+            'name.unique' => 'La compañía ya tiene un puesto con el mismo nombre.',
+            'company_id.exists' => 'La compañía especificada no existe.',
+            'hierarchy_level.min' => 'El nivel de jerarquía debe ser al menos 0.',
         ]);
 
         if ($validator->fails()) {
@@ -222,22 +231,30 @@ class PositionController extends Controller
             ], 422);
         }
 
-        $positionInCompany = Position::where('name', $request->name)
-            ->where('company_id', $position->company_id)
-            ->where('id', '!=', $position->id)
-            ->first();
+        // Si se proporciona 'name' o 'company_id', verificar la unicidad del nombre dentro de la compañía correspondiente
+        if ($request->has('name') || $request->has('company_id')) {
+            $newName = $request->input('name', $position->name);
+            $newCompanyId = $request->input('company_id', $position->company_id);
 
-        if ($positionInCompany) {
-            return response()->json([
-                'message' => 'La compañía ya tiene un puesto con el mismo nombre'
-            ], 480);
+            $positionInCompany = Position::where('name', $newName)
+                ->where('company_id', $newCompanyId)
+                ->where('id', '!=', $position->id)
+                ->first();
+
+            if ($positionInCompany) {
+                return response()->json([
+                    'message' => 'La compañía ya tiene un puesto con el mismo nombre.'
+                ], 480);
+            }
         }
 
-        $oldName = $position->name;
-        $oldHierarchyLevel = $position->hierarchy_level;
+        // Guardar los cambios solamente en los campos proporcionados
+        $fieldsToUpdate = $request->only(['name', 'company_id', 'hierarchy_level']);
 
-        $position->name = $request->name;
-        $position->hierarchy_level = $request->hierarchy_level;
+        foreach ($fieldsToUpdate as $key => $value) {
+            $position->$key = $value;
+        }
+
         $position->save();
 
         $position->load('company');
@@ -245,7 +262,7 @@ class PositionController extends Controller
         // Registrar log
         $employee = Auth::guard('employee')->user();
         $transaction_id = 'update_position';
-        $description = "Posición actualizada de '$oldName' a '{$position->name}' en la empresa {$position->company->name}";
+        $description = "Posición actualizada de '{$position->getOriginal('name')}' a '{$position->name}' en la empresa {$position->company->name}";
         $this->registerLog($employee->id, $transaction_id, $description, $request);
 
         return response()->json([
@@ -316,7 +333,6 @@ class PositionController extends Controller
         }
 
         $employeesCount = Employee::where('position_id', $id)->count();
-
 
         return response()->json(['employees_count' => $employeesCount]);
     }
