@@ -170,7 +170,7 @@ const FileManager: React.FC = () => {
     // Estados para manejar conflictos
     const [conflictFiles, setConflictFiles] = useState<string[]>([]);
     const [isConflictModalOpen, setIsConflictModalOpen] = useState<boolean>(false);
-    const [conflictAction, setConflictAction] = useState<'upload' | 'copy' | 'move' | null>(null);
+    const [conflictAction, setConflictAction] = useState<'upload' | 'copy' | 'move' | 'uploadDirectory' | null>(null);
     const [filesToUpload, setFilesToUpload] = useState<FileList | null>(null);
 
     useEffect(() => {
