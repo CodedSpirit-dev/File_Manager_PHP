@@ -65,10 +65,9 @@ import {
     deleteFolder,
     downloadFile,
     renameItem,
-    copyFile,
-    moveFile,
+    copyItems,
+    moveItems,
     downloadFolder,
-    copyFiles,
 } from './fileManagerApi';
 import { usePage } from '@inertiajs/react';
 import Breadcrumb from "@/Pages/FileSystem/Components/Breadcrumb";
@@ -114,11 +113,11 @@ const FileManager: React.FC = () => {
 
     // Estados para manejar la acción de copiar
     const [isCopying, setIsCopying] = useState<boolean>(false);
-    const [copySource, setCopySource] = useState<{ filenames: string[]; path: string } | null>(null);
+    const [copySource, setCopySource] = useState<{ items: { name: string; type: 'file' | 'folder' }[]; path: string } | null>(null);
 
     // Estados para manejar la acción de mover
     const [isMoving, setIsMoving] = useState<boolean>(false);
-    const [moveSource, setMoveSource] = useState<{ filenames: string[]; path: string } | null>(null);
+    const [moveSource, setMoveSource] = useState<{ items: { name: string; type: 'file' | 'folder' }[]; path: string } | null>(null);
 
     // Estados para el Modal de Estado
     const [modalOpen, setModalOpen] = useState<boolean>(false);
@@ -168,6 +167,12 @@ const FileManager: React.FC = () => {
         completed: number;
     } | null>(null);
 
+    // Estados para manejar conflictos
+    const [conflictFiles, setConflictFiles] = useState<string[]>([]);
+    const [isConflictModalOpen, setIsConflictModalOpen] = useState<boolean>(false);
+    const [conflictAction, setConflictAction] = useState<'upload' | 'copy' | 'move' | null>(null);
+    const [filesToUpload, setFilesToUpload] = useState<FileList | null>(null);
+
     useEffect(() => {
         const initializeData = async () => {
             try {
@@ -212,7 +217,6 @@ const FileManager: React.FC = () => {
             console.error('Error al obtener jerarquía y empresa:', error);
         }
     };
-
 
     /**
      * Función para obtener el árbol completo de archivos y carpetas.
@@ -438,7 +442,6 @@ const FileManager: React.FC = () => {
         }
     };
 
-
     // Función auxiliar para mostrar el modal de estado
     const showModal = (title: string, message: string, type: 'success' | 'error') => {
         setModalTitle(title);
@@ -505,43 +508,58 @@ const FileManager: React.FC = () => {
         folderInput.click();
     };
 
-
-    // Función para subir un archivo con progreso
+    // Función para subir un archivo con progreso y manejo de conflictos
     const handleUploadFileAction = async () => {
         const fileInput = document.createElement('input');
         fileInput.type = 'file';
         fileInput.multiple = true; // Permitir seleccionar varios archivos
         fileInput.onchange = async () => {
             if (fileInput.files && fileInput.files.length > 0) {
-                const totalFiles = fileInput.files.length;
-                let completedFiles = 0;
+                const existingItemNames = items.map(item => item.name);
+                const uploadFileNames = Array.from(fileInput.files).map(file => file.name);
+                const conflictingFiles = uploadFileNames.filter(name => existingItemNames.includes(name));
 
-                // Iniciar progreso de subida
-                setUploadProgress({ total: totalFiles, completed: 0 });
-
-                try {
-                    for (const file of Array.from(fileInput.files)) {
-                        await uploadFile(file, currentPath); // Llamar a la función de subida para cada archivo
-                        completedFiles += 1;
-                        setUploadProgress({ total: totalFiles, completed: completedFiles });
-                    }
-                    showModal('Éxito', 'Archivos subidos exitosamente.', 'success');
-                    fetchFilesTree(); // Refrescar el árbol
-                } catch (error: any) {
-                    // Verificar si el error es una respuesta de Laravel por límite de tamaño
-                    if (error.response?.data?.exception === "Illuminate\\Http\\Exceptions\\PostTooLargeException") {
-                        showModal('Error', 'Uno de los archivos supera el límite de 10MB.', 'error');
-                    } else {
-                        showModal('Error', 'Error al subir uno o más archivos.', 'error');
-                    }
-                } finally {
-                    setUploadProgress(null); // Finalizar el progreso de subida
+                if (conflictingFiles.length > 0) {
+                    // Hay conflictos
+                    setConflictFiles(conflictingFiles);
+                    setFilesToUpload(fileInput.files); // Guardar los archivos para subir después
+                    setConflictAction('upload');
+                    setIsConflictModalOpen(true);
+                } else {
+                    // No hay conflictos, proceder con la subida
+                    await uploadFiles(Array.from(fileInput.files));
                 }
             }
         };
         fileInput.click();
     };
 
+    // Función para manejar la subida de archivos con opción de sobrescribir
+    const uploadFiles = async (files: File[], overwrite: boolean = false) => {
+        const totalFiles = files.length;
+        let completedFiles = 0;
+
+        // Iniciar progreso de subida
+        setUploadProgress({ total: totalFiles, completed: 0 });
+
+        try {
+            for (const file of files) {
+                await uploadFile(file, currentPath, overwrite); // Modificar uploadFile para aceptar overwrite
+                completedFiles += 1;
+                setUploadProgress({ total: totalFiles, completed: completedFiles });
+            }
+            showModal('Éxito', 'Archivos subidos exitosamente.', 'success');
+            fetchFilesTree(); // Refrescar el árbol
+        } catch (error: any) {
+            if (error.response?.data?.exception === "Illuminate\\Http\\Exceptions\\PostTooLargeException") {
+                showModal('Error', 'Uno de los archivos supera el límite de 10MB.', 'error');
+            } else {
+                showModal('Error', 'Error al subir uno o más archivos.', 'error');
+            }
+        } finally {
+            setUploadProgress(null); // Finalizar el progreso de subida
+        }
+    };
 
     const handleDownloadAction = async () => {
         if (selectedItems.length > 0) {
@@ -620,55 +638,82 @@ const FileManager: React.FC = () => {
 
     const handleCopy = async () => {
         if (selectedItems.length > 0) {
-            // Permitir copiar archivos y carpetas
-            setCopySource({ filenames: selectedItems.map(path => path.split('/').pop() || path), path: currentPath });
+            // Obtener los elementos seleccionados con su nombre y tipo
+            const itemsToCopy = selectedItems.map(path => {
+                const item = items.find(i => i.path === path);
+                return item ? { name: item.name, type: item.type } : null;
+            }).filter(Boolean) as { name: string; type: 'file' | 'folder' }[];
+
+            setCopySource({ items: itemsToCopy, path: currentPath });
             setIsCopying(true);
         }
     };
 
     const handleConfirmCopy = async () => {
         if (copySource) {
-            const { filenames, path } = copySource;
-            const totalFiles = filenames.length;
-            let completedFiles = 0;
+            const { items: itemsToCopy, path } = copySource;
 
-            // Iniciar el seguimiento del progreso
-            setOperationProgress({
-                type: 'copy',
-                total: totalFiles,
-                completed: completedFiles,
-            });
+            // Verificar conflictos
+            const existingItemNames = items.map(item => item.name);
+            const conflictingItems = itemsToCopy.filter(item => existingItemNames.includes(item.name));
 
-            try {
-                await copyFiles(filenames, path, currentPath);
-                completedFiles = totalFiles;
-                setOperationProgress({
-                    type: 'copy',
-                    total: totalFiles,
-                    completed: completedFiles,
-                });
-
-                showModal('Éxito', 'Archivo(s) copiado(s) exitosamente.', 'success');
-                fetchFilesTree(); // Refrescar el árbol
-                setIsCopying(false);
-                setCopySource(null);
-                setSelectedItems([]); // Deseleccionar los elementos copiados
-            } catch (error: any) {
-                if (error.response && error.response.status === 403) {
-                    showModal('Error', 'No tienes permiso para copiar uno o más archivos.', 'error');
-                } else if (error.response && error.response.data.error) {
-                    showModal('Error', error.response.data.error, 'error');
-                } else {
-                    showModal('Error', 'Error al copiar uno o más archivos.', 'error');
-                }
-                console.error(error);
-            } finally {
-                // Finalizar el seguimiento del progreso
-                setOperationProgress(null);
+            if (conflictingItems.length > 0) {
+                // Hay conflictos
+                setConflictFiles(conflictingItems.map(item => item.name));
+                setConflictAction('copy');
+                setIsConflictModalOpen(true);
+            } else {
+                // No hay conflictos, proceder con la copia
+                await copyFilesAction(itemsToCopy, path, currentPath);
             }
         }
     };
 
+    // Función para manejar la copia de elementos con opción de sobrescribir
+    const copyFilesAction = async (
+        itemsToCopy: { name: string; type: 'file' | 'folder' }[],
+        sourcePath: string,
+        destPath: string,
+        overwrite: boolean = false
+    ) => {
+        const totalItems = itemsToCopy.length;
+        let completedItems = 0;
+
+        // Iniciar el seguimiento del progreso
+        setOperationProgress({
+            type: 'copy',
+            total: totalItems,
+            completed: completedItems,
+        });
+
+        try {
+            await copyItems(itemsToCopy, sourcePath, destPath, overwrite); // Usar copyItems
+            completedItems = totalItems;
+            setOperationProgress({
+                type: 'copy',
+                total: totalItems,
+                completed: completedItems,
+            });
+
+            showModal('Éxito', 'Elemento(s) copiado(s) exitosamente.', 'success');
+            fetchFilesTree(); // Refrescar el árbol
+            setIsCopying(false);
+            setCopySource(null);
+            setSelectedItems([]); // Deseleccionar los elementos copiados
+        } catch (error: any) {
+            if (error.response && error.response.status === 403) {
+                showModal('Error', 'No tienes permiso para copiar uno o más elementos.', 'error');
+            } else if (error.response && error.response.data.error) {
+                showModal('Error', error.response.data.error, 'error');
+            } else {
+                showModal('Error', 'Error al copiar uno o más elementos.', 'error');
+            }
+            console.error(error);
+        } finally {
+            // Finalizar el seguimiento del progreso
+            setOperationProgress(null);
+        }
+    };
 
     const handleCancelCopy = () => {
         setIsCopying(false);
@@ -677,61 +722,118 @@ const FileManager: React.FC = () => {
 
     const handleMove = async () => {
         if (selectedItems.length > 0) {
-            setMoveSource({ filenames: selectedItems.map(path => path.split('/').pop() || path), path: currentPath });
+            // Obtener los elementos seleccionados con su nombre y tipo
+            const itemsToMove = selectedItems.map(path => {
+                const item = items.find(i => i.path === path);
+                return item ? { name: item.name, type: item.type } : null;
+            }).filter(Boolean) as { name: string; type: 'file' | 'folder' }[];
+
+            setMoveSource({ items: itemsToMove, path: currentPath });
             setIsMoving(true);
         }
     };
 
     const handleConfirmMove = async () => {
         if (moveSource) {
-            const { filenames, path } = moveSource;
-            const totalFiles = filenames.length;
-            let completedFiles = 0;
+            const { items: itemsToMove, path } = moveSource;
 
-            // Iniciar el seguimiento del progreso
+            // Verificar conflictos
+            const existingItemNames = items.map(item => item.name);
+            const conflictingItems = itemsToMove.filter(item => existingItemNames.includes(item.name));
+
+            if (conflictingItems.length > 0) {
+                // Hay conflictos
+                setConflictFiles(conflictingItems.map(item => item.name));
+                setConflictAction('move');
+                setIsConflictModalOpen(true);
+            } else {
+                // No hay conflictos, proceder con el movimiento
+                await moveFilesAction(itemsToMove, path, currentPath);
+            }
+        }
+    };
+
+    // Función para manejar el movimiento de elementos con opción de sobrescribir
+    const moveFilesAction = async (
+        itemsToMove: { name: string; type: 'file' | 'folder' }[],
+        sourcePath: string,
+        destPath: string,
+        overwrite: boolean = false
+    ) => {
+        const totalItems = itemsToMove.length;
+        let completedItems = 0;
+
+        // Iniciar el seguimiento del progreso
+        setOperationProgress({
+            type: 'move',
+            total: totalItems,
+            completed: completedItems,
+        });
+
+        try {
+            await moveItems(itemsToMove, sourcePath, destPath, overwrite); // Usar moveItems
+            completedItems = totalItems;
             setOperationProgress({
                 type: 'move',
-                total: totalFiles,
-                completed: completedFiles,
+                total: totalItems,
+                completed: completedItems,
             });
 
-            try {
-                // Crear un array de promesas
-                const movePromises = filenames.map(async (filename) => {
-                    await moveFile(filename, path, currentPath);
-                    completedFiles += 1;
-                    setOperationProgress({
-                        type: 'move',
-                        total: totalFiles,
-                        completed: completedFiles,
-                    });
-                });
-
-                // Ejecutar todas las promesas de movimiento en paralelo
-                await Promise.all(movePromises);
-
-                showModal('Éxito', 'Archivo(s) movido(s) exitosamente.', 'success');
-                fetchFilesTree(); // Refrescar el árbol
-                setIsMoving(false);
-                setMoveSource(null);
-                setSelectedItems([]); // Deseleccionar los elementos movidos
-            } catch (error: any) {
-                if (error.response && error.response.status === 403) {
-                    showModal('Error', 'No tienes permiso para mover uno o más archivos.', 'error');
-                } else {
-                    showModal('Error', 'Error al mover uno o más archivos.', 'error');
-                }
-                console.error(error);
-            } finally {
-                // Finalizar el seguimiento del progreso
-                setOperationProgress(null);
+            showModal('Éxito', 'Elemento(s) movido(s) exitosamente.', 'success');
+            fetchFilesTree(); // Refrescar el árbol
+            setIsMoving(false);
+            setMoveSource(null);
+            setSelectedItems([]); // Deseleccionar los elementos movidos
+        } catch (error: any) {
+            if (error.response && error.response.status === 403) {
+                showModal('Error', 'No tienes permiso para mover uno o más elementos.', 'error');
+            } else {
+                showModal('Error', 'Error al mover uno o más elementos.', 'error');
             }
+            console.error(error);
+        } finally {
+            // Finalizar el seguimiento del progreso
+            setOperationProgress(null);
         }
     };
 
     const handleCancelMove = () => {
         setIsMoving(false);
         setMoveSource(null);
+    };
+
+    // Funciones para manejar la confirmación y cancelación de sobrescritura
+    const handleConfirmOverwrite = async () => {
+        if (conflictAction === 'upload' && filesToUpload) {
+            await uploadFiles(Array.from(filesToUpload), true); // overwrite = true
+        } else if (conflictAction === 'copy' && copySource) {
+            const { items: itemsToCopy, path } = copySource;
+            await copyFilesAction(itemsToCopy, path, currentPath, true); // overwrite = true
+        } else if (conflictAction === 'move' && moveSource) {
+            const { items: itemsToMove, path } = moveSource;
+            await moveFilesAction(itemsToMove, path, currentPath, true); // overwrite = true
+        }
+        // Restablecer estados de conflicto
+        setIsConflictModalOpen(false);
+        setConflictFiles([]);
+        setConflictAction(null);
+        setFilesToUpload(null);
+    };
+
+    const handleCancelOverwrite = () => {
+        // Restablecer estados de conflicto
+        setIsConflictModalOpen(false);
+        setConflictFiles([]);
+        setConflictAction(null);
+        setFilesToUpload(null);
+        // También cancelar copia o movimiento si es necesario
+        if (conflictAction === 'copy') {
+            setIsCopying(false);
+            setCopySource(null);
+        } else if (conflictAction === 'move') {
+            setIsMoving(false);
+            setMoveSource(null);
+        }
     };
 
     const handleRename = () => {
@@ -852,8 +954,6 @@ const FileManager: React.FC = () => {
         setItems(sortedItems);
     };
 
-
-
     // Manejar el evento de tecla ESC para cancelar la copia, mover y renombrar
     const handleKeyDown = useCallback((event: KeyboardEvent) => {
         if (event.key === 'Escape') {
@@ -900,15 +1000,7 @@ const FileManager: React.FC = () => {
     // Memorizar el color de fondo para optimizar el rendimiento
     const backgroundColorClass = useMemo(() => getBackgroundColorClass(), [companyName]);
 
-    // Mapeo de nombres de empresas a clases de Tailwind CSS
-    const companyBackgroundClasses: { [key: string]: string } = {
-        'Dicatho': 'bg-dicatho',
-        'Pachinos': 'bg-pachinos',
-        'CEPAC': 'bg-cepac',
-        'VSP': 'bg-vsp',
-        'La Penitencia': 'bg-penitencia',
-    };
-// Mapeo de nombres de empresas a clases de Tailwind CSS y color de texto
+    // Mapeo de nombres de empresas a clases de Tailwind CSS y color de texto
     const companyStyles: {
         [key: string]: {
             backgroundClass: string;
@@ -922,15 +1014,14 @@ const FileManager: React.FC = () => {
         'La Penitencia': { backgroundClass: 'bg-penitencia', textColor: 'text-black' },
     };
 
-
-// Función para extraer el nombre de la empresa desde el path
+    // Función para extraer el nombre de la empresa desde el path
     const getCompanyNameFromPath = (path: string): string | null => {
         const segments = path.split('/');
         // Suponiendo que el nombre de la empresa está en el segundo segmento, por ejemplo, 'public/Pachinos'
         return segments.length > 1 ? segments[1] : null;
     };
 
-// Función para obtener las clases de fondo y texto para un elemento
+    // Función para obtener las clases de fondo y texto para un elemento
     const getItemStyles = (item: Item): { backgroundClass: string; textColor: string } => {
         const companyName = getCompanyNameFromPath(item.path);
         if (companyName && companyStyles[companyName]) {
@@ -938,7 +1029,6 @@ const FileManager: React.FC = () => {
         }
         return { backgroundClass: 'bg-white', textColor: 'text-black' }; // Valores por defecto
     };
-
 
     return (
         <>
@@ -970,9 +1060,9 @@ const FileManager: React.FC = () => {
                     onMoveHere={handleConfirmMove}
                     onCancelMove={handleCancelMove}
                     isMoving={isMoving}
-                    onBack={handleGoBack} // Pasar `onBack`
-                    canGoBack={canGoBack} // Pasar `canGoBack` actualizado
-                    selectedItemsCount={selectedItems.length} // Pasar el conteo de elementos seleccionados
+                    onBack={handleGoBack}
+                    canGoBack={canGoBack}
+                    selectedItemsCount={selectedItems.length}
                 />
 
                 {/* Modal de progreso de subida */}
@@ -1008,7 +1098,6 @@ const FileManager: React.FC = () => {
                         </div>
                     </Modal>
                 )}
-
 
                 {/* Modal para crear una nueva carpeta */}
                 <Modal
@@ -1098,18 +1187,18 @@ const FileManager: React.FC = () => {
                                         onClick={(e) => handleSelectItem(item.path, e)}
                                         onDoubleClick={() => handleDoubleClickItem(item)}
                                     >
-                        <span className={`text-4xl ${isSelected ? 'text-black' : textColor}`}>
-                            {item.type === 'folder' ? <FaFolder /> : getFileIcon(item.name)}
-                        </span>
+                                        <span className={`text-4xl ${isSelected ? 'text-black' : textColor}`}>
+                                            {item.type === 'folder' ? <FaFolder /> : getFileIcon(item.name)}
+                                        </span>
                                         <span className={`mt-2 text-center truncate w-full ${isSelected ? 'text-black' : textColor}`}>
-                            {item.name}
-                        </span>
+                                            {item.name}
+                                        </span>
 
                                         {/* Indicador de Selección */}
                                         {isSelected && (
                                             <span className="absolute top-2 right-2 bg-blue-500 text-white rounded-full w-5 h-5 flex items-center justify-center">
-                                ✓
-                            </span>
+                                                ✓
+                                            </span>
                                         )}
                                     </li>
                                 );
@@ -1117,45 +1206,63 @@ const FileManager: React.FC = () => {
                         </ul>
                     )}
                 </div>
-        </div>
+            </div>
 
-    {/* Modal de Estado (Éxito/Error) */
-    }
-    <Modal
-        isOpen={modalOpen}
-        title={modalTitle}
-        onClose={() => setModalOpen(false)}
-    >
-        <p>{modalMessage}</p>
-        <div className="flex justify-end mt-4">
-            <button className="btn" onClick={() => setModalOpen(false)}>Aceptar</button>
-        </div>
-    </Modal>
-
-    {/* Modal de Progreso (Copiar/Moviendo) */
-    }
-    {
-        operationProgress && (
+            {/* Modal de Estado (Éxito/Error) */}
             <Modal
-                isOpen={true}
-                title={operationProgress.type === 'copy' ? 'Copiando Archivos' : 'Moviendo Archivos'}
-                onClose={() => { /* No permitir cerrar */
-                }}
-                canClose={false} // No permitir cerrar durante la operación
+                isOpen={modalOpen}
+                title={modalTitle}
+                onClose={() => setModalOpen(false)}
             >
-                <div className="flex flex-col items-center space-y-4">
-                    <span className="loading loading-spinner loading-lg text-primary"></span>
-                    <p>
-                        {operationProgress.type === 'copy' ? 'Copiando' : 'Moviendo'} {operationProgress.completed} de {operationProgress.total} archivos.
-                    </p>
+                <p>{modalMessage}</p>
+                <div className="flex justify-end mt-4">
+                    <button className="btn" onClick={() => setModalOpen(false)}>Aceptar</button>
                 </div>
             </Modal>
-        )
-    }
-</>
-)
-    ;
 
+            {/* Modal de Progreso (Copiando/Moviendo) */}
+            {operationProgress && (
+                <Modal
+                    isOpen={true}
+                    title={operationProgress.type === 'copy' ? 'Copiando Elementos' : 'Moviendo Elementos'}
+                    onClose={() => { /* No permitir cerrar */ }}
+                    canClose={false} // No permitir cerrar durante la operación
+                >
+                    <div className="flex flex-col items-center space-y-4">
+                        <span className="loading loading-spinner loading-lg text-primary"></span>
+                        <p>
+                            {operationProgress.type === 'copy' ? 'Copiando' : 'Moviendo'} {operationProgress.completed} de {operationProgress.total} elementos.
+                        </p>
+                    </div>
+                </Modal>
+            )}
+
+            {/* Modal de Conflictos */}
+            {isConflictModalOpen && (
+                <Modal
+                    isOpen={isConflictModalOpen}
+                    title="Conflicto de Elementos"
+                    onClose={handleCancelOverwrite}
+                >
+                    <p>Los siguientes elementos ya existen en el directorio destino:</p>
+                    <ul className="list-disc list-inside">
+                        {conflictFiles.map((fileName) => (
+                            <li key={fileName}>{fileName}</li>
+                        ))}
+                    </ul>
+                    <p>¿Deseas sobrescribirlos?</p>
+                    <div className="flex justify-end mt-4 space-x-2">
+                        <button className="btn btn-secondary" onClick={handleCancelOverwrite}>
+                            Cancelar
+                        </button>
+                        <button className="btn btn-primary" onClick={handleConfirmOverwrite}>
+                            Sobrescribir
+                        </button>
+                    </div>
+                </Modal>
+            )}
+        </>
+    );
 };
 
 export default FileManager;

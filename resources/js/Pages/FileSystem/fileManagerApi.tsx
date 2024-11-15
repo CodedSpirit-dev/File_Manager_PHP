@@ -28,13 +28,15 @@ export const getFiles = async (path: string): Promise<any> => {
  * Subir un archivo.
  * @param {File} file - Archivo a subir.
  * @param {string} path - Ruta donde se subirá el archivo.
+ * @param {boolean} overwrite - Si se debe sobrescribir el archivo si ya existe.
  * @returns {Promise<Object>} - Respuesta del servidor.
  */
-export const uploadFile = async (file: File, path: string): Promise<any> => {
+export const uploadFile = async (file: File, path: string, overwrite: boolean = false): Promise<any> => {
     try {
         const formData = new FormData();
         formData.append('file', file);
-        formData.append('path', path); // Agregar el campo path
+        formData.append('path', path);
+        formData.append('overwrite', overwrite ? '1' : '0');
 
         const response = await axios.post(`${FILEMANAGER_PREFIX}/files/upload`, formData, {
             headers: {
@@ -85,8 +87,9 @@ export const uploadDirectory = async (files: FileList, path: string): Promise<an
  */
 export const deleteFile = async (filename: string, path: string): Promise<any> => {
     try {
-        const response = await axios.delete(`${FILEMANAGER_PREFIX}/files/delete`, {
-            data: { filename, path }
+        const response = await axios.post(`${FILEMANAGER_PREFIX}/files/delete`, {
+            filename,
+            path
         });
         return response.data;
     } catch (error) {
@@ -103,8 +106,9 @@ export const deleteFile = async (filename: string, path: string): Promise<any> =
  */
 export const deleteFolder = async (folderName: string, path: string): Promise<any> => {
     try {
-        const response = await axios.delete(`${FILEMANAGER_PREFIX}/folders/delete`, {
-            data: { folder_name: folderName, path }
+        const response = await axios.post(`${FILEMANAGER_PREFIX}/folders/delete`, {
+            folder_name: folderName,
+            path
         });
         return response.data;
     } catch (error) {
@@ -161,64 +165,57 @@ export const renameItem = async (data: {
 };
 
 /**
- * Copiar un archivo a otra carpeta.
- * @param {string} filename - Nombre del archivo a copiar.
- * @param {string} sourcePath - Ruta actual del archivo.
- * @param {string} targetPath - Ruta de destino donde se copiará el archivo.
+ * Copiar múltiples elementos (archivos y carpetas) a otra carpeta.
+ * @param {Array} items - Lista de elementos a copiar.
+ * @param {string} sourcePath - Ruta actual de los elementos.
+ * @param {string} targetPath - Ruta de destino donde se copiarán los elementos.
+ * @param {boolean} overwrite - Si se debe sobrescribir si ya existen.
  * @returns {Promise<Object>} - Respuesta del servidor.
  */
-export const copyFile = async (filename: string, sourcePath: string, targetPath: string): Promise<any> => {
+export const copyItems = async (
+    items: { name: string; type: string }[],
+    sourcePath: string,
+    targetPath: string,
+    overwrite: boolean = false
+): Promise<any> => {
     try {
-        const response = await axios.post(`${FILEMANAGER_PREFIX}/files/copy-file`, {
-            filename,
+        const response = await axios.post(`${FILEMANAGER_PREFIX}/items/copy`, {
+            items,
             source_path: sourcePath,
-            target_path: targetPath
+            target_path: targetPath,
+            overwrite: overwrite ? true : false
         });
         return response.data;
     } catch (error) {
-        console.error('Error al copiar archivo:', error);
+        console.error('Error al copiar elementos:', error);
         throw error;
     }
 };
 
 /**
- * Copiar múltiples archivos a otra carpeta.
- * @param {string[]} filenames - Nombres de los archivos a copiar.
- * @param {string} sourcePath - Ruta actual de los archivos.
- * @param {string} targetPath - Ruta de destino donde se copiarán los archivos.
+ * Mover múltiples elementos (archivos y carpetas) a otra carpeta.
+ * @param {Array} items - Lista de elementos a mover.
+ * @param {string} sourcePath - Ruta actual de los elementos.
+ * @param {string} targetPath - Ruta de destino donde se moverán los elementos.
+ * @param {boolean} overwrite - Si se debe sobrescribir si ya existen.
  * @returns {Promise<Object>} - Respuesta del servidor.
  */
-export const copyFiles = async (filenames: string[], sourcePath: string, targetPath: string): Promise<any> => {
+export const moveItems = async (
+    items: { name: string; type: string }[],
+    sourcePath: string,
+    targetPath: string,
+    overwrite: boolean = false
+): Promise<any> => {
     try {
-        const response = await axios.post(`${FILEMANAGER_PREFIX}/files/copy-files`, {
-            filenames,
+        const response = await axios.post(`${FILEMANAGER_PREFIX}/items/move`, {
+            items,
             source_path: sourcePath,
-            target_path: targetPath
+            target_path: targetPath,
+            overwrite: overwrite ? true : false
         });
         return response.data;
     } catch (error) {
-        console.error('Error al copiar archivos:', error);
-        throw error;
-    }
-};
-
-/**
- * Mover un archivo a otra carpeta.
- * @param {string} filename - Nombre del archivo a mover.
- * @param {string} sourcePath - Ruta actual del archivo.
- * @param {string} targetPath - Ruta de destino donde se moverá el archivo.
- * @returns {Promise<Object>} - Respuesta del servidor.
- */
-export const moveFile = async (filename: string, sourcePath: string, targetPath: string): Promise<any> => {
-    try {
-        const response = await axios.post(`${FILEMANAGER_PREFIX}/files/move-file`, {
-            filename,
-            source_path: sourcePath,
-            target_path: targetPath
-        });
-        return response.data;
-    } catch (error) {
-        console.error('Error al mover archivo:', error);
+        console.error('Error al mover elementos:', error);
         throw error;
     }
 };
@@ -316,6 +313,7 @@ export const downloadFile = async (filename: string, path: string): Promise<Blob
         throw error;
     }
 };
+
 /**
  * Obtener toda la estructura de archivos y carpetas.
  * @returns {Promise<Object>} - Estructura de archivos y carpetas.

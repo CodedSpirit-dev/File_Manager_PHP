@@ -135,9 +135,6 @@ class FileManagerController extends Controller
         ], 200);
     }
 
-
-
-
     /**
      * Muestra la lista de carpetas y archivos en una ruta específica.
      */
@@ -194,6 +191,7 @@ class FileManagerController extends Controller
         $validator = Validator::make($request->all(), [
             'file' => 'required|file|max:10240',
             'path' => 'required|string',
+            'overwrite' => 'nullable|boolean',
         ]);
 
         if ($validator->fails()) {
@@ -201,6 +199,7 @@ class FileManagerController extends Controller
         }
 
         $path = $this->normalizePath($request->input('path'));
+        $overwrite = $request->input('overwrite', false);
 
         if (!$this->isValidPath($path)) {
             return response()->json(['error' => 'Ruta inválida.'], 400);
@@ -209,7 +208,18 @@ class FileManagerController extends Controller
         if ($request->hasFile('file')) {
             $file = $request->file('file');
             $originalName = $file->getClientOriginalName();
-            $filePath = $file->storeAs($path, $originalName, 'local');
+            $filePath = "$path/$originalName";
+
+            if (!$overwrite && Storage::disk('local')->exists($filePath)) {
+                return response()->json(['error' => "El archivo '$originalName' ya existe."], 400);
+            }
+
+            // Si overwrite es true y el archivo existe, eliminarlo
+            if ($overwrite && Storage::disk('local')->exists($filePath)) {
+                Storage::disk('local')->delete($filePath);
+            }
+
+            $file->storeAs($path, $originalName, 'local');
 
             // Registrar log
             $this->registerLog($employee->id, 'upload_file', "Archivo subido: $originalName a $path", $request);
@@ -219,6 +229,7 @@ class FileManagerController extends Controller
 
         return response()->json(['error' => 'No se proporcionó ningún archivo.'], 400);
     }
+
 
     /**
      * Sube una carpeta como un directorio.
@@ -618,6 +629,161 @@ class FileManagerController extends Controller
     }
 
     /**
+     * Copia múltiples elementos (archivos y carpetas) a otra carpeta.
+     */
+    public function copyItems(Request $request)
+    {
+        $employee = Auth::guard('employee')->user();
+
+        if (!$this->hasPermission('can_copy_files')) {
+            return response()->json(['error' => 'No tienes permiso para copiar archivos o carpetas.'], 403);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'items' => 'required|array',
+            'items.*.name' => 'required|string',
+            'items.*.type' => 'required|in:file,folder',
+            'source_path' => 'required|string',
+            'target_path' => 'required|string',
+            'overwrite' => 'nullable|boolean',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        $items = $request->input('items');
+        $sourcePath = $this->normalizePath($request->input('source_path'));
+        $targetPath = $this->normalizePath($request->input('target_path'));
+        $overwrite = $request->input('overwrite', false);
+
+        if (!$this->isValidPath($sourcePath) || !$this->isValidPath($targetPath)) {
+            return response()->json(['error' => 'Ruta inválida.'], 400);
+        }
+
+        $errors = [];
+        foreach ($items as $item) {
+            $itemName = $item['name'];
+            $itemType = $item['type'];
+            $sourceItemPath = "$sourcePath/$itemName";
+            $targetItemPath = "$targetPath/$itemName";
+
+            if (!Storage::disk('local')->exists($sourceItemPath)) {
+                $errors[] = "El elemento original $itemName no existe.";
+                continue;
+            }
+
+            if (Storage::disk('local')->exists($targetItemPath)) {
+                if ($overwrite) {
+                    if ($itemType === 'file') {
+                        Storage::disk('local')->delete($targetItemPath);
+                    } else {
+                        Storage::disk('local')->deleteDirectory($targetItemPath);
+                    }
+                } else {
+                    $errors[] = "Ya existe un elemento con el mismo nombre $itemName en la carpeta de destino.";
+                    continue;
+                }
+            }
+
+            if ($itemType === 'file') {
+                Storage::disk('local')->copy($sourceItemPath, $targetItemPath);
+            } else {
+                $this->copyFolder($sourceItemPath, $targetItemPath);
+            }
+
+            // Registrar log por cada elemento copiado
+            $transactionId = $itemType === 'file' ? 'copy_file' : 'copy_folder';
+            $description = "Elemento copiado: $itemName de $sourcePath a $targetPath";
+            $this->registerLog($employee->id, $transactionId, $description, $request);
+        }
+
+        if (!empty($errors)) {
+            return response()->json(['errors' => $errors], 400);
+        }
+
+        return response()->json(['message' => 'Elementos copiados exitosamente.']);
+    }
+
+    /**
+     * Mueve múltiples elementos (archivos y carpetas) a otra carpeta.
+     */
+    public function moveItems(Request $request)
+    {
+        $employee = Auth::guard('employee')->user();
+
+        if (!$this->hasPermission('can_move_files')) {
+            return response()->json(['error' => 'No tienes permiso para mover archivos o carpetas.'], 403);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'items' => 'required|array',
+            'items.*.name' => 'required|string',
+            'items.*.type' => 'required|in:file,folder',
+            'source_path' => 'required|string',
+            'target_path' => 'required|string',
+            'overwrite' => 'nullable|boolean',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        $items = $request->input('items');
+        $sourcePath = $this->normalizePath($request->input('source_path'));
+        $targetPath = $this->normalizePath($request->input('target_path'));
+        $overwrite = $request->input('overwrite', false);
+
+        if (!$this->isValidPath($sourcePath) || !$this->isValidPath($targetPath)) {
+            return response()->json(['error' => 'Ruta inválida.'], 400);
+        }
+
+        $errors = [];
+        foreach ($items as $item) {
+            $itemName = $item['name'];
+            $itemType = $item['type'];
+            $sourceItemPath = "$sourcePath/$itemName";
+            $targetItemPath = "$targetPath/$itemName";
+
+            if (!Storage::disk('local')->exists($sourceItemPath)) {
+                $errors[] = "El elemento original $itemName no existe.";
+                continue;
+            }
+
+            if (Storage::disk('local')->exists($targetItemPath)) {
+                if ($overwrite) {
+                    if ($itemType === 'file') {
+                        Storage::disk('local')->delete($targetItemPath);
+                    } else {
+                        Storage::disk('local')->deleteDirectory($targetItemPath);
+                    }
+                } else {
+                    $errors[] = "Ya existe un elemento con el mismo nombre $itemName en la carpeta de destino.";
+                    continue;
+                }
+            }
+
+            if ($itemType === 'file') {
+                Storage::disk('local')->move($sourceItemPath, $targetItemPath);
+            } else {
+                $this->moveFolder($sourceItemPath, $targetItemPath);
+            }
+
+            // Registrar log por cada elemento movido
+            $transactionId = $itemType === 'file' ? 'move_file' : 'move_folder';
+            $description = "Elemento movido: $itemName de $sourcePath a $targetPath";
+            $this->registerLog($employee->id, $transactionId, $description, $request);
+        }
+
+        if (!empty($errors)) {
+            return response()->json(['errors' => $errors], 400);
+        }
+
+        return response()->json(['message' => 'Elementos movidos exitosamente.']);
+    }
+
+
+    /**
      * Copia un archivo a otra carpeta.
      */
     public function copyFile(Request $request)
@@ -666,6 +832,66 @@ class FileManagerController extends Controller
     }
 
     /**
+     * Copia una carpeta de origen a destino de forma recursiva.
+     */
+    public function copyFolder($source, $destination)
+    {
+        $directories = Storage::disk('local')->allDirectories($source);
+        $files = Storage::disk('local')->allFiles($source);
+
+        // Crear directorios en destino
+        foreach ($directories as $dir) {
+            $relativePath = substr($dir, strlen($source) + 1);
+            Storage::disk('local')->makeDirectory($destination . '/' . $relativePath);
+        }
+
+        // Copiar archivos
+        foreach ($files as $file) {
+            $relativePath = substr($file, strlen($source) + 1);
+            Storage::disk('local')->copy($file, $destination . '/' . $relativePath);
+        }
+    }
+
+
+    /**
+     * Mueve una carpeta de origen a destino de forma recursiva.
+     */
+    public function moveFolder($source, $destination)
+    {
+        $this->copyFolder($source, $destination);
+        Storage::disk('local')->deleteDirectory($source);
+    }
+
+    /**
+     * Validar que la ruta proporcionada no contenga patrones de Path Traversal.
+     */
+    private function isValidPath($path)
+    {
+        // Evitar rutas que suban a directorios superiores
+        return !Str::contains($path, ['..', './', '../']);
+    }
+
+    /**
+     * Verifica si el empleado tiene el permiso especificado.
+     *
+     * @param string $permission
+     * @return bool
+     */
+    private function hasPermission(string $permission): bool
+    {
+        $employee = Auth::guard('employee')->user();
+
+        // Asegúrate de que la relación 'permissions' esté cargada
+        if (!$employee->relationLoaded('permissions')) {
+            $employee->load('permissions');
+        }
+
+        return $employee->permissions->contains('name', $permission);
+    }
+
+
+
+    /**
      * Copia múltiples archivos a otra carpeta.
      */
     public function copyFiles(Request $request)
@@ -681,6 +907,7 @@ class FileManagerController extends Controller
             'filenames.*' => 'required|string',
             'source_path' => 'required|string',
             'target_path' => 'required|string',
+            'overwrite' => 'nullable|boolean',
         ]);
 
         if ($validator->fails()) {
@@ -690,6 +917,7 @@ class FileManagerController extends Controller
         $filenames = $request->input('filenames');
         $sourcePath = $this->normalizePath($request->input('source_path'));
         $targetPath = $this->normalizePath($request->input('target_path'));
+        $overwrite = $request->input('overwrite', false);
 
         if (!$this->isValidPath($sourcePath) || !$this->isValidPath($targetPath)) {
             return response()->json(['error' => 'Ruta inválida.'], 400);
@@ -706,8 +934,12 @@ class FileManagerController extends Controller
             }
 
             if (Storage::disk('local')->exists($targetFilePath)) {
-                $errors[] = "Ya existe un archivo con el mismo nombre $filename en la carpeta de destino.";
-                continue;
+                if ($overwrite) {
+                    Storage::disk('local')->delete($targetFilePath);
+                } else {
+                    $errors[] = "Ya existe un archivo con el mismo nombre $filename en la carpeta de destino.";
+                    continue;
+                }
             }
 
             Storage::disk('local')->copy($sourceFilePath, $targetFilePath);
@@ -738,6 +970,7 @@ class FileManagerController extends Controller
             'filename' => 'required|string',
             'source_path' => 'required|string',
             'target_path' => 'required|string',
+            'overwrite' => 'nullable|boolean',
         ]);
 
         if ($validator->fails()) {
@@ -747,6 +980,7 @@ class FileManagerController extends Controller
         $filename = $request->input('filename');
         $sourcePath = $this->normalizePath($request->input('source_path'));
         $targetPath = $this->normalizePath($request->input('target_path'));
+        $overwrite = $request->input('overwrite', false);
 
         if (!$this->isValidPath($sourcePath) || !$this->isValidPath($targetPath)) {
             return response()->json(['error' => 'Ruta inválida.'], 400);
@@ -760,7 +994,11 @@ class FileManagerController extends Controller
         }
 
         if (Storage::disk('local')->exists($targetFilePath)) {
-            return response()->json(['error' => 'Ya existe un archivo con el mismo nombre en la carpeta de destino.'], 400);
+            if ($overwrite) {
+                Storage::disk('local')->delete($targetFilePath);
+            } else {
+                return response()->json(['error' => 'Ya existe un archivo con el mismo nombre en la carpeta de destino.'], 400);
+            }
         }
 
         Storage::disk('local')->move($sourceFilePath, $targetFilePath);
@@ -964,34 +1202,6 @@ class FileManagerController extends Controller
 
         return $items;
     }
-
-    /**
-     * Validar que la ruta proporcionada no contenga patrones de Path Traversal.
-     */
-    private function isValidPath($path)
-    {
-        // Evitar rutas que suban a directorios superiores
-        return !Str::contains($path, ['..', './', '../']);
-    }
-
-    /**
-     * Verifica si el empleado tiene el permiso especificado.
-     *
-     * @param string $permission
-     * @return bool
-     */
-    private function hasPermission(string $permission): bool
-    {
-        $employee = Auth::guard('employee')->user();
-
-        // Asegúrate de que la relación 'permissions' esté cargada
-        if (!$employee->relationLoaded('permissions')) {
-            $employee->load('permissions');
-        }
-
-        return $employee->permissions->contains('name', $permission);
-    }
-
 
     /**
      * Registra una acción en la tabla de logs.

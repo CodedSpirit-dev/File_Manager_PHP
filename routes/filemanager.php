@@ -14,61 +14,30 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::prefix('filemanager')->name('filemanager.')->middleware('auth:employee')->group(function () {
-    // Ruta para listar archivos y carpetas
-    Route::get('/files', [FileManagerController::class, 'index'])->name('files.index');
-
-    // Ruta para subir archivos
-    Route::post('/files/upload', [FileManagerController::class, 'upload'])->name('files.upload');
-
-    // Ruta para eliminar archivos
-    Route::delete('/files/delete', [FileManagerController::class, 'delete'])->name('files.delete');
-
-    // Ruta para crear carpetas
-    Route::post('/folders/create', [FileManagerController::class, 'createFolder'])->name('folders.create');
-
-    // **Eliminar Ruta para actualizar (renombrar) carpetas**
-    // Route::put('/folders/update', [FileManagerController::class, 'updateFolder'])->name('folders.update');
-
-    // Ruta para descargar archivos
-    Route::get('/files/download', [FileManagerController::class, 'downloadFile'])->name('files.download');
-
-    // **Eliminar Ruta para renombrar archivos**
-    // Route::post('/files/rename-file', [FileManagerController::class, 'renameFile'])->name('files.renameFile');
-
-    // **Agregar Ruta para renombrar archivos y carpetas**
-    Route::post('/rename', [FileManagerController::class, 'renameItem'])->name('rename');
-
-    // Ruta para copiar un archivo
-    Route::post('/files/copy-file', [FileManagerController::class, 'copyFile'])->name('files.copyFile');
-
-    // Ruta para copiar múltiples archivos
-    Route::post('/files/copy-files', [FileManagerController::class, 'copyFiles'])->name('files.copyFiles');
-
-    // Ruta para mover un archivo
-    Route::post('/files/move-file', [FileManagerController::class, 'moveFile'])->name('files.moveFile');
-
-    // Ruta para subir directorios
-    Route::post('/folders/upload-directory', [FileManagerController::class, 'uploadDirectory'])->name('folders.uploadDirectory');
-
-    // Ruta para eliminar carpetas
-    Route::delete('/folders/delete', [FileManagerController::class, 'deleteFolder'])->name('folders.delete');
-
-    // Ruta para ver archivos
-    Route::get('/files/view', [FileManagerController::class, 'view'])->name('files.view');
-
-    // Ruta para obtener la URL pública de un archivo
-    Route::get('/public-file-url', [FileManagerController::class, 'getPublicFileUrl'])->name('files.getPublicFileUrl');
-
-    // Ruta para servir un archivo públicamente
-    Route::get('/public-file', [FileManagerController::class, 'getPublicFile'])->name('files.getPublicFile');
-
-    // Ruta para descargar carpetas como ZIP
-    Route::get('/folders/download', [FileManagerController::class, 'downloadFolder'])->name('folders.download');
-
-    // Ruta para obtener toda la estructura de archivos y carpetas
-    Route::get('/files-tree', [FileManagerController::class, 'getFilesTree'])->name('files.tree');
-
-    // Ruta para obtener la jerarquía y empresa del usuario
-    Route::get('/hierarchy-company', [FileManagerController::class, 'fetchHierarchyAndCompany'])->name('hierarchyCompany');
+// Rutas para archivos
+Route::prefix('filemanager/files')->group(function () {
+    Route::get('/', [FileManagerController::class, 'getFiles']);
+    Route::post('/upload', [FileManagerController::class, 'upload']);
+    Route::post('/delete', [FileManagerController::class, 'delete']);
+    Route::get('/download', [FileManagerController::class, 'downloadFile']);
+    Route::get('/view', [FileManagerController::class, 'view']);
 });
+
+// Rutas para carpetas
+Route::prefix('filemanager/folders')->group(function () {
+    Route::post('/create', [FileManagerController::class, 'createFolder']);
+    Route::post('/delete', [FileManagerController::class, 'deleteFolder']);
+    Route::post('/upload-directory', [FileManagerController::class, 'uploadDirectory']);
+    Route::get('/download', [FileManagerController::class, 'downloadFolder']);
+});
+
+// Rutas para operaciones de renombrar, copiar y mover
+Route::post('/filemanager/rename', [FileManagerController::class, 'renameItem']);
+Route::post('/filemanager/items/copy', [FileManagerController::class, 'copyItems']);
+Route::post('/filemanager/items/move', [FileManagerController::class, 'moveItems']);
+
+// Ruta para obtener el árbol de archivos
+Route::get('/filemanager/files-tree', [FileManagerController::class, 'getFilesTree']);
+
+//Ruta para obtener la compa;ia y la jerarquia de la carpeta
+Route::get('/filemanager/hierarchy-company', [FileManagerController::class, 'fetchHierarchyAndCompany']);
