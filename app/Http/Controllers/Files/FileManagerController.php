@@ -56,6 +56,89 @@ class FileManagerController extends Controller
     }
 
     /**
+     * Renombra un archivo o carpeta.
+     */
+    /**
+     * Renombra un archivo o carpeta.
+     */
+    public function renameItem(Request $request)
+    {
+        $employee = Auth::guard('employee')->user();
+
+        // Verificar permisos
+        if (!$this->hasPermission('can_rename_files_and_folders')) {
+            return response()->json(['error' => 'No tienes permiso para renombrar archivos o carpetas.'], 403);
+        }
+
+        // Validar la solicitud
+        $validator = Validator::make($request->all(), [
+            'old_name' => 'required|string|max:255',
+            'new_name' => 'required|string|max:255',
+            'path' => 'required|string',
+            'type' => 'required|in:file,folder',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        $oldName = $request->input('old_name');
+        $newName = $request->input('new_name');
+        $path = $this->normalizePath($request->input('path'));
+        $type = $request->input('type');
+
+        if (!$this->isValidPath($path)) {
+            return response()->json(['error' => 'Ruta inválida.'], 400);
+        }
+
+        // Determinar las rutas completas
+        $oldPath = rtrim($path, '/') . '/' . ltrim($oldName, '/');
+        $newPath = rtrim($path, '/') . '/' . ltrim($newName, '/');
+
+        // Verificar existencia del elemento original
+        if (!Storage::disk('local')->exists($oldPath)) {
+            return response()->json(['error' => "El elemento original '$oldName' no existe."], 404);
+        }
+
+        // Verificar si ya existe un elemento con el nuevo nombre
+        if (Storage::disk('local')->exists($newPath)) {
+            return response()->json(['error' => "Ya existe un elemento con el nombre '$newName' en esta ubicación."], 400);
+        }
+
+        try {
+            Storage::disk('local')->move($oldPath, $newPath);
+        } catch (\Exception $e) {
+            Log::error("Error al renombrar elemento: " . $e->getMessage());
+            return response()->json(['error' => 'Error al renombrar el elemento.'], 500);
+        }
+
+        // Mapeo de tipo a texto y adjetivo en español
+        $typeTextMap = [
+            'file' => ['Archivo', 'renombrado'],
+            'folder' => ['Carpeta', 'renombrada'],
+        ];
+
+        // Obtener el texto y adjetivo correspondiente al tipo
+        $typeText = $typeTextMap[$type][0] ?? 'Elemento';
+        $typeAdjective = $typeTextMap[$type][1] ?? 'renombrado';
+
+        // Registrar log
+        $transactionId = $type === 'file' ? 'rename_file' : 'rename_folder';
+        $description = "$typeText renombrado de '$oldName' a '$newName' en '$path'";
+        $this->registerLog($employee->id, $transactionId, $description, $request);
+
+        // Responder con éxito usando el texto en español con concordancia de género
+        return response()->json([
+            'message' => "$typeText $typeAdjective exitosamente.",
+            'old_path' => $oldPath,
+            'new_path' => $newPath
+        ], 200);
+    }
+
+
+
+
+    /**
      * Muestra la lista de carpetas y archivos en una ruta específica.
      */
     public function index(Request $request)
@@ -914,25 +997,27 @@ class FileManagerController extends Controller
      * Registra una acción en la tabla de logs.
      *
      * @param int $userId
-     * @param string $transactionId Nombre de la acción (e.g., "upload_file")
-     * @param string $description
+     * @param string $action Nombre de la acción (e.g., "view_files_tree")
+     * @param string $description Descripción detallada de la acción
      * @param \Illuminate\Http\Request $request
      * @return void
      */
-    private function registerLog(int $userId, string $transactionId, string $description, Request $request): void
+    private function registerLog(int $userId, string $action, string $description, Request $request): void
     {
-        // Obtiene la dirección IP y el agente de usuario
+        // Obtener la dirección IP y el agente de usuario
         $ipAddress = $request->ip();
         $userAgent = $request->header('User-Agent');
 
         // Inserta el log en la base de datos
         \DB::table('logs')->insert([
             'user_id' => $userId,
-            'transaction_id' => $transactionId, // Ahora es el nombre de la acción
+            'action' => $action, // Asegúrate de que el campo 'action' exista en tu tabla 'logs'
             'description' => $description,
             'date' => now(),
             'ip_address' => $ipAddress,
             'user_agent' => $userAgent,
         ]);
     }
+
+
 }

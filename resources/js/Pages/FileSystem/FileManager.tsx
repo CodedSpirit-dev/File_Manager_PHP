@@ -64,10 +64,11 @@ import {
     uploadDirectory,
     deleteFolder,
     downloadFile,
-    renameFile,
+    renameItem,
     copyFile,
     moveFile,
-    downloadFolder, copyFiles,
+    downloadFolder,
+    copyFiles,
 } from './fileManagerApi';
 import { usePage } from '@inertiajs/react';
 import Breadcrumb from "@/Pages/FileSystem/Components/Breadcrumb";
@@ -88,6 +89,7 @@ interface Item {
     path: string;
     children?: Item[];
 }
+
 interface SortPayload {
     criteria: 'name' | 'type';
     order: 'asc' | 'desc';
@@ -98,12 +100,10 @@ const FileManager: React.FC = () => {
     const userPermissions: string[] = auth.user?.permissions || [];
 
     const [selectedItems, setSelectedItems] = useState<string[]>([]);
-
     const [items, setItems] = useState<Item[]>([]);
     const [currentPath, setCurrentPath] = useState<string>(''); // Ruta inicial a establecer
     const [companyName, setCompanyName] = useState<string | null>(null);
     const [fileTree, setFileTree] = useState<FileSystemItem[]>([]); // Árbol completo
-
     const [hierarchyLevel, setHierarchyLevel] = useState<number>(1);
 
     const [isCreateFolderOpen, setIsCreateFolderOpen] = useState<boolean>(false);
@@ -392,7 +392,7 @@ const FileManager: React.FC = () => {
         }
     };
 
-// Manejar doble clic en elementos (carpetas o archivos)
+    // Manejar doble clic en elementos (carpetas o archivos)
     const handleDoubleClickItem = (item: Item) => {
         if (item.type === 'folder') {
             setCurrentPath(item.path);
@@ -438,7 +438,7 @@ const FileManager: React.FC = () => {
             showModal('Éxito', 'Carpeta creada exitosamente.', 'success');
 
             // Refrescar el árbol completo
-            fetchFilesTree();
+            await fetchFilesTree();
             setNewFolderName('');
             setIsCreateFolderOpen(false);
         } catch (error: any) {
@@ -595,7 +595,7 @@ const FileManager: React.FC = () => {
     const handleCopy = async () => {
         if (selectedItems.length > 0) {
             // Permitir copiar archivos y carpetas
-            setCopySource({ filenames: selectedItems, path: currentPath });
+            setCopySource({ filenames: selectedItems.map(path => path.split('/').pop() || path), path: currentPath });
             setIsCopying(true);
         }
     };
@@ -614,7 +614,7 @@ const FileManager: React.FC = () => {
             });
 
             try {
-                await copyFiles(filenames.map(filePath => filePath.split('/').pop() || filePath), path, currentPath);
+                await copyFiles(filenames, path, currentPath);
                 completedFiles = totalFiles;
                 setOperationProgress({
                     type: 'copy',
@@ -630,8 +630,8 @@ const FileManager: React.FC = () => {
             } catch (error: any) {
                 if (error.response && error.response.status === 403) {
                     showModal('Error', 'No tienes permiso para copiar uno o más archivos.', 'error');
-                } else if (error.response && error.response.data.errors) {
-                    showModal('Error', error.response.data.errors.join(' '), 'error');
+                } else if (error.response && error.response.data.error) {
+                    showModal('Error', error.response.data.error, 'error');
                 } else {
                     showModal('Error', 'Error al copiar uno o más archivos.', 'error');
                 }
@@ -651,7 +651,7 @@ const FileManager: React.FC = () => {
 
     const handleMove = async () => {
         if (selectedItems.length > 0) {
-            setMoveSource({ filenames: selectedItems, path: currentPath });
+            setMoveSource({ filenames: selectedItems.map(path => path.split('/').pop() || path), path: currentPath });
             setIsMoving(true);
         }
     };
@@ -671,17 +671,14 @@ const FileManager: React.FC = () => {
 
             try {
                 // Crear un array de promesas
-                const movePromises = filenames.map(async (filePath) => {
-                    const filename = filePath.split('/').pop(); // Extraer solo el nombre del archivo
-                    if (filename) {
-                        await moveFile(filename, path, currentPath);
-                        completedFiles += 1;
-                        setOperationProgress({
-                            type: 'move',
-                            total: totalFiles,
-                            completed: completedFiles,
-                        });
-                    }
+                const movePromises = filenames.map(async (filename) => {
+                    await moveFile(filename, path, currentPath);
+                    completedFiles += 1;
+                    setOperationProgress({
+                        type: 'move',
+                        total: totalFiles,
+                        completed: completedFiles,
+                    });
                 });
 
                 // Ejecutar todas las promesas de movimiento en paralelo
@@ -738,29 +735,50 @@ const FileManager: React.FC = () => {
             return;
         }
 
-        // Obtener la extensión original si es un archivo
-        let newFilename = renameNewName;
-        if (renameIsFile) {
-            const item = items.find((i) => i.path === selectedItems[0]);
-            if (item) {
-                const extensionIndex = item.name.lastIndexOf('.');
-                const extension = extensionIndex !== -1 ? item.name.slice(extensionIndex) : '';
-                newFilename += extension;
-            }
+        // Obtener el elemento seleccionado
+        const selectedItemPath = selectedItems[0];
+        const item = items.find((i) => i.path === selectedItemPath);
+        if (!item) {
+            showModal('Error', 'Elemento seleccionado no encontrado.', 'error');
+            return;
         }
 
+        // Extraer el nombre original
+        const oldName = item.name;
+
+        // Obtener la extensión original si es un archivo
+        let newName = renameNewName;
+        if (item.type === 'file') {
+            const extensionIndex = item.name.lastIndexOf('.');
+            const extension = extensionIndex !== -1 ? item.name.slice(extensionIndex) : '';
+            newName += extension;
+        }
+
+        // Determinar el tipo de elemento
+        const type = item.type; // 'file' o 'folder'
+
         try {
-            if (selectedItems.length === 1 && selectedItems[0] != null) {
-                const response = await renameFile(selectedItems[0], newFilename, currentPath);
-                showModal('Éxito', 'Elemento renombrado exitosamente.', 'success');
-                fetchFilesTree(); // Refrescar el árbol
-                setSelectedItems([]); // Deseleccionar el elemento renombrado
-                setRenameModalOpen(false);
-                setRenameNewName('');
-            }
+            // Construir los datos a enviar
+            const renameData = {
+                old_name: oldName, // Solo el nombre del archivo o carpeta
+                new_name: newName,
+                path: currentPath,
+                type: type,
+            };
+
+            console.log('Renombrando:', renameData);
+
+            const response = await renameItem(renameData); // renameItem es la función actualizada en fileManagerApi.ts
+            showModal('Éxito', response.message, 'success'); // Corregido: acceder a `response.message`
+            fetchFilesTree(); // Refrescar el árbol
+            setSelectedItems([]); // Deseleccionar el elemento renombrado
+            setRenameModalOpen(false);
+            setRenameNewName('');
         } catch (error: any) {
             if (error.response && error.response.status === 403) {
                 showModal('Error', 'No tienes permiso para renombrar este elemento.', 'error');
+            } else if (error.response && error.response.data.error) {
+                showModal('Error', error.response.data.error, 'error');
             } else {
                 showModal('Error', 'Error al renombrar el elemento.', 'error');
             }
@@ -1052,7 +1070,7 @@ const FileManager: React.FC = () => {
                         </p>
                     </div>
                 </Modal>
-    )}
+            )}
         </>
     );
 

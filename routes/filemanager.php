@@ -27,22 +27,25 @@ Route::prefix('filemanager')->name('filemanager.')->middleware('auth:employee')-
     // Ruta para crear carpetas
     Route::post('/folders/create', [FileManagerController::class, 'createFolder'])->name('folders.create');
 
-    // Ruta para actualizar (renombrar) carpetas
-    Route::put('/folders/update', [FileManagerController::class, 'updateFolder'])->name('folders.update');
+    // **Eliminar Ruta para actualizar (renombrar) carpetas**
+    // Route::put('/folders/update', [FileManagerController::class, 'updateFolder'])->name('folders.update');
 
     // Ruta para descargar archivos
     Route::get('/files/download', [FileManagerController::class, 'downloadFile'])->name('files.download');
 
-    // Ruta para renombrar archivos
-    Route::post('/files/rename-file', [FileManagerController::class, 'renameFile'])->name('files.renameFile');
+    // **Eliminar Ruta para renombrar archivos**
+    // Route::post('/files/rename-file', [FileManagerController::class, 'renameFile'])->name('files.renameFile');
 
-    // Ruta para copiar archivos
+    // **Agregar Ruta para renombrar archivos y carpetas**
+    Route::post('/rename', [FileManagerController::class, 'renameItem'])->name('rename');
+
+    // Ruta para copiar un archivo
     Route::post('/files/copy-file', [FileManagerController::class, 'copyFile'])->name('files.copyFile');
 
-    // Ruta para copiar archivos
+    // Ruta para copiar múltiples archivos
     Route::post('/files/copy-files', [FileManagerController::class, 'copyFiles'])->name('files.copyFiles');
 
-    // Ruta para mover archivos
+    // Ruta para mover un archivo
     Route::post('/files/move-file', [FileManagerController::class, 'moveFile'])->name('files.moveFile');
 
     // Ruta para subir directorios
@@ -67,7 +70,5 @@ Route::prefix('filemanager')->name('filemanager.')->middleware('auth:employee')-
     Route::get('/files-tree', [FileManagerController::class, 'getFilesTree'])->name('files.tree');
 
     // Ruta para obtener la jerarquía y empresa del usuario
-    Route::get('/hierarchy-company', [FileManagerController::class, 'fetchHierarchyAndCompany']);
-
-
+    Route::get('/hierarchy-company', [FileManagerController::class, 'fetchHierarchyAndCompany'])->name('hierarchyCompany');
 });

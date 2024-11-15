@@ -12,7 +12,7 @@ import {
     BsSortAlphaDown,
     BsSortAlphaDownAlt
 } from "react-icons/bs";
-import { MdOutlineDeleteOutline, MdOutlineDriveFileMove } from "react-icons/md";
+import { MdOutlineDeleteOutline, MdOutlineDriveFileMove, MdEdit } from "react-icons/md";
 import { IoClose, IoChevronBackOutline } from "react-icons/io5";
 import { BiExtension, BiSolidExtension } from 'react-icons/bi';
 import { Menu } from '@headlessui/react';
@@ -192,6 +192,19 @@ const FileManagerToolbar: React.FC<FileManagerToolbarProps> = ({
                                             )}
                                         </Menu.Item>
                                     )}
+                                    {canRename && (
+                                        <Menu.Item>
+                                            {({ active }) => (
+                                                <button
+                                                    onClick={onRename}
+                                                    className={`${active ? 'bg-blue-500 text-white' : 'text-gray-900'} group flex rounded-md items-center w-full px-2 py-2 text-sm`}
+                                                >
+                                                    <MdEdit className="w-5 h-5 mr-2" />
+                                                    Renombrar
+                                                </button>
+                                            )}
+                                        </Menu.Item>
+                                    )}
                                     {canMove && (
                                         <Menu.Item>
                                             {({ active }) => (
@@ -223,6 +236,7 @@ const FileManagerToolbar: React.FC<FileManagerToolbarProps> = ({
                         </Menu>
                     )}
 
+                    {/* Botón de Ordenar */}
                     <button
                         onClick={handleSortToggle}
                         className="btn btn-outline flex items-center space-x-2 hover:text-primary-content ml-2"
