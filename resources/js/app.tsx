@@ -7,6 +7,24 @@ import { createRoot } from 'react-dom/client';
 
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 
+// Deshabilitar F12, clic derecho y combinaciones de teclas para inspección
+document.addEventListener('keydown', (event) => {
+    // Deshabilitar F12
+    if (event.key === 'F12') {
+        event.preventDefault();
+    }
+
+    // Deshabilitar Ctrl+Shift+I, Ctrl+Shift+J, Ctrl+Shift+C y Ctrl+U
+    if ((event.ctrlKey && event.shiftKey && ['I', 'J', 'C'].includes(event.key)) || (event.ctrlKey && event.key === 'U')) {
+        event.preventDefault();
+    }
+});
+
+// Deshabilitar clic derecho
+document.addEventListener('contextmenu', (event) => {
+    event.preventDefault();
+});
+
 createInertiaApp({
     title: (title) => `${title} | ${appName}`,
     resolve: (name) =>

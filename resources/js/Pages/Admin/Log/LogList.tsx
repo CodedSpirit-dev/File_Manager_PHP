@@ -4,6 +4,7 @@ import LogToolbar from './LogToolbar';
 import LogDetailsModal from './LogDetailsModal';
 // @ts-ignore
 import UAParser from 'ua-parser-js';
+import {Head} from "@inertiajs/react";
 
 interface Log {
     id: number;
@@ -176,6 +177,8 @@ const LogList: React.FC = () => {
 
     return (
         <div className="container mx-auto px-4 py-8 bg-base-100">
+
+            <Head title={'Logs'} />
             <h2 className="text-center mb-4 text-2xl font-semibold">Historial de Logs</h2>
 
             {/* LogToolbar */}

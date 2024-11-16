@@ -9,6 +9,8 @@ import { IoBusinessOutline } from 'react-icons/io5';
 import { MdOutlineWorkOutline } from 'react-icons/md';
 import { GrGroup } from 'react-icons/gr';
 import { CgOptions } from 'react-icons/cg';
+import {usePage} from "@inertiajs/react";
+import {EmployeePageProps} from "@/types";
 
 interface AdminDropdownProps {
     renderComponent: (componentName: string) => void;
@@ -17,6 +19,8 @@ interface AdminDropdownProps {
 
 const AdminDropdown: React.FC<AdminDropdownProps> = ({ renderComponent, activeComponent }) => {
     const { hasPermission } = useAuth();
+    const { auth } = usePage<EmployeePageProps>().props;
+    const employee = auth.user;
 
     // Lista de permisos del panel de administración
     const adminPermissions: Array<keyof Permissions> = [
@@ -96,6 +100,7 @@ const AdminDropdown: React.FC<AdminDropdownProps> = ({ renderComponent, activeCo
                                 </button>
                             )}
                         </Menu.Item>
+
                         <Menu.Item>
                             {({ active }) => (
                                 <button
@@ -111,6 +116,24 @@ const AdminDropdown: React.FC<AdminDropdownProps> = ({ renderComponent, activeCo
                                 </button>
                             )}
                         </Menu.Item>
+                    {employee.position?.hierarchy_level === 0 && (
+                        <Menu.Item>
+                            {({ active }) => (
+                                <button
+                                    className={`${
+                                        activeComponent === 'LogList'
+                                            ? 'bg-primary text-white cursor-not-allowed'
+                                            : active ? 'bg-info text-white' : 'text-gray-900'
+                                    } group flex rounded-md items-center w-full px-2 py-2 text-sm`}
+                                    onClick={() => handleClick('LogList')}
+                                    disabled={activeComponent === 'LogList'}
+                                >
+                                    <LuFolderOpen className="mr-2" /> Logs
+                                </button>
+                            )}
+                        </Menu.Item>
+                    )}
+
                 </div>
             </Menu.Items>
         </Menu>

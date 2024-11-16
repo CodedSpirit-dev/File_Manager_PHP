@@ -19,6 +19,8 @@ import Profile from './Profile/Profile';
 import FileManager from './FileSystem/FileManager';
 import LogList from './Admin/Log/LogList'; // Importa el componente LogList
 import { EmployeePageProps } from '@/types';
+import Timer from "@/Components/Timer";
+
 
 const HomeContent: React.FC = () => {
     const { hasPermission } = useAuth();
@@ -28,6 +30,7 @@ const HomeContent: React.FC = () => {
     // Inicializar el componente activo en "FileManager" y mostrarlo por defecto
     const [component, setComponent] = useState<JSX.Element | null>(<FileManager />);
     const [activeComponent, setActiveComponent] = useState<string>('FileManager');
+    const [loading, setLoading] = useState(false);
 
     const renderComponent = (componentName: string) => {
         setActiveComponent(componentName);
@@ -47,7 +50,7 @@ const HomeContent: React.FC = () => {
             case 'PositionList':
                 setComponent(<PositionList />);
                 break;
-            case 'LogList': // Caso para mostrar LogList
+            case 'LogList':
                 setComponent(<LogList />);
                 break;
             default:
@@ -56,6 +59,8 @@ const HomeContent: React.FC = () => {
     };
 
     const closeSession = () => {
+        setLoading(true);
+
         axios.post('/logout').finally(() => {
             window.location.href = '/login';
         });
@@ -189,20 +194,9 @@ const HomeContent: React.FC = () => {
                         </Button>
                         {/* AdminDropdown visible solo en pantallas grandes */}
                         <AdminDropdown renderComponent={renderComponent} activeComponent={activeComponent} />
-                        {/* Botón de Logs solo visible para usuarios de jerarquía 0 */}
-                        {employee.position?.hierarchy_level === 0 && (
-                            <Button
-                                className={`btn btn-ghost nav__bar__button hover:text-black ${
-                                    activeComponent === 'LogList' ? 'bg-primary text-white cursor-not-allowed' : ''
-                                }`}
-                                onClick={() => renderComponent('LogList')}
-                                disabled={activeComponent === 'LogList'}
-                            >
-                                <RiArchiveDrawerLine className="mr-2" /> Logs
-                            </Button>
-                        )}
                     </div>
 
+                    <Timer />
                     {/* Botón de cerrar sesión visible en todas las pantallas */}
                     <div>
                         <button
@@ -222,7 +216,7 @@ const HomeContent: React.FC = () => {
                                 <div className="modal-action justify-center">
                                     <form method="dialog">
                                         <button
-                                            className="btn btn-active btn-secondary bg-warning text-base-content hover:text-base-100 m-3">No
+                                            className="btn">No
                                             cerrar sesión
                                         </button>
                                         <button
@@ -230,7 +224,10 @@ const HomeContent: React.FC = () => {
                                             className="btn btn-active btn-primary m-3"
                                             onClick={closeSession}
                                         >
-                                            Sí, cerrar sesión
+                                            {loading ? (
+                                                <span className="loading loading-spinner loading-xs mr-2"></span>
+                                            ) : null}
+                                            Cerrar sesión
                                         </button>
                                     </form>
                                 </div>

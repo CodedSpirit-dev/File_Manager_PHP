@@ -187,8 +187,8 @@ class CompanyController extends Controller
         $company = Company::findOrFail($id);
 
         // No permitir eliminar la empresa SGI
-        if ($company->name === 'SGI') {
-            return response()->json(['message' => 'No se debe eliminar SGI.'], 403);
+        if ($company->name === 'VSP') {
+            return response()->json(['message' => 'No se debe eliminar VSP.'], 403);
         }
 
         $companyFolderPath = 'public/' . $company->name;
