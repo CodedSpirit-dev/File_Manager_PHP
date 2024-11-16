@@ -1,7 +1,5 @@
-// src/components/LogDetailsModal.tsx
-
 import React from 'react';
-import { permissionDescriptions} from "@/Pages/utils/PermissionMapping";
+import { permissionDescriptions } from "@/Pages/utils/PermissionMapping";
 
 interface Log {
     id: number;
@@ -28,7 +26,6 @@ interface LogDetailsModalProps {
 const LogDetailsModal: React.FC<LogDetailsModalProps> = ({ log, isOpen, onClose }) => {
     if (!isOpen || !log) return null;
 
-    // Función para extraer y mapear permisos
     const getPermissions = (description: string): string[] => {
         const permissionsPrefix = 'Permisos asignados:';
         const index = description.indexOf(permissionsPrefix);
@@ -42,15 +39,15 @@ const LogDetailsModal: React.FC<LogDetailsModalProps> = ({ log, isOpen, onClose 
     const permissions = getPermissions(log.description);
 
     return (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-            <div className="bg-white rounded-lg shadow-lg min-w-64 w-9/12 p-6 relative h-5/6 max-h-full overflow-y-auto">
+        <div className="modal modal-open">
+            <div className="modal-box relative">
                 <button
-                    className="absolute top-2 right-2 text-gray-500 hover:text-gray-700"
+                    className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
                     onClick={onClose}
                 >
-                    &#10005;
+                    ✕
                 </button>
-                <h2 className="text-xl font-semibold mb-4">Detalles del Log</h2>
+                <h2 className="text-2xl font-semibold mb-4">Detalles del Log</h2>
                 <div className="space-y-2">
                     <div><strong>ID:</strong> {log.id}</div>
                     <div><strong>Usuario:</strong> {log.user_name || 'N/A'}</div>
@@ -79,12 +76,14 @@ const LogDetailsModal: React.FC<LogDetailsModalProps> = ({ log, isOpen, onClose 
                         </div>
                     )}
                 </div>
-                <button
-                    className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-                    onClick={onClose}
-                >
-                    Cerrar
-                </button>
+                <div className="modal-action">
+                    <button
+                        className="btn btn-primary"
+                        onClick={onClose}
+                    >
+                        Cerrar
+                    </button>
+                </div>
             </div>
         </div>
     );

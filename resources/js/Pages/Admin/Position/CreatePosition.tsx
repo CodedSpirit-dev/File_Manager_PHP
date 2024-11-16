@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import axios from "axios";
 import { useForm, Controller } from 'react-hook-form';
 import { Company, HierarchyLevel, Permission } from "@/types";
+import {useAuth} from "@/contexts/AuthProvider";
 
 interface CreatePositionProps {
     onClose: () => void;
@@ -9,6 +10,7 @@ interface CreatePositionProps {
 }
 
 export default function CreatePosition({ onClose, onSuccess }: CreatePositionProps) {
+    const { hierarchyLevel } = useAuth();
     const { control, handleSubmit, formState: { errors, isValid }, reset } = useForm({
         mode: 'onChange',
         defaultValues: {
@@ -32,20 +34,43 @@ export default function CreatePosition({ onClose, onSuccess }: CreatePositionPro
     const errorModalRef = useRef<HTMLDialogElement | null>(null);
     const confirmModalRef = useRef<HTMLDialogElement | null>(null);
 
-    // Cargar empresas, niveles jerárquicos y permisos
+
+// Cargar empresas, niveles jerárquicos y permisos
     useEffect(() => {
-        axios.get('/admin/companies')
-            .then(response => setCompanies(response.data))
-            .catch(error => console.error('Error al cargar las empresas', error));
+        const fetchCompanies = async () => {
+            try {
+                const response = await axios.get('/admin/companies');
+                setCompanies(response.data);
+            } catch (error) {
+                console.error('Error al cargar las empresas', error);
+            }
+        };
 
-        axios.get('/api/hierarchylevels')
-            .then(response => setHierarchyLevels(response.data))
-            .catch(error => console.error('Error al cargar los niveles jerárquicos', error));
+        const fetchHierarchyLevels = async () => {
+            try {
+                const response = await axios.get('/api/hierarchylevels');
+                const filteredLevels = response.data.filter((level: HierarchyLevel) =>
+                    hierarchyLevel !== null && (hierarchyLevel === 0 || level.level > hierarchyLevel)
+                );
+                setHierarchyLevels(filteredLevels);
+            } catch (error) {
+                console.error('Error al cargar los niveles jerárquicos', error);
+            }
+        };
 
-        axios.get('/api/permissions')
-            .then(response => setAvailablePermissions(response.data))
-            .catch(() => setErrorMessage('Error al cargar los permisos disponibles.'));
-    }, []);
+        const fetchPermissions = async () => {
+            try {
+                const response = await axios.get('/api/permissions');
+                setAvailablePermissions(response.data);
+            } catch {
+                setErrorMessage('Error al cargar los permisos disponibles.');
+            }
+        };
+
+        fetchCompanies();
+        fetchHierarchyLevels();
+        fetchPermissions();
+    }, [hierarchyLevel]);
 
     // Agrupación de permisos por categoría
     const permissionCategories: { [key: string]: string[] } = {
@@ -79,11 +104,9 @@ export default function CreatePosition({ onClose, onSuccess }: CreatePositionPro
     const onSubmit = async (data: { name: string; company_id: string; hierarchy_level: string }) => {
         setLoading(true);
         try {
-            // Crear el puesto
             const positionResponse = await axios.post('/admin/positions', data);
-            const newPositionId = positionResponse.data.id; // Extraer el ID directamente
+            const newPositionId = positionResponse.data.id;
 
-            // Verificar que el puesto se haya creado exitosamente antes de asignar permisos
             if (newPositionId && selectedPermissions.length > 0) {
                 await axios.post('/api/positionpermissions', {
                     position_id: newPositionId,
@@ -92,13 +115,11 @@ export default function CreatePosition({ onClose, onSuccess }: CreatePositionPro
             }
 
             setSuccessMessage('El puesto ha sido registrado exitosamente.');
-            reset(); // Limpiar formulario al tener éxito
-            confirmModalRef.current?.close(); // Cerrar modal de confirmación
-            successModalRef.current?.showModal(); // Mostrar modal de éxito
+            reset();
+            successModalRef.current?.showModal();
         } catch (error: any) {
-            confirmModalRef.current?.close(); // Cerrar modal de confirmación
             setErrorMessage(error.response?.data?.message || 'Hubo un error al registrar el puesto.');
-            errorModalRef.current?.showModal(); // Mostrar modal de error
+            errorModalRef.current?.showModal();
         } finally {
             setLoading(false);
         }
@@ -131,9 +152,10 @@ export default function CreatePosition({ onClose, onSuccess }: CreatePositionPro
                                     <Controller
                                         name="company_id"
                                         control={control}
-                                        rules={{ required: 'La empresa es obligatoria' }}
-                                        render={({ field }) => (
-                                            <select {...field} id="company_id" className="select select-bordered w-full">
+                                        rules={{required: 'La empresa es obligatoria'}}
+                                        render={({field}) => (
+                                            <select {...field} id="company_id"
+                                                    className="select select-bordered w-full">
                                                 <option value="">Seleccione una empresa</option>
                                                 {companies.map((company) => (
                                                     <option key={company.id} value={company.id}>
@@ -143,19 +165,21 @@ export default function CreatePosition({ onClose, onSuccess }: CreatePositionPro
                                             </select>
                                         )}
                                     />
-                                    {errors.company_id && <p className="text-red-600 text-sm mt-1">{errors.company_id.message}</p>}
+                                    {errors.company_id &&
+                                        <p className="text-red-600 text-sm mt-1">{errors.company_id.message}</p>}
                                 </label>
                             </div>
 
                             {/* Selección de nivel jerárquico */}
                             <div className="mt-4">
-                                <label className="input__data__entry" htmlFor="hierarchy_level">
+                                <label htmlFor="hierarchy_level">
                                     <Controller
                                         name="hierarchy_level"
                                         control={control}
-                                        rules={{ required: 'El nivel jerárquico es obligatorio' }}
-                                        render={({ field }) => (
-                                            <select {...field} id="hierarchy_level" className="select select-bordered w-full">
+                                        rules={{required: 'El nivel jerárquico es obligatorio'}}
+                                        render={({field}) => (
+                                            <select {...field} id="hierarchy_level"
+                                                    className="select select-bordered w-full">
                                                 <option value="">Seleccione un nivel jerárquico</option>
                                                 {hierarchyLevels.map((hierarchy) => (
                                                     <option key={hierarchy.level} value={hierarchy.level}>
@@ -165,9 +189,11 @@ export default function CreatePosition({ onClose, onSuccess }: CreatePositionPro
                                             </select>
                                         )}
                                     />
-                                    {errors.hierarchy_level && <p className="text-red-600 text-sm mt-1">{errors.hierarchy_level.message}</p>}
+                                    {errors.hierarchy_level &&
+                                        <p className="text-red-600 text-sm mt-1">{errors.hierarchy_level.message}</p>}
                                 </label>
                             </div>
+
 
                             {/* Nombre del puesto */}
                             <div className="mt-4">
@@ -182,7 +208,7 @@ export default function CreatePosition({ onClose, onSuccess }: CreatePositionPro
                                                 message: 'El nombre debe tener al menos 3 caracteres'
                                             }
                                         }}
-                                        render={({ field }) => (
+                                        render={({field}) => (
                                             <input
                                                 {...field}
                                                 placeholder="Nombre del puesto"
@@ -197,8 +223,10 @@ export default function CreatePosition({ onClose, onSuccess }: CreatePositionPro
 
                             {/* Botones de acción */}
                             <div className="mt-6 flex items-center">
-                                <button type="button" className="btn-warning-mod mx-2" onClick={onClose}>Cancelar</button>
-                                <button type="button" className="btn-accept mx-2" onClick={() => setStep(2)} disabled={!isValid}>
+                                <button type="button" className="btn-warning-mod mx-2" onClick={onClose}>Cancelar
+                                </button>
+                                <button type="button" className="btn-accept mx-2" onClick={() => setStep(2)}
+                                        disabled={!isValid}>
                                     Siguiente
                                 </button>
                             </div>

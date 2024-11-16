@@ -137,19 +137,26 @@ class PositionController extends Controller
      */
     public function store(Request $request)
     {
+        $employee = Auth::guard('employee')->user();
+        $employeeHierarchy = $employee->position->hierarchy_level;
+
         // Verificar permisos
         if (!$this->hasPermission('can_create_positions')) {
             return response()->json(['error' => 'No tienes permiso para crear posiciones.'], 403);
         }
 
+        // Validar la jerarquía del nivel
+        if ($request->hierarchy_level >= $employeeHierarchy && $employeeHierarchy !== 0) {
+            return response()->json([
+                'message' => 'No puedes crear posiciones con un nivel jerárquico igual o superior al tuyo.'
+            ], 403);
+        }
+
+        // Validar datos
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
             'company_id' => 'required|integer|exists:companies,id',
             'hierarchy_level' => 'required|integer|min:0'
-        ], [
-            'name.unique' => 'La compañía ya tiene un puesto con el mismo nombre.',
-            'company_id.exists' => 'La compañía especificada no existe.',
-            'hierarchy_level.min' => 'El nivel de jerarquía debe ser al menos 0.',
         ]);
 
         if ($validator->fails()) {
@@ -159,37 +166,22 @@ class PositionController extends Controller
             ], 422);
         }
 
-        $positionInCompany = Position::where('name', $request->name)
-            ->where('company_id', $request->company_id)
-            ->first();
-
-        if ($positionInCompany) {
-            return response()->json([
-                'message' => 'La compañía ya tiene un puesto con el mismo nombre'
-            ], 480);
-        }
-
+        // Crear posición
         $position = Position::create([
             'name' => $request->name,
             'company_id' => $request->company_id,
             'hierarchy_level' => $request->hierarchy_level
         ]);
 
-        $position->load('company');
-
         // Registrar log
-        $employee = Auth::guard('employee')->user();
         $transaction_id = 'create_position';
-        $description = "Posición creada: {$position->name} en la empresa {$position->company->name}";
+        $description = "Posición creada: {$position->name}";
         $this->registerLog($employee->id, $transaction_id, $description, $request);
 
         return response()->json([
             'id' => $position->id,
             'name' => $position->name,
-            'company_id' => $position->company_id,
-            'company_name' => $position->company->name ?? 'N/A',
-            'employees_count' => 0,
-            'hierarchy_level' => $position->hierarchy_level,
+            'hierarchy_level' => $position->hierarchy_level
         ], 201);
     }
 
@@ -213,6 +205,7 @@ class PositionController extends Controller
             return response()->json(['message' => 'Posición no encontrada.'], 404);
         }
 
+
         // Validar solo los campos presentes
         $validator = Validator::make($request->all(), [
             'name' => 'sometimes|required|string|max:255',
@@ -231,6 +224,7 @@ class PositionController extends Controller
             ], 422);
         }
 
+
         // Si se proporciona 'name' o 'company_id', verificar la unicidad del nombre dentro de la compañía correspondiente
         if ($request->has('name') || $request->has('company_id')) {
             $newName = $request->input('name', $position->name);
@@ -247,6 +241,8 @@ class PositionController extends Controller
                 ], 480);
             }
         }
+
+
 
         // Guardar los cambios solamente en los campos proporcionados
         $fieldsToUpdate = $request->only(['name', 'company_id', 'hierarchy_level']);

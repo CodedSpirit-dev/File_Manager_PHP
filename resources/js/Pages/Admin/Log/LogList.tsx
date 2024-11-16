@@ -1,10 +1,7 @@
-// src/components/LogList.tsx
-
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import LogToolbar from './LogToolbar';
 import LogDetailsModal from './LogDetailsModal';
-import { permissionDescriptions} from "@/Pages/utils/PermissionMapping";
 // @ts-ignore
 import UAParser from 'ua-parser-js';
 
@@ -37,26 +34,56 @@ const truncateText = (text: string, maxLength: number): string => {
     return text.substring(0, maxLength) + '...';
 };
 
+const parseUserAgent = (userAgent: string | null): ParsedUserAgent => {
+    if (!userAgent) {
+        return {
+            browser: 'N/A',
+            browserVersion: '',
+            os: 'N/A',
+            osVersion: '',
+            device: 'N/A',
+        };
+    }
+
+    try {
+        const parser = new UAParser(userAgent);
+        const result = parser.getResult();
+
+        return {
+            browser: result.browser.name || 'N/A',
+            browserVersion: result.browser.version || '',
+            os: result.os.name || 'N/A',
+            osVersion: result.os.version || '',
+            device: result.device.type
+                ? `${result.device.vendor || ''} ${result.device.model || ''} (${result.device.type})`.trim()
+                : 'Desktop',
+        };
+    } catch (error) {
+        console.error('Error parsing user agent:', error);
+        return {
+            browser: 'N/A',
+            browserVersion: '',
+            os: 'N/A',
+            osVersion: '',
+            device: 'N/A',
+        };
+    }
+};
+
 const LogList: React.FC = () => {
     const [logs, setLogs] = useState<Log[]>([]);
     const [filteredLogs, setFilteredLogs] = useState<Log[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
-    // State para el Toolbar
     const [searchQuery, setSearchQuery] = useState('');
     const [transactionFilter, setTransactionFilter] = useState('');
-
-    // Ordenamiento por columnas
     const [sortConfig, setSortConfig] = useState<{ key: keyof Log; direction: 'asc' | 'desc' }>({
         key: 'date',
         direction: 'desc',
     });
 
-    // Opciones de filtro de transacción
     const [transactionOptions, setTransactionOptions] = useState<string[]>([]);
-
-    // State para el Modal
     const [selectedLog, setSelectedLog] = useState<Log | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -66,7 +93,7 @@ const LogList: React.FC = () => {
 
     useEffect(() => {
         if (logs.length > 0) {
-            const uniqueTransactions = Array.from(new Set(logs.map(log => log.transaction_id)));
+            const uniqueTransactions = Array.from(new Set(logs.map((log) => log.transaction_id)));
             setTransactionOptions(uniqueTransactions);
         }
     }, [logs]);
@@ -79,7 +106,20 @@ const LogList: React.FC = () => {
         setLoading(true);
         try {
             const response = await axios.get<Log[]>('/api/logs');
-            setLogs(response.data);
+
+            const parsedLogs = response.data.map((log) => {
+                const parsedUA = parseUserAgent(log.user_agent);
+                return {
+                    ...log,
+                    browser: parsedUA.browser,
+                    browserVersion: parsedUA.browserVersion,
+                    os: parsedUA.os,
+                    osVersion: parsedUA.osVersion,
+                    device: parsedUA.device,
+                };
+            });
+
+            setLogs(parsedLogs);
         } catch (error) {
             setError('Error al cargar los registros');
             console.error(error);
@@ -88,41 +128,9 @@ const LogList: React.FC = () => {
         }
     };
 
-    const parseUserAgent = (userAgent: string | null): ParsedUserAgent => {
-        if (!userAgent) {
-            return {
-                browser: 'N/A',
-                browserVersion: '',
-                os: 'N/A',
-                osVersion: '',
-                device: 'N/A',
-            };
-        }
-
-        const parser = new UAParser(userAgent);
-        const result = parser.getResult();
-
-        const browser = result.browser.name || 'N/A';
-        const browserVersion = result.browser.version || '';
-        const os = result.os.name || 'N/A';
-        const osVersion = result.os.version || '';
-        const device = result.device.type
-            ? `${result.device.vendor || ''} ${result.device.model || ''} (${result.device.type})`.trim()
-            : 'Desktop';
-
-        return {
-            browser,
-            browserVersion,
-            os,
-            osVersion,
-            device,
-        };
-    };
-
     const applyFilters = () => {
         let updatedLogs = [...logs];
 
-        // Filtrar por búsqueda
         if (searchQuery) {
             const query = searchQuery.toLowerCase();
             updatedLogs = updatedLogs.filter(
@@ -132,28 +140,23 @@ const LogList: React.FC = () => {
             );
         }
 
-        // Filtrar por transacción
         if (transactionFilter) {
             updatedLogs = updatedLogs.filter(
                 (log) => log.transaction_id.toLowerCase() === transactionFilter.toLowerCase()
             );
         }
 
-        // Ordenar por la configuración de sortConfig
         updatedLogs.sort((a, b) => {
             let aValue: any;
             let bValue: any;
 
             if (sortConfig.key === 'user_name') {
-                // Usar 'user_name'
                 aValue = a.user_name ? a.user_name.toLowerCase() : '';
                 bValue = b.user_name ? b.user_name.toLowerCase() : '';
             } else if (sortConfig.key === 'date') {
-                // Convertir a objetos Date para comparar
                 aValue = new Date(a.date);
                 bValue = new Date(b.date);
             } else {
-                // Otros campos
                 aValue = a[sortConfig.key];
                 bValue = b[sortConfig.key];
                 if (typeof aValue === 'string') aValue = aValue.toLowerCase();
@@ -205,108 +208,60 @@ const LogList: React.FC = () => {
         <div className="container mx-auto px-4 py-8 bg-base-100">
             <h2 className="text-center mb-4 text-2xl font-semibold">Historial de Logs</h2>
 
-            {/* Toolbar Component */}
-            <LogToolbar
-                searchQuery={searchQuery}
-                setSearchQuery={setSearchQuery}
-                transactionFilter={transactionFilter}
-                setTransactionFilter={setTransactionFilter}
-                transactionOptions={transactionOptions}
-                sortOrder={sortConfig.direction}
-                setSortOrder={(direction) => setSortConfig((prev) => ({ ...prev, direction }))}
-            />
-
             <div className="overflow-x-auto">
                 <table className="table w-full table-zebra">
                     <thead>
                     <tr className="text-primary-content">
-                        <th
-                            className="px-4 py-2 text-center cursor-pointer"
-                            onClick={() => handleSort('id')}
-                        >
-                            ID {sortConfig.key === 'id' ? (sortConfig.direction === 'asc' ? '↑' : '↓') : ''}
-                        </th>
-                        <th
-                            className="px-4 py-2 text-center cursor-pointer"
-                            onClick={() => handleSort('user_name')}
-                        >
-                            Usuario {sortConfig.key === 'user_name' ? (sortConfig.direction === 'asc' ? '↑' : '↓') : ''}
-                        </th>
-                        <th
-                            className="px-4 py-2 text-center cursor-pointer"
-                            onClick={() => handleSort('transaction_id')}
-                        >
-                            Transacción {sortConfig.key === 'transaction_id' ? (sortConfig.direction === 'asc' ? '↑' : '↓') : ''}
-                        </th>
-                        <th
-                            className="px-4 py-2 text-center cursor-pointer"
-                            onClick={() => handleSort('description')}
-                        >
-                            Descripción {sortConfig.key === 'description' ? (sortConfig.direction === 'asc' ? '↑' : '↓') : ''}
-                        </th>
-                        <th
-                            className="px-4 py-2 text-center cursor-pointer"
-                            onClick={() => handleSort('date')}
-                        >
-                            Fecha y Hora {sortConfig.key === 'date' ? (sortConfig.direction === 'asc' ? '↑' : '↓') : ''}
-                        </th>
-                        <th className="px-4 py-2 text-center">Acciones</th>
+                        <th onClick={() => handleSort('id')}>ID</th>
+                        <th onClick={() => handleSort('user_name')}>Usuario</th>
+                        <th onClick={() => handleSort('transaction_id')}>Transacción</th>
+                        <th onClick={() => handleSort('description')}>Descripción</th>
+                        <th onClick={() => handleSort('date')}>Fecha y Hora</th>
+                        <th>Acciones</th>
                     </tr>
                     </thead>
                     <tbody>
-                    {filteredLogs.length > 0 ? (
-                        filteredLogs.map((log) => {
-                            const parsedUA = parseUserAgent(log.user_agent);
-
-                            return (
-                                <tr key={log.id} className="hover:bg-base-200">
-                                    <td className="border px-4 py-2 text-center">{log.id}</td>
-                                    <td className="border px-4 py-2 text-center">{log.user_name || 'N/A'}</td>
-                                    <td className="border px-4 py-2 text-center">{log.transaction_id}</td>
-                                    <td className="border px-4 py-2 text-center" title={log.description}>
-                                        {truncateText(log.description, 80)}
-                                    </td>
-                                    <td className="border px-4 py-2 text-center">
-                                        {new Date(log.date).toLocaleString('es-ES', {
-                                            day: 'numeric',
-                                            month: 'long',
-                                            year: 'numeric',
-                                            hour: '2-digit',
-                                            minute: '2-digit',
-                                            second: '2-digit',
-                                        })}
-                                    </td>
-                                    <td className="border px-4 py-2 text-center">
-                                        <button
-                                            className="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600"
-                                            onClick={() => openModal(log)}
-                                        >
-                                            Ver Detalles
-                                        </button>
-                                    </td>
-                                </tr>
-                            );
-                        })
-                    ) : (
-                        <tr>
-                            <td colSpan={6} className="text-center py-4">
-                                No hay registros para mostrar.
+                    {filteredLogs.map((log) => (
+                        <tr key={log.id} className="hover:bg-base-200">
+                            <td>{log.id}</td>
+                            <td>{log.user_name || 'N/A'}</td>
+                            <td>{log.transaction_id}</td>
+                            <td title={log.description}>
+                                {truncateText(log.description, 80)}
+                            </td>
+                            <td>
+                                {new Date(log.date).toLocaleString('es-ES', {
+                                    day: 'numeric',
+                                    month: 'long',
+                                    year: 'numeric',
+                                    hour: '2-digit',
+                                    minute: '2-digit',
+                                    second: '2-digit',
+                                })}
+                            </td>
+                            <td>
+                                <button
+                                    className="btn btn-primary btn-sm"
+                                    onClick={() => openModal(log)}
+                                >
+                                    Ver Detalles
+                                </button>
                             </td>
                         </tr>
-                    )}
+                    ))}
                     </tbody>
                 </table>
             </div>
 
-            {/* Modal de Detalles */}
-            <LogDetailsModal
-                log={selectedLog}
-                isOpen={isModalOpen}
-                onClose={closeModal}
-            />
+            {isModalOpen && (
+                <LogDetailsModal
+                    log={selectedLog}
+                    isOpen={isModalOpen}
+                    onClose={closeModal}
+                />
+            )}
         </div>
     );
-
 };
 
 export default LogList;
