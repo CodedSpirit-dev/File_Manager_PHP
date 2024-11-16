@@ -23,7 +23,7 @@ class PositionPermissionSeeder extends Seeder
     {
         // Lista de permisos ordenada del 1 al 20 para la posición con ID 1
         $permissions = [
-            1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20
+            1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19
         ];
 
         // Construir array para insertar en la tabla position_permissions

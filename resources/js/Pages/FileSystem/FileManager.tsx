@@ -252,9 +252,15 @@ const FileManager: React.FC = () => {
      * @param tree Árbol completo de archivos y carpetas.
      * @param path Ruta actual.
      */
+    /**
+     * Función para actualizar los items del directorio actual basado en el árbol completo.
+     * @param tree Árbol completo de archivos y carpetas.
+     * @param path Ruta actual.
+     */
     const updateCurrentItems = (tree: FileSystemItem[], path: string) => {
         // Navegar hasta la ruta actual en el árbol
         const pathSegments = path.split('/').filter(Boolean);
+
         // @ts-ignore
         let currentNode: FileSystemItem = { children: tree };
 
@@ -280,11 +286,15 @@ const FileManager: React.FC = () => {
             path: item.path,
         })) || [];
 
-        // Ordenar los items por nombre de A a Z
-        formattedItems.sort((a, b) => a.name.localeCompare(b.name));
+        // Filtrar la carpeta SGI si la jerarquía del usuario no es 0
+        const filteredItems = hierarchyLevel === 0 ? formattedItems : formattedItems.filter(item => item.name !== 'SGI');
 
-        setItems(formattedItems);
+        // Ordenar los items por nombre de A a Z
+        filteredItems.sort((a, b) => a.name.localeCompare(b.name));
+
+        setItems(filteredItems);
     };
+
 
     const handleNavigateToPath = (path: string) => {
         setCurrentPath(path); // Actualiza el `currentPath` con la ruta seleccionada en el breadcrumb

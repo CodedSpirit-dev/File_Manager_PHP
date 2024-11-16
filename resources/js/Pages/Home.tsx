@@ -1,4 +1,3 @@
-// HomeContent.tsx
 import React, { useState } from 'react';
 import { Head, usePage } from '@inertiajs/react';
 import { Button, Menu } from '@headlessui/react';
@@ -20,7 +19,6 @@ import FileManager from './FileSystem/FileManager';
 import LogList from './Admin/Log/LogList'; // Importa el componente LogList
 import { EmployeePageProps } from '@/types';
 import Timer from "@/Components/Timer";
-
 
 const HomeContent: React.FC = () => {
     const { hasPermission } = useAuth();
@@ -113,36 +111,42 @@ const HomeContent: React.FC = () => {
                                             </button>
                                         )}
                                     </Menu.Item>
-                                    <Menu.Item>
-                                        {({ active }) => (
-                                            <button
-                                                className={`${
-                                                    activeComponent === 'CompanyList'
-                                                        ? 'bg-primary text-white cursor-not-allowed'
-                                                        : active ? 'bg-info text-white' : 'text-gray-900'
-                                                } group flex rounded-md items-center w-full px-2 py-2 text-sm`}
-                                                onClick={() => renderComponent('CompanyList')}
-                                                disabled={activeComponent === 'CompanyList'}
-                                            >
-                                                <IoBusinessOutline className="mr-2" /> Empresas
-                                            </button>
-                                        )}
-                                    </Menu.Item>
-                                    <Menu.Item>
-                                        {({ active }) => (
-                                            <button
-                                                className={`${
-                                                    activeComponent === 'PositionList'
-                                                        ? 'bg-primary text-white cursor-not-allowed'
-                                                        : active ? 'bg-info text-white' : 'text-gray-900'
-                                                } group flex rounded-md items-center w-full px-2 py-2 text-sm`}
-                                                onClick={() => renderComponent('PositionList')}
-                                                disabled={activeComponent === 'PositionList'}
-                                            >
-                                                <MdOutlineWorkOutline className="mr-2" /> Puestos
-                                            </button>
-                                        )}
-                                    </Menu.Item>
+                                    {/* Restricción de jerarquía para Empresas */}
+                                    {employee.position?.hierarchy_level === 0 && (
+                                        <Menu.Item>
+                                            {({ active }) => (
+                                                <button
+                                                    className={`${
+                                                        activeComponent === 'CompanyList'
+                                                            ? 'bg-primary text-white cursor-not-allowed'
+                                                            : active ? 'bg-info text-white' : 'text-gray-900'
+                                                    } group flex rounded-md items-center w-full px-2 py-2 text-sm`}
+                                                    onClick={() => renderComponent('CompanyList')}
+                                                    disabled={activeComponent === 'CompanyList'}
+                                                >
+                                                    <IoBusinessOutline className="mr-2" /> Empresas
+                                                </button>
+                                            )}
+                                        </Menu.Item>
+                                    )}
+                                    {/* Restricción de jerarquía para Puestos */}
+                                    {employee.position?.hierarchy_level === 0 && (
+                                        <Menu.Item>
+                                            {({ active }) => (
+                                                <button
+                                                    className={`${
+                                                        activeComponent === 'PositionList'
+                                                            ? 'bg-primary text-white cursor-not-allowed'
+                                                            : active ? 'bg-info text-white' : 'text-gray-900'
+                                                    } group flex rounded-md items-center w-full px-2 py-2 text-sm`}
+                                                    onClick={() => renderComponent('PositionList')}
+                                                    disabled={activeComponent === 'PositionList'}
+                                                >
+                                                    <MdOutlineWorkOutline className="mr-2" /> Puestos
+                                                </button>
+                                            )}
+                                        </Menu.Item>
+                                    )}
                                     <Menu.Item>
                                         {({ active }) => (
                                             <button
