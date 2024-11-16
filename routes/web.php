@@ -78,3 +78,4 @@ Route::middleware('auth:employee')->get('/user/hierarchy', [EmployeeController::
 // Rutas para la gestión de archivos
 require base_path('routes/filemanager.php');
 require base_path('routes/admin.php');
+require base_path('routes/auth.php');
