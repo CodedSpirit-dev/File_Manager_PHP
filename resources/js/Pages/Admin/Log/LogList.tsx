@@ -78,10 +78,7 @@ const LogList: React.FC = () => {
 
     const [searchQuery, setSearchQuery] = useState('');
     const [transactionFilter, setTransactionFilter] = useState('');
-    const [sortConfig, setSortConfig] = useState<{ key: keyof Log; direction: 'asc' | 'desc' }>({
-        key: 'date',
-        direction: 'desc',
-    });
+    const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
 
     const [transactionOptions, setTransactionOptions] = useState<string[]>([]);
     const [selectedLog, setSelectedLog] = useState<Log | null>(null);
@@ -100,7 +97,7 @@ const LogList: React.FC = () => {
 
     useEffect(() => {
         applyFilters();
-    }, [logs, searchQuery, sortConfig, transactionFilter]);
+    }, [logs, searchQuery, sortOrder, transactionFilter]);
 
     const fetchLogs = async () => {
         setLoading(true);
@@ -147,39 +144,12 @@ const LogList: React.FC = () => {
         }
 
         updatedLogs.sort((a, b) => {
-            let aValue: any;
-            let bValue: any;
-
-            if (sortConfig.key === 'user_name') {
-                aValue = a.user_name ? a.user_name.toLowerCase() : '';
-                bValue = b.user_name ? b.user_name.toLowerCase() : '';
-            } else if (sortConfig.key === 'date') {
-                aValue = new Date(a.date);
-                bValue = new Date(b.date);
-            } else {
-                aValue = a[sortConfig.key];
-                bValue = b[sortConfig.key];
-                if (typeof aValue === 'string') aValue = aValue.toLowerCase();
-                if (typeof bValue === 'string') bValue = bValue.toLowerCase();
-            }
-
-            if (aValue < bValue) {
-                return sortConfig.direction === 'asc' ? -1 : 1;
-            }
-            if (aValue > bValue) {
-                return sortConfig.direction === 'asc' ? 1 : -1;
-            }
-            return 0;
+            const aDate = new Date(a.date);
+            const bDate = new Date(b.date);
+            return sortOrder === 'asc' ? aDate.getTime() - bDate.getTime() : bDate.getTime() - aDate.getTime();
         });
 
         setFilteredLogs(updatedLogs);
-    };
-
-    const handleSort = (key: keyof Log) => {
-        setSortConfig((prevConfig) => ({
-            key,
-            direction: prevConfig.key === key && prevConfig.direction === 'asc' ? 'desc' : 'asc',
-        }));
     };
 
     const openModal = (log: Log) => {
@@ -208,15 +178,26 @@ const LogList: React.FC = () => {
         <div className="container mx-auto px-4 py-8 bg-base-100">
             <h2 className="text-center mb-4 text-2xl font-semibold">Historial de Logs</h2>
 
+            {/* LogToolbar */}
+            <LogToolbar
+                searchQuery={searchQuery}
+                setSearchQuery={setSearchQuery}
+                transactionFilter={transactionFilter}
+                setTransactionFilter={setTransactionFilter}
+                transactionOptions={transactionOptions}
+                sortOrder={sortOrder}
+                setSortOrder={setSortOrder}
+            />
+
             <div className="overflow-x-auto">
                 <table className="table w-full table-zebra">
                     <thead>
                     <tr className="text-primary-content">
-                        <th onClick={() => handleSort('id')}>ID</th>
-                        <th onClick={() => handleSort('user_name')}>Usuario</th>
-                        <th onClick={() => handleSort('transaction_id')}>Transacción</th>
-                        <th onClick={() => handleSort('description')}>Descripción</th>
-                        <th onClick={() => handleSort('date')}>Fecha y Hora</th>
+                        <th>ID</th>
+                        <th>Usuario</th>
+                        <th>Transacción</th>
+                        <th>Descripción</th>
+                        <th>Fecha y Hora</th>
                         <th>Acciones</th>
                     </tr>
                     </thead>
@@ -227,7 +208,7 @@ const LogList: React.FC = () => {
                             <td>{log.user_name || 'N/A'}</td>
                             <td>{log.transaction_id}</td>
                             <td title={log.description}>
-                                {truncateText(log.description, 80)}
+                                {truncateText(log.description, 60)}
                             </td>
                             <td>
                                 {new Date(log.date).toLocaleString('es-ES', {
@@ -253,6 +234,7 @@ const LogList: React.FC = () => {
                 </table>
             </div>
 
+            {/* Modal */}
             {isModalOpen && (
                 <LogDetailsModal
                     log={selectedLog}

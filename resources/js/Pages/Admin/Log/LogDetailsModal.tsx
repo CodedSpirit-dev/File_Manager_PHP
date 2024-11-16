@@ -78,7 +78,7 @@ const LogDetailsModal: React.FC<LogDetailsModalProps> = ({ log, isOpen, onClose 
                 </div>
                 <div className="modal-action">
                     <button
-                        className="btn btn-primary"
+                        className="btn btn-primary btn-block"
                         onClick={onClose}
                     >
                         Cerrar
