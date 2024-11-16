@@ -27,7 +27,6 @@ class DatabaseSeeder extends Seeder
             PermissionSeeder::class,
             EmployeeSeeder::class,
             PositionPermissionSeeder::class, // Seeder actualizado para permisos de posición
-            LogSeeder::class, // Nuevo seeder para la tabla de logs
         ]);
     }
 }
